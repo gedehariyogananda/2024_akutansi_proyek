@@ -35,7 +35,9 @@ func (c *AuthController) Register(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.service.Register(&registerRequest); err != nil {
+	user, err := c.service.Register(&registerRequest)
+
+	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{
 			"success": false,
 			"message": err.Error(),
@@ -47,6 +49,7 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	ctx.JSON(http.StatusAccepted, gin.H{
 		"success": true,
 		"message": "mantap",
+		"data":    user,
 	})
 }
 
@@ -71,24 +74,13 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	if user.Roles == "admin" {
-		ctx.JSON(http.StatusAccepted, gin.H{
-			"success": true,
-			"message": "successfully login",
-			"data": gin.H{
-				"admin": user,
-				"token": token,
-			},
-		})
-	} else {
-		ctx.JSON(http.StatusAccepted, gin.H{
-			"success": true,
-			"message": "successfully login",
-			"data": gin.H{
-				"user":  user,
-				"token": token,
-			},
-		})
+	ctx.JSON(http.StatusAccepted, gin.H{
+		"success": true,
+		"message": "successfully login",
+		"data": gin.H{
+			"user":  user,
+			"token": token,
+		},
+	})
 
-	}
 }

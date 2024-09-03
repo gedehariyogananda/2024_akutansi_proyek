@@ -26,6 +26,15 @@ func DIAuth(db *gorm.DB) *Controllers.AuthController {
 
 func DICommonMiddleware(db *gorm.DB) *Middleware.CommondMiddleware {
 	jwtService := Services.JwtServiceProvider()
-	commondMiddleware := Middleware.CommonMiddlewareProvider(jwtService)
+	authRepository := Repositories.AuthRepositoryProvider(db)
+	commondMiddleware := Middleware.CommonMiddlewareProvider(jwtService, authRepository)
 	return commondMiddleware
+}
+
+func DICompany(db *gorm.DB) *Controllers.CompanyController {
+	companyRepository := Repositories.CompanyRepositoryProvider(db)
+	userCompanyRepository := Repositories.UserCompanyRepositoryProvider(db)
+	companyService := Services.CompanyServiceProvider(companyRepository, userCompanyRepository)
+	companyController := Controllers.CompanyControllerProvider(companyService)
+	return companyController
 }

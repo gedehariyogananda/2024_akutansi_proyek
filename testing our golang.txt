@@ -1,0 +1,51 @@
+repository : 
+https://github.com/gedehariyogananda/pattern-golang
+
+catatan : 
+refrensi -> https://lemoncode21.medium.com/build-a-restful-crud-api-with-golang-gin-and-gorm-e1e976ef5b9f
+
+code mahen -> 
+https://github.com/MahendraKhibrah/ct-backend-web
+
+build with staterpack : 
+go -> go mod init
+go gin -> github.com/gin-gonic/gin
+db -> gorm driver mysql (gorm.io/driver/mysql)
+automigrate -> automigrate 
+validasi -> github.com/go-playground/validator/v10
+dotend -> github.com/joho/godotenv
+cors -> github.com/gin-contrib/cors
+env -> go get -u github.com/joho/godotenv
+hashPass -> go get golang.org/x/crypto/bcrypt
+instalasi wire -> go get github.com/google/wire
+hot reload -> go install github.com/cosmtrek/air@v1.52.0
+lalu ketik command air init (mendapatkan air.toml)
+lalu run tinggal "air"
+
+catatan : 
+GORM dapat memanggil metode BeforeCreate secara otomatis karena menggunakan refleksi (reflection) di dalam bahasa Go. Refleksi memungkinkan GORM untuk memeriksa dan memanggil metode tertentu pada sebuah struct tanpa harus Anda panggil secara manual.
+
+Bagaimana Ini Bekerja:
+Refleksi di Go: Refleksi adalah kemampuan Go untuk memeriksa, mengubah, dan memanggil metode atau atribut dari objek secara dinamis pada runtime. Dengan refleksi, GORM dapat melihat apakah sebuah struct memiliki metode BeforeCreate, dan jika ada, GORM akan memanggil metode tersebut sebelum operasi INSERT.
+
+Hooks di GORM: GORM memiliki beberapa hook, seperti BeforeCreate, BeforeUpdate, BeforeDelete, AfterCreate, dll., yang dirancang untuk dieksekusi pada titik-titik tertentu dalam siklus hidup operasi database.
+
+BeforeCreate: Dijalankan sebelum data disimpan ke database.
+BeforeUpdate: Dijalankan sebelum data diperbarui di database.
+AfterCreate: Dijalankan setelah data disimpan ke database.
+AfterUpdate: Dijalankan setelah data diperbarui di database.
+Dan sebagainya.
+Internal GORM Mechanism:
+
+Ketika Anda memanggil db.Create(&user), GORM akan memulai dengan mencari apakah model User memiliki metode BeforeCreate.
+GORM memanfaatkan refleksi untuk memeriksa keberadaan metode BeforeCreate.
+Jika metode tersebut ada, GORM akan memanggilnya sebelum melakukan operasi INSERT.
+Setelah BeforeCreate dieksekusi, GORM kemudian melanjutkan dengan menyimpan data ke database.
+
+
+----------//-----------
+jika suatu fungsi passing lebih dari 1 parameter, maka pakai 
+if _, err := 
+
+jika hanya satu lgsung passing (contohh register hanya butuh request)
+if err := 
