@@ -17,7 +17,5 @@ func CompanyRoute(c *gin.RouterGroup, db *gorm.DB) {
 
 	CompanyController := Di.DICompany(db)
 
-	
-
 	route.POST("/", CompanyController.AddCompany)
 }

@@ -26,9 +26,10 @@ func (r *UserCompanyRepository) InsertUserCompany(request *Dto.MakeUserCompanyRe
 		UserID:    request.UserId,
 		CompanyID: request.CompanyId,
 	}
-	err = r.DB.Create(&userCompany).Error
-	if err != nil {
+
+	if err := r.DB.Create(&userCompany).Error; err != nil {
 		return err
 	}
+
 	return nil
 }
