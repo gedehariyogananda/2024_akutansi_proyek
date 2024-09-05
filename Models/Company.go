@@ -3,10 +3,10 @@ package Models
 import "time"
 
 type Company struct {
-	ID        int
-	Name      string
-	Address   string
-	ImageCompany     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           int       `json:"id"`
+	Name         string    `json:"name"`
+	Address      string    `json:"address"`
+	ImageCompany string    `json:"image_company"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }

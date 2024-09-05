@@ -11,6 +11,7 @@ import (
 type (
 	ICompanyController interface {
 		AddCompany(ctx *gin.Context)
+		GetAllCompanyUser(ctx *gin.Context)
 	}
 
 	CompanyController struct {
@@ -24,7 +25,7 @@ func CompanyControllerProvider(companyService Services.ICompanyService) *Company
 	}
 }
 
-func (h *CompanyController) AddCompany(ctx *gin.Context) {
+func (c *CompanyController) AddCompany(ctx *gin.Context) {
 	authorizeUserID, _ := ctx.Get("user_id")
 	userID := authorizeUserID.(float64)
 
@@ -37,11 +38,31 @@ func (h *CompanyController) AddCompany(ctx *gin.Context) {
 		return
 	}
 
-	err := h.companyService.AddCompany(&request, int(userID))
+	err := c.companyService.AddCompany(&request, int(userID))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "success make companies"})
+}
+
+func (c *CompanyController) GetAllCompanyUser(ctx *gin.Context) {
+	authorizeUserID, _ := ctx.Get("user_id")
+	userID := authorizeUserID.(float64)
+
+	companies, err := c.companyService.GetAllCompanyUser(int(userID))
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success":   true,
+		"message":   "success get all companies",
+		"companies": companies,
+	})
 }
