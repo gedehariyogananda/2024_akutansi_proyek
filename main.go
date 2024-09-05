@@ -1,64 +1,45 @@
 package main
 
 import (
-	"os"
-
 	"2024_akutansi_project/Config"
+	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Routes"
-	"github.com/gin-contrib/cors"
+	"2024_akutansi_project/Utils"
+
+	_ "2024_akutansi_project/docs"
+
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
 
-	// config db
+	Utils.LoadEnv()
+
 	Config.Connect()
 	db := Config.DB
-
 	if db == nil {
 		panic("Failed to connect to database!")
 	}
 
-	// setup gin config 
 	setup := gin.Default()
+	setup.MaxMultipartMemory = 8 << 20 // 8 MB
 
-	// max memory
-	setup.MaxMultipartMemory = 8 << 20
-
-	// akses folder uploads
 	setup.Static("/uploads", "./public/uploads")
 
-	// setup cors origin config
-	setup.Use(cors.New(cors.Config{
-		AllowHeaders: []string{"Origin,Content-Type,Accept,User-Agent,Content-Length,Authorization"},
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{"GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS"},
-	}))
+	// Setup CORS
+	setup.Use(Middleware.SetupCORS())
 
-	if err := godotenv.Load(".env"); err != nil {
-		panic("Failed to load .env file!")
-	}
-
-	portServer := os.Getenv("SERVER_PORT")
-	if portServer == "" {
-		portServer = "8888"
-	}
-
-	app := os.Getenv("APP_ENV")
-
-	var server string
-	if app == "local" {
-		server = "127.0.0.1:" + portServer
-	} else {
-		server = portServer
-	}
-
-	// init route
+	// Setup routes
 	Routes.Init(setup, db)
 
+	// Setup Swagger
+	setup.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Run server
+	server := Config.GetServerAddress()
 	if err := setup.Run(server); err != nil {
 		panic("Failed to run server!")
 	}
-
 }
