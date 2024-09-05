@@ -53,6 +53,17 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	})
 }
 
+// Login godoc
+// @Summary Login
+// @Description Login
+// @Tags Auth
+// @Accept json
+// @Param body body Dto.LoginRequest true "Login Request"
+// @Success 202 {object} gin.H
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /auth/login [post]
+
 func (c *AuthController) Login(ctx *gin.Context) {
 	var loginRequest Dto.LoginRequest
 

@@ -22,7 +22,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8888",
 	BasePath:         "/api/v1",
-	Schemes:          []string{"http", "https"},
+	Schemes:          []string{"http,", "https"},
 	Title:            "2024_akutansi_proyek API",
 	Description:      "Documentation for Akutansi Project",
 	InfoInstanceName: "swagger",

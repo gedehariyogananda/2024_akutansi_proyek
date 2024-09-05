@@ -11,5 +11,7 @@ func ToCompanyResponseDTO(userCompany Models.UserCompany) Response.CompanyRespon
 		Name:         userCompany.Company.Name,
 		Address:      userCompany.Company.Address,
 		ImageCompany: userCompany.Company.ImageCompany,
+		CreatedAt:    userCompany.Company.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:    userCompany.Company.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}
 }

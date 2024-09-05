@@ -7,6 +7,6 @@ type Company struct {
 	Name         string    `json:"name"`
 	Address      string    `json:"address"`
 	ImageCompany string    `json:"image_company"`
-	CreatedAt    time.Time `json:"created_at"`
+	CreatedAt    time.Time `json:"-"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }

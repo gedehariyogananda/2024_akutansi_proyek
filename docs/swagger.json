@@ -1,7 +1,16 @@
 {
+    "schemes": [
+        "http,",
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "Documentation for Akutansi Project",
+        "title": "2024_akutansi_proyek API",
+        "contact": {},
+        "version": "1.0"
     },
+    "host": "localhost:8888",
+    "basePath": "/api/v1",
     "paths": {}
 }

@@ -13,6 +13,12 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// @title 2024_akutansi_proyek API
+// @version 1.0
+// @description Documentation for Akutansi Project
+// @host localhost:8888
+// @BasePath /api/v1
+// @schemes http, https
 func main() {
 
 	Utils.LoadEnv()
@@ -36,6 +42,12 @@ func main() {
 
 	// Setup Swagger
 	setup.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	setup.GET("/checker", func(ctx *gin.Context) {
+		ctx.JSON(200, gin.H{
+			"message": "checked health",
+		})
+	})
 
 	// Run server
 	server := Config.GetServerAddress()

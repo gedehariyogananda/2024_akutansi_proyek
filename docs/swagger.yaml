@@ -1,4 +1,12 @@
+basePath: /api/v1
+host: localhost:8888
 info:
   contact: {}
+  description: Documentation for Akutansi Project
+  title: 2024_akutansi_proyek API
+  version: "1.0"
 paths: {}
+schemes:
+- http,
+- https
 swagger: "2.0"

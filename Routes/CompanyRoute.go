@@ -19,4 +19,6 @@ func CompanyRoute(c *gin.RouterGroup, db *gorm.DB) {
 
 	route.POST("/", CompanyController.AddCompany)
 	route.GET("/", CompanyController.GetAllCompanyUser)
+	route.PATCH("/:id", CompanyController.UpdateCompany)
+	route.DELETE("/:id", CompanyController.DeleteCompany)
 }

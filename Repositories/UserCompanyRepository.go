@@ -11,6 +11,7 @@ type (
 	IUserCompanyRepository interface {
 		InsertUserCompany(request *Dto.MakeUserCompanyRequest) (err error)
 		FindAll(user_id int) (userCompany *[]Models.UserCompany, err error)
+		Bind(company_id int) (userCompany *Models.UserCompany, err error)
 	}
 
 	UserCompanyRepository struct {
@@ -41,6 +42,17 @@ func (r *UserCompanyRepository) FindAll(user_id int) (userCompany *[]Models.User
 	if err := r.DB.Where("user_id = ?", user_id).
 		Preload("Company").
 		Find(&userCompany).Error; err != nil {
+		return nil, err
+	}
+
+	return userCompany, nil
+}
+
+func (r *UserCompanyRepository) Bind(company_id int) (userCompany *Models.UserCompany, err error) {
+	userCompany = &Models.UserCompany{}
+
+	if err := r.DB.Where("company_id = ?", company_id).
+		First(&userCompany).Error; err != nil {
 		return nil, err
 	}
 
