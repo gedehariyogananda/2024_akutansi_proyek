@@ -12,10 +12,10 @@ const (
 )
 
 type Invoice struct {
-	ID              int
-	InvoiceName     string
+	ID              int `gorm:"primaryKey;autoIncrement"`
+	InvoiceCustomer string
 	InvoiceNumber   string
-	InvoiceDate     time.Time
+	InvoiceDate     string
 	TotalAmount     float64
 	MoneyReceived   float64
 	StatusInvoice   StatusInvoice

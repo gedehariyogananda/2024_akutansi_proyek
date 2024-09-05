@@ -61,3 +61,39 @@ func DICompany(db *gorm.DB) *Controllers.CompanyController {
 
 	return &Controllers.CompanyController{}
 }
+
+func DISaleableProduct(db *gorm.DB) *Controllers.SaleableProductController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.SaleableProductRepositoryProvider,
+		Services.SaleableProductServiceProvider,
+		Controllers.SaleableProductControllerProvider,
+		Repositories.MaterialProductRepositoryProvider,
+
+		wire.Bind(new(Controllers.ISaleableProductController), new(*Controllers.SaleableProductController)),
+		wire.Bind(new(Services.ISaleableProductService), new(*Services.SaleableProductService)),
+		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
+		wire.Bind(new(Repositories.ISaleableProductRepository), new(*Repositories.SaleableProductRepository)),
+	),
+	))
+
+	return &Controllers.SaleableProductController{}
+}
+
+func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.InvoiceRepositoryProvider,
+		Services.InvoiceServiceProvider,
+		Controllers.InvoiceControllerProvider,
+		Repositories.InvoiceMaterialRepositoryProvider,
+		Repositories.InvoiceSaleableRepositoryProvider,
+
+		wire.Bind(new(Controllers.IInvoiceController), new(*Controllers.InvoiceController)),
+		wire.Bind(new(Services.IInvoiceService), new(*Services.InvoiceService)),
+		wire.Bind(new(Repositories.IInvoiceRepository), new(*Repositories.InvoiceRepository)),
+		wire.Bind(new(Repositories.IInvoiceMaterialRepository), new(*Repositories.InvoiceMaterialRepository)),
+		wire.Bind(new(Repositories.IInvoiceSaleableRepository), new(*Repositories.InvoiceSaleableRepository)),
+	),
+	))
+
+	return &Controllers.InvoiceController{}
+}

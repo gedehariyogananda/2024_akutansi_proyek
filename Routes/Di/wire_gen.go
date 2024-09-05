@@ -38,3 +38,20 @@ func DICompany(db *gorm.DB) *Controllers.CompanyController {
 	companyController := Controllers.CompanyControllerProvider(companyService)
 	return companyController
 }
+
+func DISaleableProduct(db *gorm.DB) *Controllers.SaleableProductController {
+	saleableProductRepository := Repositories.SaleableProductRepositoryProvider(db)
+	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
+	saleableProductService := Services.SaleableProductServiceProvider(saleableProductRepository, materialProductRepository)
+	saleableProductController := Controllers.SaleableProductControllerProvider(saleableProductService)
+	return saleableProductController
+}
+
+func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
+	invoiceRepository := Repositories.InvoiceRepositoryProvider(db)
+	invoiceMaterialRepository := Repositories.InvoiceMaterialRepositoryProvider(db)
+	invoiceSaleableRepository := Repositories.InvoiceSaleableRepositoryProvider(db)
+	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceMaterialRepository, invoiceSaleableRepository)
+	invoiceController := Controllers.InvoiceControllerProvider(invoiceService)
+	return invoiceController
+}
