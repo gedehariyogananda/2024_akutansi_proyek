@@ -88,14 +88,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 
 func (c *AuthController) UpdateTokenCompany(ctx *gin.Context) {
 
-	authorizeUserID, exist := ctx.Get("user_id")
-	if !exist {
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": "Unauthorized",
-		})
-		return
-	}
+	authorizeUserID := ctx.GetInt("user_id")
 
 	var request Dto.TokenCompanyRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -106,7 +99,7 @@ func (c *AuthController) UpdateTokenCompany(ctx *gin.Context) {
 		return
 	}
 
-	token, company, err, statusCode := c.service.TokenCompany(&request, authorizeUserID.(int))
+	token, company, err, statusCode := c.service.TokenCompany(&request, authorizeUserID)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{
 			"success": false,

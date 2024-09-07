@@ -4,7 +4,6 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,8 +28,7 @@ func CompanyControllerProvider(companyService Services.ICompanyService) *Company
 }
 
 func (c *CompanyController) AddCompany(ctx *gin.Context) {
-	authorizeUserID, _ := ctx.Get("user_id")
-	userID := authorizeUserID.(float64)
+	userID := ctx.GetInt("user_id")
 
 	var request Dto.MakeCompanyRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -41,7 +39,7 @@ func (c *CompanyController) AddCompany(ctx *gin.Context) {
 		return
 	}
 
-	err := c.companyService.AddCompany(&request, int(userID))
+	err := c.companyService.AddCompany(&request, userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -50,21 +48,11 @@ func (c *CompanyController) AddCompany(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "success make companies"})
 }
 
-// GetAllCompanyUser godoc
-// @Summary Get all companies
-// @Description Get all companies users init
-// @Tags Company
-// @Accept json
-// @Produce json
-// @Security ApiKeyAuth
-// @Success 200 {object} gin.H
-// @Router /company [get]
-
 func (c *CompanyController) GetAllCompanyUser(ctx *gin.Context) {
-	authorizeUserID, _ := ctx.Get("user_id")
-	userID := authorizeUserID.(float64)
 
-	companies, err := c.companyService.GetAllCompanyUser(int(userID))
+	userId := ctx.GetInt("user_id")
+
+	companies, err := c.companyService.GetAllCompanyUser(userId)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -81,10 +69,8 @@ func (c *CompanyController) GetAllCompanyUser(ctx *gin.Context) {
 }
 
 func (c *CompanyController) UpdateCompany(ctx *gin.Context) {
-	authorizeUserID, _ := ctx.Get("user_id")
-	userID := authorizeUserID.(float64)
-	idParam := ctx.Param("id")
-	companyID, err := strconv.Atoi(idParam)
+	userId := ctx.GetInt("user_id")
+	companyId := ctx.GetInt("company_id")
 
 	var request Dto.EditCompanyRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -95,7 +81,7 @@ func (c *CompanyController) UpdateCompany(ctx *gin.Context) {
 		return
 	}
 
-	company, statusCode, err := c.companyService.UpdateCompany(&request, companyID, int(userID))
+	company, statusCode, err := c.companyService.UpdateCompany(&request, companyId, userId)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{
 			"success": false,
@@ -104,7 +90,7 @@ func (c *CompanyController) UpdateCompany(ctx *gin.Context) {
 		return
 	}
 
-	company.ID = companyID
+	company.ID = companyId
 
 	ctx.JSON(statusCode, gin.H{
 		"success": true,
@@ -114,12 +100,10 @@ func (c *CompanyController) UpdateCompany(ctx *gin.Context) {
 }
 
 func (c *CompanyController) DeleteCompany(ctx *gin.Context) {
-	authorizeUserID, _ := ctx.Get("user_id")
-	userID := authorizeUserID.(float64)
-	idParam := ctx.Param("id")
-	companyID, err := strconv.Atoi(idParam)
+	userId := ctx.GetInt("user_id")
+	companyId := ctx.GetInt("company_id")
 
-	statusCode, err := c.companyService.DeleteCompany(companyID, int(userID))
+	statusCode, err := c.companyService.DeleteCompany(companyId, userId)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{
 			"success": false,

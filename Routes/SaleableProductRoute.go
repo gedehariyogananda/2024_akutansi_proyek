@@ -17,6 +17,6 @@ func SaleableProductRoute(c *gin.RouterGroup, db *gorm.DB) {
 
 	SaleableProductController := Di.DISaleableProduct(db)
 
-	route.GET("/:id", SaleableProductController.FindAllSaleableProduct)
+	route.GET("/", SaleableProductController.FindAllSaleableProduct)
 
 }

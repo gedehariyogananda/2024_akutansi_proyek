@@ -2,7 +2,6 @@ package Controllers
 
 import (
 	"2024_akutansi_project/Services"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,10 +24,8 @@ func SaleableProductControllerProvider(saleableProductService Services.ISaleable
 
 func (c *SaleableProductController) FindAllSaleableProduct(ctx *gin.Context) {
 	companyId := ctx.GetInt("company_id")
-	idParam := ctx.Param("id")
-	companyID, _ := strconv.Atoi(idParam)
 
-	saleableProducts, materialProduct, err := c.saleableProductService.FindAllSaleableProducts(companyID)
+	saleableProducts, materialProduct, err := c.saleableProductService.FindAllSaleableProducts(companyId)
 
 	if err != nil {
 		ctx.JSON(500, gin.H{
@@ -40,6 +37,6 @@ func (c *SaleableProductController) FindAllSaleableProduct(ctx *gin.Context) {
 
 	ctx.JSON(200, gin.H{
 		"message": "Success",
-		"data":    gin.H{"saleable_products": saleableProducts, "material_products": materialProduct, "company_id": companyId},
+		"data":    gin.H{"saleable_products": saleableProducts, "material_products": materialProduct},
 	})
 }
