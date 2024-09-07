@@ -4,7 +4,7 @@ package Dto
 type PurchasedItem struct {
 	ID                int  `json:"id" binding:"required"`
 	QuantitySold      int  `json:"quantity_sold" binding:"required"`
-	IsSaleableProduct bool `json:"is_saleable_product" binding:"required"`
+	IsSaleableProduct bool `json:"is_saleable_product"`
 	TotalPrice        int  `json:"total_price" binding:"required"`
 }
 

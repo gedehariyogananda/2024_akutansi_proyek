@@ -4,12 +4,13 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Repositories"
 	"fmt"
+	"net/http"
 	"time"
 )
 
 type (
 	IInvoiceService interface {
-		CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (err error)
+		CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (err error, statusCode int)
 	}
 
 	InvoiceService struct {
@@ -27,11 +28,11 @@ func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, i
 	}
 }
 
-func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (err error) {
+func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (err error, statusCode int) {
 	dateInvoice := time.Now().Format("2006/01/02")
 	invoiceNumber := fmt.Sprintf("%s-%s", dateInvoice, request.InvoiceCustomer)
 
-	// calculate total_amount
+	// Calculate total amount
 	totalAmount := 0
 	for _, purchase := range request.Purchaseds {
 		totalAmount += purchase.TotalPrice
@@ -48,16 +49,18 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 
 	invoice, err := s.InvoiceRepository.Create(invoiceRequestDTO, company_id)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create invoice: %w", err), http.StatusInternalServerError
+	}
+
+	if invoice == nil || invoice.ID == 0 {
+		return fmt.Errorf("failed to create invoice: invoice ID is 0"), http.StatusInternalServerError
 	}
 
 	invoiceID := invoice.ID
-	if invoice.ID == 0 {
-		return fmt.Errorf("failed to create invoice: ID not set")
-	}
 
+	// Handle saleable products
 	for _, purchase := range request.Purchaseds {
-		if purchase.IsSaleableProduct == true {
+		if purchase.IsSaleableProduct {
 			invoiceSaleableRequestDTO := &Dto.InvoiceSaleableRequestDTO{
 				InvoiceID:         invoiceID,
 				SaleableProductID: purchase.ID,
@@ -66,11 +69,14 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 			}
 
 			if err := s.InvoiceSaleableRepository.Create(invoiceSaleableRequestDTO); err != nil {
-				return err
+				return fmt.Errorf("failed to create invoice saleable product: %w", err), http.StatusInternalServerError
 			}
 		}
+	}
 
-		if purchase.IsSaleableProduct == false {
+	// Handle material products
+	for _, purchase := range request.Purchaseds {
+		if !purchase.IsSaleableProduct {
 			invoiceMaterialRequestDTO := &Dto.InvoiceMaterialRequestDTO{
 				InvoiceID:         invoiceID,
 				MaterialProductID: purchase.ID,
@@ -79,10 +85,10 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 			}
 
 			if err := s.InvoiceMaterialRepository.Create(invoiceMaterialRequestDTO); err != nil {
-				return err
+				return fmt.Errorf("failed to create invoice material product: %w", err), http.StatusInternalServerError
 			}
 		}
 	}
 
-	return nil
+	return nil, http.StatusCreated
 }

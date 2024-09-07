@@ -39,29 +39,35 @@ func (c *CompanyController) AddCompany(ctx *gin.Context) {
 		return
 	}
 
-	err := c.companyService.AddCompany(&request, userID)
+	err, statusCode := c.companyService.AddCompany(&request, userID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(statusCode, gin.H{
+			"success": false,
+			"message": err.Error()},
+		)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "success make companies"})
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "success make companies",
+	})
 }
 
 func (c *CompanyController) GetAllCompanyUser(ctx *gin.Context) {
 
 	userId := ctx.GetInt("user_id")
 
-	companies, err := c.companyService.GetAllCompanyUser(userId)
+	companies, err, statusCode := c.companyService.GetAllCompanyUser(userId)
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
+		ctx.JSON(statusCode, gin.H{
 			"success": false,
 			"message": err.Error(),
 		})
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
+	ctx.JSON(statusCode, gin.H{
 		"success":   true,
 		"message":   "success get all companies",
 		"companies": companies,

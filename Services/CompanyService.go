@@ -12,8 +12,8 @@ import (
 
 type (
 	ICompanyService interface {
-		AddCompany(request *Dto.MakeCompanyRequest, userID int) (err error)
-		GetAllCompanyUser(user_id int) (companyResponse *[]Response.CompanyResponseDTO, err error)
+		AddCompany(request *Dto.MakeCompanyRequest, userID int) (err error, statusCode int)
+		GetAllCompanyUser(user_id int) (companyResponse *[]Response.CompanyResponseDTO, err error, statusCode int)
 		UpdateCompany(request *Dto.EditCompanyRequest, company_id int, user_id int) (company *Models.Company, statusCode int, err error)
 
 		DeleteCompany(company_id int, user_id int) (statusCode int, err error)
@@ -32,26 +32,26 @@ func CompanyServiceProvider(companyRepository Repositories.ICompanyRepository, u
 	}
 }
 
-func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID int) (err error) {
+func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID int) (err error, statusCode int) {
 	company, err := s.companyRepository.InsertCompany(request)
 	if err != nil {
-		return fmt.Errorf("error insert company: %w", err)
+		return fmt.Errorf("error insert company: %w", err), http.StatusBadRequest
 	}
 
 	if err := s.userCompanyRepository.InsertUserCompany(&Dto.MakeUserCompanyRequest{
 		UserId:    userID,
 		CompanyId: company.ID,
 	}); err != nil {
-		return fmt.Errorf("error insert user company: %w", err)
+		return fmt.Errorf("error insert user company: %w", err), http.StatusBadRequest
 	}
 
-	return nil
+	return nil, http.StatusCreated
 }
 
-func (s *CompanyService) GetAllCompanyUser(user_id int) (companyResponse *[]Response.CompanyResponseDTO, err error) {
+func (s *CompanyService) GetAllCompanyUser(user_id int) (companyResponse *[]Response.CompanyResponseDTO, err error, statusCode int) {
 	userCompany, err := s.userCompanyRepository.FindAll(user_id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error get all company user: %w", err), http.StatusBadRequest
 	}
 
 	// for mapping data
@@ -61,7 +61,7 @@ func (s *CompanyService) GetAllCompanyUser(user_id int) (companyResponse *[]Resp
 		companyResponses = append(companyResponses, companyResponse)
 	}
 
-	return &companyResponses, nil
+	return &companyResponses, nil, http.StatusOK
 }
 
 func (s *CompanyService) UpdateCompany(request *Dto.EditCompanyRequest, company_id int, user_id int) (company *Models.Company, statusCode int, err error) {

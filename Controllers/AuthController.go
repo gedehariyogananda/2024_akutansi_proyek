@@ -36,10 +36,10 @@ func (c *AuthController) Register(ctx *gin.Context) {
 		return
 	}
 
-	user, err := c.service.Register(&registerRequest)
+	user, err, statusCode := c.service.Register(&registerRequest)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{
+		ctx.JSON(statusCode, gin.H{
 			"success": false,
 			"message": err.Error(),
 		})
@@ -47,7 +47,7 @@ func (c *AuthController) Register(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusAccepted, gin.H{
+	ctx.JSON(statusCode, gin.H{
 		"success": true,
 		"message": "mantap",
 		"data":    user,
@@ -65,9 +65,9 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	user, token, err := c.service.Login(&loginRequest)
+	user, token, err, statusCode := c.service.Login(&loginRequest)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{
+		ctx.JSON(statusCode, gin.H{
 			"success": false,
 			"message": err.Error(),
 		})
@@ -75,7 +75,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusAccepted, gin.H{
+	ctx.JSON(statusCode, gin.H{
 		"success": true,
 		"message": "successfully login",
 		"data": gin.H{

@@ -24,7 +24,9 @@ func (r *SaleableProductRepository) FindAll(company_id int) (saleableProduct *[]
 
 	saleableProduct = &[]Models.SaleableProduct{}
 
-	if err := r.DB.Where("company_id = ?", company_id).Find(&saleableProduct).Error; err != nil {
+	if err := r.DB.Where("company_id = ?", company_id).
+		Preload("Category").
+		Find(&saleableProduct).Error; err != nil {
 		return nil, err
 	}
 

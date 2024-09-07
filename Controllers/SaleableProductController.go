@@ -25,18 +25,23 @@ func SaleableProductControllerProvider(saleableProductService Services.ISaleable
 func (c *SaleableProductController) FindAllSaleableProduct(ctx *gin.Context) {
 	companyId := ctx.GetInt("company_id")
 
-	saleableProducts, materialProduct, err := c.saleableProductService.FindAllSaleableProducts(companyId)
+	saleableProducts, materialProducts, err, statusCode := c.saleableProductService.FindAllSaleableProducts(companyId)
 
 	if err != nil {
-		ctx.JSON(500, gin.H{
+		ctx.JSON(statusCode, gin.H{
+			"success": false,
 			"message": err.Error(),
 		})
 		return
 
 	}
 
-	ctx.JSON(200, gin.H{
-		"message": "Success",
-		"data":    gin.H{"saleable_products": saleableProducts, "material_products": materialProduct},
+	ctx.JSON(statusCode, gin.H{
+		"success": true,
+		"message": "success get saleable products",
+		"data": gin.H{
+			"saleable_products": saleableProducts,
+			"material_products": materialProducts,
+		},
 	})
 }

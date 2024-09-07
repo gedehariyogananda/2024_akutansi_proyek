@@ -35,13 +35,16 @@ func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.InvoiceService.CreateInvoicePurchased(&request, companyId); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
+	err, statusCode := c.InvoiceService.CreateInvoicePurchased(&request, companyId)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{
 			"success": false,
 			"message": err.Error(),
 		})
-		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "success create invoice purchased"})
+	ctx.JSON(statusCode, gin.H{
+		"success": true,
+		"message": "success create invoice purchased",
+	})
 }
