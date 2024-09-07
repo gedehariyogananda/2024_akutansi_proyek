@@ -19,7 +19,8 @@ import (
 func DIAuth(db *gorm.DB) *Controllers.AuthController {
 	authRepository := Repositories.AuthRepositoryProvider(db)
 	jwtService := Services.JwtServiceProvider()
-	authService := Services.AuthServiceProvider(authRepository, jwtService)
+	companyRepository := Repositories.CompanyRepositoryProvider(db)
+	authService := Services.AuthServiceProvider(authRepository, jwtService, companyRepository)
 	authController := Controllers.AuthControllerProvider(authService)
 	return authController
 }

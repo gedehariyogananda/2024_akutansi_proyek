@@ -12,6 +12,7 @@ type (
 	IJwtService interface {
 		GenerateToken(userId int) (token string, err error)
 		ParseToken(token string) (claims jwt.MapClaims, err error)
+		GenerateTokenWithCompany(userId int, company_id int) (token string, err error)
 	}
 
 	JwtService struct {
@@ -54,4 +55,21 @@ func (s *JwtService) ParseToken(token string) (claims jwt.MapClaims, err error) 
 	}
 
 	return claims, nil
+}
+
+func (s *JwtService) GenerateTokenWithCompany(userId int, company_id int) (token string, err error) {
+	expiredTime := time.Now().Add(3 * 30 * 24 * time.Hour) // 3 bulan
+
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userId":    userId,
+		"companyId": company_id,
+		"exp":       expiredTime.Unix(),
+	})
+
+	token, err = jwtToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }

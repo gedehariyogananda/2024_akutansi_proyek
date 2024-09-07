@@ -3,7 +3,6 @@ package Controllers
 import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -24,8 +23,10 @@ func InvoiceControllerProvider(invoiceService Services.IInvoiceService) *Invoice
 }
 
 func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
-	var request Dto.InvoiceRequestClient
 
+	companyId := ctx.GetInt("company_id")
+
+	var request Dto.InvoiceRequestClient
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -33,9 +34,8 @@ func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 		})
 		return
 	}
-	fmt.Printf("Received request: %+v\n", request)
 
-	if err := c.InvoiceService.CreateInvoicePurchased(&request); err != nil {
+	if err := c.InvoiceService.CreateInvoicePurchased(&request, companyId); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": err.Error(),

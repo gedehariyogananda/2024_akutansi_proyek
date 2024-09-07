@@ -9,7 +9,10 @@ import (
 
 func InvoiceRoute(c *gin.RouterGroup, db *gorm.DB) {
 	route := c.Group("/invoice")
+	m := Di.DICommonMiddleware(db)
 
+	// open use authenticate
+	route.Use(m.IsAuthenticate)
 	InvoiceController := Di.DIInvoice(db)
 
 	route.GET("/checked", func(ctx *gin.Context) {

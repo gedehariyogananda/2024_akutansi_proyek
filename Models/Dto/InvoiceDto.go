@@ -11,7 +11,6 @@ type PurchasedItem struct {
 type InvoiceRequestClient struct {
 	InvoiceCustomer string          `json:"invoice_customer" binding:"required"`
 	PaymentMethodID int             `json:"payment_method_id" binding:"required"`
-	CompanyID       int             `json:"company_id" binding:"required"`
 	Purchaseds      []PurchasedItem `json:"purchaseds" binding:"required,dive"`
 }
 

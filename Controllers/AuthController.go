@@ -13,6 +13,7 @@ type (
 	IAuthController interface {
 		Register(ctx *gin.Context)
 		Login(ctx *gin.Context)
+		UpdateTokenCompany(ctx *gin.Context)
 	}
 
 	AuthController struct {
@@ -53,17 +54,6 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	})
 }
 
-// Login godoc
-// @Summary Login
-// @Description Login
-// @Tags Auth
-// @Accept json
-// @Param body body Dto.LoginRequest true "Login Request"
-// @Success 202 {object} gin.H
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /auth/login [post]
-
 func (c *AuthController) Login(ctx *gin.Context) {
 	var loginRequest Dto.LoginRequest
 
@@ -94,4 +84,43 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		},
 	})
 
+}
+
+func (c *AuthController) UpdateTokenCompany(ctx *gin.Context) {
+
+	authorizeUserID, exist := ctx.Get("user_id")
+	if !exist {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"success": false,
+			"message": "Unauthorized",
+		})
+		return
+	}
+
+	var request Dto.TokenCompanyRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid request body",
+		})
+		return
+	}
+
+	token, company, err, statusCode := c.service.TokenCompany(&request, authorizeUserID.(int))
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(statusCode, gin.H{
+		"success": true,
+		"message": "success update token",
+		"data": gin.H{
+			"token":        token,
+			"company_user": company,
+		},
+	})
 }

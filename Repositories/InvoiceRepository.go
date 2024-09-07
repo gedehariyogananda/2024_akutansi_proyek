@@ -10,7 +10,7 @@ import (
 
 type (
 	IInvoiceRepository interface {
-		Create(request *Dto.InvoiceRequestDTO) (invoice *Models.Invoice, err error)
+		Create(request *Dto.InvoiceRequestDTO, company_id int) (invoice *Models.Invoice, err error)
 	}
 
 	InvoiceRepository struct {
@@ -22,12 +22,12 @@ func InvoiceRepositoryProvider(db *gorm.DB) *InvoiceRepository {
 	return &InvoiceRepository{DB: db}
 }
 
-func (r *InvoiceRepository) Create(request *Dto.InvoiceRequestDTO) (invoice *Models.Invoice, err error) {
+func (r *InvoiceRepository) Create(request *Dto.InvoiceRequestDTO, company_id int) (invoice *Models.Invoice, err error) {
 
 	invoice = &Models.Invoice{
 		InvoiceNumber:   request.InvoiceNumber,
 		InvoiceCustomer: request.InvoiceCustomer,
-		CompanyID:       request.CompanyID,
+		CompanyID:       company_id,
 		PaymentMethodID: request.PaymentMethodId,
 		InvoiceDate:     request.InvoiceDate,
 		TotalAmount:     float64(request.TotalAmount),

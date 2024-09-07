@@ -24,6 +24,7 @@ func SaleableProductControllerProvider(saleableProductService Services.ISaleable
 }
 
 func (c *SaleableProductController) FindAllSaleableProduct(ctx *gin.Context) {
+	companyId := ctx.GetInt("company_id")
 	idParam := ctx.Param("id")
 	companyID, _ := strconv.Atoi(idParam)
 
@@ -34,10 +35,11 @@ func (c *SaleableProductController) FindAllSaleableProduct(ctx *gin.Context) {
 			"message": err.Error(),
 		})
 		return
+
 	}
 
 	ctx.JSON(200, gin.H{
 		"message": "Success",
-		"data":    gin.H{"saleable_products": saleableProducts, "material_products": materialProduct},
+		"data":    gin.H{"saleable_products": saleableProducts, "material_products": materialProduct, "company_id": companyId},
 	})
 }

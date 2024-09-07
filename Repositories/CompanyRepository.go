@@ -13,6 +13,7 @@ type (
 		InsertCompany(request *Dto.MakeCompanyRequest) (company *Models.Company, err error)
 		Update(request *Dto.EditCompanyRequest, company_id int) (company *Models.Company, err error)
 		Delete(company_id int) (err error)
+		GetCompany(company_id int) (company *Models.Company, err error)
 	}
 
 	CompanyRepository struct {
@@ -66,4 +67,14 @@ func (h *CompanyRepository) Delete(company_id int) (err error) {
 	}
 
 	return nil
+}
+
+func (h *CompanyRepository) GetCompany(company_id int) (company *Models.Company, err error) {
+	company = &Models.Company{}
+
+	if err := h.DB.Where("id = ?", company_id).First(company).Error; err != nil {
+		return nil, err
+	}
+
+	return company, nil
 }

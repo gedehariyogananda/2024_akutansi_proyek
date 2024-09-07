@@ -1,6 +1,7 @@
 package Middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -47,14 +48,23 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Set("user_id", claims["userId"])
+	userID, ok := claims["userId"].(float64)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid User ID"})
+		ctx.Abort()
+		return
+	}
 
-	authenticateIDInit := claims["userId"].(float64)
-	userID := int(authenticateIDInit)
+	ctx.Set("user_id", int(userID))
 
-	// check token from db (security secure)
-	if err = m.authRepository.CheckToken(token, userID); err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+	if companyID, ok := claims["companyId"].(float64); ok {
+		ctx.Set("company_id", int(companyID))
+	} else {
+		fmt.Println("companyId not found in claims")
+	}
+
+	if err = m.authRepository.CheckToken(token, int(userID)); err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized: Token Mismatch"})
 		ctx.Abort()
 		return
 	}

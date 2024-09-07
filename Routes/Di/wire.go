@@ -19,11 +19,13 @@ func DIAuth(db *gorm.DB) *Controllers.AuthController {
 		Services.AuthServiceProvider,
 		Controllers.AuthControllerProvider,
 		Services.JwtServiceProvider,
+		Repositories.CompanyRepositoryProvider,
 
 		wire.Bind(new(Controllers.IAuthController), new(*Controllers.AuthController)),
 		wire.Bind(new(Services.IAuthService), new(*Services.AuthService)),
 		wire.Bind(new(Repositories.IAuthRepository), new(*Repositories.AuthRepository)),
 		wire.Bind(new(Services.IJwtService), new(*Services.JwtService)),
+		wire.Bind(new(Repositories.ICompanyRepository), new(*Repositories.CompanyRepository)),
 	),
 	))
 

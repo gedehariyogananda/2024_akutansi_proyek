@@ -13,3 +13,7 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 	Token    string `json:"token"`
 }
+
+type TokenCompanyRequest struct {
+	CompanyID int `json:"company_id"`
+}

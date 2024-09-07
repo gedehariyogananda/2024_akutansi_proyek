@@ -9,7 +9,7 @@ import (
 
 type (
 	IInvoiceService interface {
-		CreateInvoicePurchased(request *Dto.InvoiceRequestClient) (err error)
+		CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (err error)
 	}
 
 	InvoiceService struct {
@@ -27,7 +27,7 @@ func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, i
 	}
 }
 
-func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClient) (err error) {
+func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (err error) {
 	dateInvoice := time.Now().Format("2006/01/02")
 	invoiceNumber := fmt.Sprintf("%s-%s", dateInvoice, request.InvoiceCustomer)
 
@@ -42,11 +42,11 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 		InvoiceCustomer: request.InvoiceCustomer,
 		InvoiceDate:     time.Now().Format("2006-01-02"),
 		TotalAmount:     totalAmount,
-		CompanyID:       request.CompanyID,
+		CompanyID:       company_id,
 		PaymentMethodId: request.PaymentMethodID,
 	}
 
-	invoice, err := s.InvoiceRepository.Create(invoiceRequestDTO)
+	invoice, err := s.InvoiceRepository.Create(invoiceRequestDTO, company_id)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 				InvoiceID:         invoiceID,
 				SaleableProductID: purchase.ID,
 				QuantitySold:      purchase.QuantitySold,
-				CompanyID:         request.CompanyID,
+				CompanyID:         company_id,
 			}
 
 			if err := s.InvoiceSaleableRepository.Create(invoiceSaleableRequestDTO); err != nil {
@@ -75,7 +75,7 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 				InvoiceID:         invoiceID,
 				MaterialProductID: purchase.ID,
 				QuantitySold:      purchase.QuantitySold,
-				CompanyID:         request.CompanyID,
+				CompanyID:         company_id,
 			}
 
 			if err := s.InvoiceMaterialRepository.Create(invoiceMaterialRequestDTO); err != nil {
