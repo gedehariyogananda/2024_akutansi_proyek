@@ -1,6 +1,7 @@
 package Controllers
 
 import (
+	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Services"
 
 	"github.com/gin-gonic/gin"
@@ -28,20 +29,19 @@ func (c *SaleableProductController) FindAllSaleableProduct(ctx *gin.Context) {
 	saleableProducts, materialProducts, err, statusCode := c.saleableProductService.FindAllSaleableProducts(companyId)
 
 	if err != nil {
-		ctx.JSON(statusCode, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		})
+		}, statusCode)
 		return
-
 	}
 
-	ctx.JSON(statusCode, gin.H{
+	Helper.SetResponse(ctx, gin.H{
 		"success": true,
-		"message": "success get saleable products",
+		"message": "Success get saleable products",
 		"data": gin.H{
 			"saleable_products": saleableProducts,
 			"material_products": materialProducts,
 		},
-	})
+	}, statusCode)
 }

@@ -1,6 +1,7 @@
 package Controllers
 
 import (
+	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"net/http"
@@ -32,46 +33,46 @@ func (c *CompanyController) AddCompany(ctx *gin.Context) {
 
 	var request Dto.MakeCompanyRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": "Invalid request body",
-		})
+		}, http.StatusBadRequest)
 		return
 	}
 
 	err, statusCode := c.companyService.AddCompany(&request, userID)
 	if err != nil {
-		ctx.JSON(statusCode, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
-			"message": err.Error()},
-		)
+			"message": err.Error(),
+		}, statusCode)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
+	Helper.SetResponse(ctx, gin.H{
 		"success": true,
-		"message": "success make companies",
-	})
+		"message": "Success make companies",
+	}, http.StatusOK)
 }
 
 func (c *CompanyController) GetAllCompanyUser(ctx *gin.Context) {
-
 	userId := ctx.GetInt("user_id")
 
 	companies, err, statusCode := c.companyService.GetAllCompanyUser(userId)
 
 	if err != nil {
-		ctx.JSON(statusCode, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		})
+		}, statusCode)
+		return
 	}
 
-	ctx.JSON(statusCode, gin.H{
+	Helper.SetResponse(ctx, gin.H{
 		"success":   true,
-		"message":   "success get all companies",
+		"message":   "Success get all companies",
 		"companies": companies,
-	})
+	}, http.StatusOK)
 }
 
 func (c *CompanyController) UpdateCompany(ctx *gin.Context) {
@@ -80,29 +81,29 @@ func (c *CompanyController) UpdateCompany(ctx *gin.Context) {
 
 	var request Dto.EditCompanyRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": "Invalid request body",
-		})
+		}, http.StatusBadRequest)
 		return
 	}
 
 	company, statusCode, err := c.companyService.UpdateCompany(&request, companyId, userId)
 	if err != nil {
-		ctx.JSON(statusCode, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		})
+		}, statusCode)
 		return
 	}
 
 	company.ID = companyId
 
-	ctx.JSON(statusCode, gin.H{
+	Helper.SetResponse(ctx, gin.H{
 		"success": true,
-		"message": "success update company",
+		"message": "Success update company",
 		"data":    company,
-	})
+	}, statusCode)
 }
 
 func (c *CompanyController) DeleteCompany(ctx *gin.Context) {
@@ -111,15 +112,15 @@ func (c *CompanyController) DeleteCompany(ctx *gin.Context) {
 
 	statusCode, err := c.companyService.DeleteCompany(companyId, userId)
 	if err != nil {
-		ctx.JSON(statusCode, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		})
+		}, statusCode)
 		return
 	}
 
-	ctx.JSON(statusCode, gin.H{
+	Helper.SetResponse(ctx, gin.H{
 		"success": true,
-		"message": "success delete company",
-	})
+		"message": "Success delete company",
+	}, statusCode)
 }

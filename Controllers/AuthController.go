@@ -3,6 +3,7 @@ package Controllers
 import (
 	"net/http"
 
+	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 
@@ -29,91 +30,86 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	var registerRequest Dto.RegisterRequest
 
 	if err := ctx.ShouldBind(&registerRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		})
+		}, http.StatusBadRequest)
 		return
 	}
 
 	user, err, statusCode := c.service.Register(&registerRequest)
-
 	if err != nil {
-		ctx.JSON(statusCode, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		})
-
+		}, statusCode)
 		return
 	}
 
-	ctx.JSON(statusCode, gin.H{
+	Helper.SetResponse(ctx, gin.H{
 		"success": true,
-		"message": "mantap",
+		"message": "Registration successful",
 		"data":    user,
-	})
+	}, statusCode)
 }
 
 func (c *AuthController) Login(ctx *gin.Context) {
 	var loginRequest Dto.LoginRequest
 
 	if err := ctx.ShouldBind(&loginRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		})
+		}, http.StatusBadRequest)
 		return
 	}
 
 	user, token, err, statusCode := c.service.Login(&loginRequest)
 	if err != nil {
-		ctx.JSON(statusCode, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		})
-
+		}, statusCode)
 		return
 	}
 
-	ctx.JSON(statusCode, gin.H{
+	Helper.SetResponse(ctx, gin.H{
 		"success": true,
-		"message": "successfully login",
+		"message": "Login successful",
 		"data": gin.H{
 			"user":  user,
 			"token": token,
 		},
-	})
-
+	}, statusCode)
 }
 
 func (c *AuthController) UpdateTokenCompany(ctx *gin.Context) {
-
 	authorizeUserID := ctx.GetInt("user_id")
 
 	var request Dto.TokenCompanyRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": "Invalid request body",
-		})
+		}, http.StatusBadRequest)
 		return
 	}
 
 	token, company, err, statusCode := c.service.TokenCompany(&request, authorizeUserID)
 	if err != nil {
-		ctx.JSON(statusCode, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		})
+		}, statusCode)
 		return
 	}
 
-	ctx.JSON(statusCode, gin.H{
+	Helper.SetResponse(ctx, gin.H{
 		"success": true,
-		"message": "success update token",
+		"message": "Token updated successfully",
 		"data": gin.H{
 			"token":        token,
 			"company_user": company,
 		},
-	})
+	}, statusCode)
 }

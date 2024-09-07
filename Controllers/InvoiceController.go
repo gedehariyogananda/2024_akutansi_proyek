@@ -1,6 +1,7 @@
 package Controllers
 
 import (
+	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"net/http"
@@ -28,23 +29,24 @@ func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 
 	var request Dto.InvoiceRequestClient
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
-			"message": err.Error(),
-		})
+			"message": "Invalid request body",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	err, statusCode := c.InvoiceService.CreateInvoicePurchased(&request, companyId)
 	if err != nil {
-		ctx.JSON(statusCode, gin.H{
+		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		})
+		}, statusCode)
+		return
 	}
 
-	ctx.JSON(statusCode, gin.H{
+	Helper.SetResponse(ctx, gin.H{
 		"success": true,
-		"message": "success create invoice purchased",
-	})
+		"message": "Success create invoice purchased",
+	}, statusCode)
 }
