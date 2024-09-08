@@ -116,3 +116,18 @@ func DICategory(db *gorm.DB) *Controllers.CategoryController {
 
 	return &Controllers.CategoryController{}
 }
+
+func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.PaymentMethodRepositoryProvider,
+		Services.PaymentMethodServiceProvider,
+		Controllers.PaymentMethodControllerProvider,
+
+		wire.Bind(new(Controllers.IPaymentMethodController), new(*Controllers.PaymentMethodController)),
+		wire.Bind(new(Services.IPaymentMethodService), new(*Services.PaymentMethodService)),
+		wire.Bind(new(Repositories.IPaymentMethodRepository), new(*Repositories.PaymentMethodRepository)),
+	),
+	))
+
+	return &Controllers.PaymentMethodController{}
+}

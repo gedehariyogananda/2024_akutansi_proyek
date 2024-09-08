@@ -64,3 +64,10 @@ func DICategory(db *gorm.DB) *Controllers.CategoryController {
 	categoryController := Controllers.CategoryControllerProvider(categoryService)
 	return categoryController
 }
+
+func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
+	paymentMethodRepository := Repositories.PaymentMethodRepositoryProvider(db)
+	paymentMethodService := Services.PaymentMethodServiceProvider(paymentMethodRepository)
+	paymentMethodController := Controllers.PaymentMethodControllerProvider(paymentMethodService)
+	return paymentMethodController
+}

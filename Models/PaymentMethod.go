@@ -3,9 +3,9 @@ package Models
 import "time"
 
 type PaymentMethod struct {
-	ID         int
-	MethodName string
-	CompanyID  int
-	CreatedAt  time.Time
-	Company    Company `gorm:"foreignKey:CompanyID"`
+	ID         int       `json:"id"`
+	MethodName string    `json:"method_name"`
+	CompanyID  int       `json:"company_id"`
+	CreatedAt  time.Time `json:"-"`
+	Company    Company   `gorm:"foreignKey:CompanyID" json:"-"`
 }

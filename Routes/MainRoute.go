@@ -15,4 +15,5 @@ func Init(c *gin.Engine, db *gorm.DB) {
 	SaleableProductRoute(apiPrefix, db)
 	InvoiceRoute(apiPrefix, db)
 	CategoryRoute(apiPrefix, db)
+	PaymentMethodRoute(apiPrefix, db)
 }

@@ -3,6 +3,7 @@ package Controllers
 import (
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Services"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,12 +32,12 @@ func (c *CategoryController) FindAllCategory(ctx *gin.Context) {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		}, 404)
+		}, http.StatusBadRequest)
 	}
 
 	Helper.SetResponse(ctx, gin.H{
 		"message": "Success get all category",
 		"success": true,
 		"data":    company,
-	}, 200)
+	}, http.StatusOK)
 }
