@@ -70,11 +70,13 @@ func DISaleableProduct(db *gorm.DB) *Controllers.SaleableProductController {
 		Services.SaleableProductServiceProvider,
 		Controllers.SaleableProductControllerProvider,
 		Repositories.MaterialProductRepositoryProvider,
+		Repositories.CategoryRepositoryProvider,
 
 		wire.Bind(new(Controllers.ISaleableProductController), new(*Controllers.SaleableProductController)),
 		wire.Bind(new(Services.ISaleableProductService), new(*Services.SaleableProductService)),
 		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
 		wire.Bind(new(Repositories.ISaleableProductRepository), new(*Repositories.SaleableProductRepository)),
+		wire.Bind(new(Repositories.ICategoryRepository), new(*Repositories.CategoryRepository)),
 	),
 	))
 
@@ -98,4 +100,19 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 	))
 
 	return &Controllers.InvoiceController{}
+}
+
+func DICategory(db *gorm.DB) *Controllers.CategoryController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.CategoryRepositoryProvider,
+		Services.CategoryServiceProvider,
+		Controllers.CategoryControllerProvider,
+
+		wire.Bind(new(Controllers.ICategoryController), new(*Controllers.CategoryController)),
+		wire.Bind(new(Services.ICategoryService), new(*Services.CategoryService)),
+		wire.Bind(new(Repositories.ICategoryRepository), new(*Repositories.CategoryRepository)),
+	),
+	))
+
+	return &Controllers.CategoryController{}
 }

@@ -9,6 +9,7 @@ import (
 type (
 	ISaleableProductRepository interface {
 		FindAll(company_id int) (saleableProduct *[]Models.SaleableProduct, err error)
+		FindByCategory(company_id int, category_id int) (saleableProduct *[]Models.SaleableProduct, err error)
 	}
 
 	SaleableProductRepository struct {
@@ -25,6 +26,19 @@ func (r *SaleableProductRepository) FindAll(company_id int) (saleableProduct *[]
 	saleableProduct = &[]Models.SaleableProduct{}
 
 	if err := r.DB.Where("company_id = ?", company_id).
+		Preload("Category").
+		Find(&saleableProduct).Error; err != nil {
+		return nil, err
+	}
+
+	return saleableProduct, nil
+}
+
+func (r *SaleableProductRepository) FindByCategory(company_id int, category_id int) (saleableProduct *[]Models.SaleableProduct, err error) {
+
+	saleableProduct = &[]Models.SaleableProduct{}
+
+	if err := r.DB.Where("company_id = ? AND category_id = ?", company_id, category_id).
 		Preload("Category").
 		Find(&saleableProduct).Error; err != nil {
 		return nil, err
