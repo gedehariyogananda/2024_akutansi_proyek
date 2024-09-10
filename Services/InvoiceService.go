@@ -1,6 +1,7 @@
 package Services
 
 import (
+	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Repositories"
 	"fmt"
@@ -10,7 +11,7 @@ import (
 
 type (
 	IInvoiceService interface {
-		CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (err error, statusCode int)
+		CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (invoice *Models.Invoice, err error, statusCode int)
 	}
 
 	InvoiceService struct {
@@ -28,7 +29,7 @@ func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, i
 	}
 }
 
-func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (err error, statusCode int) {
+func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (invoice *Models.Invoice, err error, statusCode int) {
 	dateInvoice := time.Now().Format("2006/01/02")
 	invoiceNumber := fmt.Sprintf("%s-%s", dateInvoice, request.InvoiceCustomer)
 
@@ -47,13 +48,13 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 		PaymentMethodId: request.PaymentMethodID,
 	}
 
-	invoice, err := s.InvoiceRepository.Create(invoiceRequestDTO, company_id)
+	invoice, err = s.InvoiceRepository.Create(invoiceRequestDTO, company_id)
 	if err != nil {
-		return fmt.Errorf("failed to create invoice: %w", err), http.StatusInternalServerError
+		return nil, fmt.Errorf("failed to create invoice: %w", err), http.StatusInternalServerError
 	}
 
 	if invoice == nil || invoice.ID == 0 {
-		return fmt.Errorf("failed to create invoice: invoice ID is 0"), http.StatusInternalServerError
+		return nil, fmt.Errorf("failed to create invoice: %w", err), http.StatusInternalServerError
 	}
 
 	invoiceID := invoice.ID
@@ -69,7 +70,7 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 			}
 
 			if err := s.InvoiceSaleableRepository.Create(invoiceSaleableRequestDTO); err != nil {
-				return fmt.Errorf("failed to create invoice saleable product: %w", err), http.StatusInternalServerError
+				return nil, fmt.Errorf("failed to create invoice saleable product: %w", err), http.StatusInternalServerError
 			}
 		}
 	}
@@ -85,10 +86,10 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 			}
 
 			if err := s.InvoiceMaterialRepository.Create(invoiceMaterialRequestDTO); err != nil {
-				return fmt.Errorf("failed to create invoice material product: %w", err), http.StatusInternalServerError
+				return nil, fmt.Errorf("failed to create invoice material product: %w", err), http.StatusInternalServerError
 			}
 		}
 	}
 
-	return nil, http.StatusCreated
+	return invoice, nil, http.StatusOK
 }

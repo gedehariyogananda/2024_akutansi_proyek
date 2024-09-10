@@ -36,7 +36,7 @@ func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 		return
 	}
 
-	err, statusCode := c.InvoiceService.CreateInvoicePurchased(&request, companyId)
+	invoice, err, statusCode := c.InvoiceService.CreateInvoicePurchased(&request, companyId)
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
@@ -45,8 +45,24 @@ func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success create invoice purchased",
-	}, statusCode)
+	if invoice.PaymentMethod.MethodName == "Cash" {
+
+		Helper.SetResponse(ctx, gin.H{
+			"success": true,
+			"message": "Success create invoice purchased",
+			"data": gin.H{
+				"invoice":     invoice,
+				"is_cashless": true,
+			},
+		}, statusCode)
+	} else {
+		Helper.SetResponse(ctx, gin.H{
+			"success": true,
+			"message": "Success create invoice purchased",
+			"data": gin.H{
+				"invoice":     invoice,
+				"is_cashless": false,
+			},
+		}, statusCode)
+	}
 }

@@ -36,7 +36,7 @@ func (r *InvoiceRepository) Create(request *Dto.InvoiceRequestDTO, company_id in
 		CreatedAt:       time.Now(),
 	}
 
-	if err := r.DB.Create(invoice).Error; err != nil {
+	if err := r.DB.Create(invoice).Preload("PaymentMethod").First(invoice).Error; err != nil {
 		return nil, err
 	}
 

@@ -12,17 +12,17 @@ const (
 )
 
 type Invoice struct {
-	ID              int `gorm:"primaryKey;autoIncrement"`
-	InvoiceCustomer string
-	InvoiceNumber   string
-	InvoiceDate     string
-	TotalAmount     float64
-	MoneyReceived   float64
-	StatusInvoice   StatusInvoice
-	CompanyID       int
-	PaymentMethodID int
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	Company         Company       `gorm:"foreignKey:CompanyID"`
-	PaymentMethod   PaymentMethod `gorm:"foreignKey:PaymentMethodID"`
+	ID              int           `gorm:"primaryKey;autoIncrement" json:"id"`
+	InvoiceCustomer string        `json:"invoice_customer"`
+	InvoiceNumber   string        `json:"invoice_number"`
+	InvoiceDate     string        `json:"invoice_date"`
+	TotalAmount     float64       `json:"total_amount"`
+	MoneyReceived   float64       `json:"money_received"`
+	StatusInvoice   StatusInvoice `json:"status_invoice"`
+	CompanyID       int           `json:"-"`
+	PaymentMethodID int           `json:"-"`
+	CreatedAt       time.Time     `json:"-"`
+	UpdatedAt       time.Time     `json:"-"`
+	Company         Company       `gorm:"foreignKey:CompanyID" json:"-"`
+	PaymentMethod   PaymentMethod `gorm:"foreignKey:PaymentMethodID" json:"payment_method"`
 }
