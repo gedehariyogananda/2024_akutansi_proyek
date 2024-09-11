@@ -3,6 +3,7 @@ package Services
 import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
+	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
 	"fmt"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 type (
 	IInvoiceService interface {
 		CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (invoice *Models.Invoice, err error, statusCode int)
+		UpdateStatusInvoice(request *Dto.InvoiceStatusRequestDTO, invoice_id int) (invoice *Models.Invoice, err error, statusCode int)
+		UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int) (invoice *Response.InvoiceResponse, err error, statusCode int)
 	}
 
 	InvoiceService struct {
@@ -89,6 +92,41 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 				return nil, fmt.Errorf("failed to create invoice material product: %w", err), http.StatusInternalServerError
 			}
 		}
+	}
+
+	return invoice, nil, http.StatusOK
+}
+
+func (s *InvoiceService) UpdateStatusInvoice(request *Dto.InvoiceStatusRequestDTO, invoice_id int) (invoice *Models.Invoice, err error, statusCode int) {
+	invoice, err = s.InvoiceRepository.UpdateStatus(request, invoice_id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update invoice status: %w", err), http.StatusInternalServerError
+	}
+
+	if invoice == nil || invoice.ID == 0 {
+		return nil, fmt.Errorf("failed to update invoice status: %w", err), http.StatusInternalServerError
+	}
+
+	return invoice, nil, http.StatusOK
+}
+
+func (s *InvoiceService) UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int) (invoice *Response.InvoiceResponse, err error, statusCode int) {
+	invoice, err = s.InvoiceRepository.UpdateMoneyReceived(request, invoice_id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update invoice money received: %w", err), http.StatusInternalServerError
+	}
+
+	if invoice == nil || invoice.ID == 0 {
+		return nil, fmt.Errorf("failed to update invoice money received: %w", err), http.StatusInternalServerError
+	}
+
+	invoiceStatus, err := s.InvoiceRepository.UpdateStatus(&Dto.InvoiceStatusRequestDTO{StatusInvoice: "PROCESS"}, invoice_id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update invoice status: %w", err), http.StatusInternalServerError
+	}
+
+	if invoiceStatus == nil || invoiceStatus.ID == 0 {
+		return nil, fmt.Errorf("failed to update invoice status: %w", err), http.StatusInternalServerError
 	}
 
 	return invoice, nil, http.StatusOK

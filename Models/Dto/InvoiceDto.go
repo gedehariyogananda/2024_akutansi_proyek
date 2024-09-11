@@ -39,3 +39,11 @@ type InvoiceSaleableRequestDTO struct {
 	QuantitySold      int `json:"quantity_sold" binding:"required"`
 	CompanyID         int `json:"company_id" binding:"required"`
 }
+
+type InvoiceStatusRequestDTO struct {
+	StatusInvoice string `json:"status_invoice" binding:"required"`
+}
+
+type InvoiceMoneyReceivedRequestDTO struct {
+	MoneyReceived float64 `json:"money_received" binding:"required"`
+}
