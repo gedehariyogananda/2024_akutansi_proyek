@@ -53,11 +53,13 @@ func DICompany(db *gorm.DB) *Controllers.CompanyController {
 		Services.CompanyServiceProvider,
 		Controllers.CompanyControllerProvider,
 		Repositories.UserCompanyRepositoryProvider,
+		Repositories.PaymentMethodRepositoryProvider,
 
 		wire.Bind(new(Controllers.ICompanyController), new(*Controllers.CompanyController)),
 		wire.Bind(new(Services.ICompanyService), new(*Services.CompanyService)),
 		wire.Bind(new(Repositories.ICompanyRepository), new(*Repositories.CompanyRepository)),
 		wire.Bind(new(Repositories.IUserCompanyRepository), new(*Repositories.UserCompanyRepository)),
+		wire.Bind(new(Repositories.IPaymentMethodRepository), new(*Repositories.PaymentMethodRepository)),
 	),
 	))
 

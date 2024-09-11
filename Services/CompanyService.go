@@ -20,15 +20,17 @@ type (
 	}
 
 	CompanyService struct {
-		companyRepository     Repositories.ICompanyRepository
-		userCompanyRepository Repositories.IUserCompanyRepository
+		companyRepository       Repositories.ICompanyRepository
+		userCompanyRepository   Repositories.IUserCompanyRepository
+		paymentMethodRepository Repositories.IPaymentMethodRepository
 	}
 )
 
-func CompanyServiceProvider(companyRepository Repositories.ICompanyRepository, userCompanyRepository Repositories.IUserCompanyRepository) *CompanyService {
+func CompanyServiceProvider(companyRepository Repositories.ICompanyRepository, userCompanyRepository Repositories.IUserCompanyRepository, paymentMethodRepository Repositories.IPaymentMethodRepository) *CompanyService {
 	return &CompanyService{
-		companyRepository:     companyRepository,
-		userCompanyRepository: userCompanyRepository,
+		companyRepository:       companyRepository,
+		userCompanyRepository:   userCompanyRepository,
+		paymentMethodRepository: paymentMethodRepository,
 	}
 }
 
@@ -43,6 +45,10 @@ func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID int)
 		CompanyId: company.ID,
 	}); err != nil {
 		return fmt.Errorf("error insert user company: %w", err), http.StatusBadRequest
+	}
+
+	if err := s.paymentMethodRepository.CreateDefaultPaymentMethod(company.ID); err != nil {
+		return fmt.Errorf("error create payment method: %w", err), http.StatusBadRequest
 	}
 
 	return nil, http.StatusCreated

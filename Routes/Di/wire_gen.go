@@ -35,7 +35,8 @@ func DICommonMiddleware(db *gorm.DB) *Middleware.CommondMiddleware {
 func DICompany(db *gorm.DB) *Controllers.CompanyController {
 	companyRepository := Repositories.CompanyRepositoryProvider(db)
 	userCompanyRepository := Repositories.UserCompanyRepositoryProvider(db)
-	companyService := Services.CompanyServiceProvider(companyRepository, userCompanyRepository)
+	paymentMethodRepository := Repositories.PaymentMethodRepositoryProvider(db)
+	companyService := Services.CompanyServiceProvider(companyRepository, userCompanyRepository, paymentMethodRepository)
 	companyController := Controllers.CompanyControllerProvider(companyService)
 	return companyController
 }
