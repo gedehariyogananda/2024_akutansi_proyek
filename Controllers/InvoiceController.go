@@ -71,6 +71,7 @@ func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 }
 
 func (c *InvoiceController) UpdateInvoiceStatus(ctx *gin.Context) {
+	companyId := ctx.GetInt("company_id")
 
 	invoiceParams := ctx.Param("invoice_id") // status "PROCESS", "CANCLE" in body Request
 	invoiceId, _ := strconv.Atoi(invoiceParams)
@@ -83,7 +84,7 @@ func (c *InvoiceController) UpdateInvoiceStatus(ctx *gin.Context) {
 		return
 	}
 
-	invoice, err, statusCode := c.InvoiceService.UpdateStatusInvoice(&request, invoiceId)
+	invoice, err, statusCode := c.InvoiceService.UpdateStatusInvoice(&request, invoiceId, companyId)
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
@@ -116,6 +117,7 @@ func (c *InvoiceController) UpdateInvoiceStatus(ctx *gin.Context) {
 }
 
 func (c *InvoiceController) UpdateMoneyReceived(ctx *gin.Context) {
+	companyId := ctx.GetInt("company_id")
 
 	invoiceParams := ctx.Param("invoice_id")
 	invoiceId, _ := strconv.Atoi(invoiceParams)
@@ -128,7 +130,7 @@ func (c *InvoiceController) UpdateMoneyReceived(ctx *gin.Context) {
 		return
 	}
 
-	invoice, err, statusCode := c.InvoiceService.UpdateMoneyReveived(&request, invoiceId)
+	invoice, err, statusCode := c.InvoiceService.UpdateMoneyReveived(&request, invoiceId, companyId)
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,

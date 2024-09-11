@@ -49,7 +49,7 @@ func (r *InvoiceRepository) Create(request *Dto.InvoiceRequestDTO, company_id in
 
 func (r *InvoiceRepository) UpdateStatus(request *Dto.InvoiceStatusRequestDTO, invoice_id int) (invoice *Models.Invoice, err error) {
 	if err := r.DB.First(&invoice, invoice_id).Error; err != nil {
-		return nil, fmt.Errorf("invoice not found: %w", err)
+		return nil, fmt.Errorf("invoice not found")
 	}
 
 	invoice.StatusInvoice = Models.StatusInvoice(request.StatusInvoice)
@@ -57,7 +57,7 @@ func (r *InvoiceRepository) UpdateStatus(request *Dto.InvoiceStatusRequestDTO, i
 	if err := r.DB.Model(&invoice).
 		Where("id = ?", invoice_id).
 		Updates(map[string]interface{}{"status_invoice": invoice.StatusInvoice}).Error; err != nil {
-		return nil, fmt.Errorf("failed to update status invoice: %w", err)
+		return nil, fmt.Errorf("failed to update invoice status")
 	}
 
 	return invoice, nil
@@ -66,7 +66,7 @@ func (r *InvoiceRepository) UpdateMoneyReceived(request *Dto.InvoiceMoneyReceive
 	var invoice Models.Invoice
 
 	if err := r.DB.First(&invoice, invoice_id).Error; err != nil {
-		return nil, fmt.Errorf("invoice not found: %w", err)
+		return nil, fmt.Errorf("invoice not found")
 	}
 
 	invoice.MoneyReceived = request.MoneyReceived
@@ -76,13 +76,14 @@ func (r *InvoiceRepository) UpdateMoneyReceived(request *Dto.InvoiceMoneyReceive
 		Updates(map[string]interface{}{
 			"money_received": invoice.MoneyReceived,
 		}).Error; err != nil {
-		return nil, fmt.Errorf("failed to update money received: %w", err)
+		return nil, fmt.Errorf("failed to update invoice money received")
 	}
 
 	moneyBack := invoice.MoneyReceived - invoice.TotalAmount
 
 	invoiceRes = &Response.InvoiceResponse{
 		ID:            invoice.ID,
+		CompanyID:     invoice.CompanyID,
 		InvoiceNumber: invoice.InvoiceNumber,
 		TotalAmount:   invoice.TotalAmount,
 		MoneyReceived: invoice.MoneyReceived,

@@ -4,6 +4,7 @@ import "2024_akutansi_project/Models"
 
 type InvoiceResponse struct {
 	ID            int                  `json:"id"`
+	CompanyID     int                  `json:"company_id"`
 	InvoiceNumber string               `json:"invoice_number"`
 	StatusInvoice Models.StatusInvoice `json:"status_invoice"`
 	MoneyReceived float64              `json:"money_received"`

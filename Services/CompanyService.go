@@ -67,7 +67,6 @@ func (s *CompanyService) GetAllCompanyUser(user_id int) (companyResponse *[]Resp
 func (s *CompanyService) UpdateCompany(request *Dto.EditCompanyRequest, company_id int, user_id int) (company *Models.Company, statusCode int, err error) {
 	userCompany, _ := s.userCompanyRepository.Bind(company_id)
 
-	// if company not found
 	if userCompany == nil {
 		return nil, http.StatusNotFound, fmt.Errorf("company not found")
 	}
