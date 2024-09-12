@@ -6,13 +6,15 @@ import (
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Models/Mapper"
 	"2024_akutansi_project/Repositories"
+	"2024_akutansi_project/Utils"
 	"fmt"
 	"net/http"
+	"os"
 )
 
 type (
 	ICompanyService interface {
-		AddCompany(request *Dto.MakeCompanyRequest, userID int) (err error, statusCode int)
+		AddCompany(request *Dto.MakeCompanyRequest, userID int, fileName string) (err error, filePath string, statusCode int)
 		GetAllCompanyUser(user_id int) (companyResponse *[]Response.CompanyResponseDTO, err error, statusCode int)
 		UpdateCompany(request *Dto.EditCompanyRequest, company_id int, user_id int) (company *Models.Company, statusCode int, err error)
 
@@ -34,24 +36,30 @@ func CompanyServiceProvider(companyRepository Repositories.ICompanyRepository, u
 	}
 }
 
-func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID int) (err error, statusCode int) {
+func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID int, fileName string) (err error, filePath string, statusCode int) {
+
+	fileName = Utils.GenerateUniqueFileName(fileName)
+	request.ImageCompany = "/company-file/" + fileName
+
+	filePath = os.Getenv("UPLOAD_DIR") + "/company-file/" + fileName
+
 	company, err := s.companyRepository.InsertCompany(request)
 	if err != nil {
-		return fmt.Errorf("error insert company: %w", err), http.StatusBadRequest
+		return fmt.Errorf("error insert company: %w", err), "", http.StatusBadRequest
 	}
 
 	if err := s.userCompanyRepository.InsertUserCompany(&Dto.MakeUserCompanyRequest{
 		UserId:    userID,
 		CompanyId: company.ID,
 	}); err != nil {
-		return fmt.Errorf("error insert user company: %w", err), http.StatusBadRequest
+		return fmt.Errorf("error insert user company: %w", err), "", http.StatusBadRequest
 	}
 
 	if err := s.paymentMethodRepository.CreateDefaultPaymentMethod(company.ID); err != nil {
-		return fmt.Errorf("error create payment method: %w", err), http.StatusBadRequest
+		return fmt.Errorf("error create default payment method: %w", err), "", http.StatusBadRequest
 	}
 
-	return nil, http.StatusCreated
+	return nil, filePath, http.StatusCreated
 }
 
 func (s *CompanyService) GetAllCompanyUser(user_id int) (companyResponse *[]Response.CompanyResponseDTO, err error, statusCode int) {

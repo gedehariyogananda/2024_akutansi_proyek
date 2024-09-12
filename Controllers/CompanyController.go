@@ -29,23 +29,42 @@ func CompanyControllerProvider(companyService Services.ICompanyService) *Company
 }
 
 func (c *CompanyController) AddCompany(ctx *gin.Context) {
-	userID := ctx.GetInt("user_id")
-
-	var request Dto.MakeCompanyRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
+	fileHeader, err := ctx.FormFile("image_company")
+	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
-			"message": "Invalid request body",
+			"message": "Image company is required",
 		}, http.StatusBadRequest)
 		return
 	}
 
-	err, statusCode := c.companyService.AddCompany(&request, userID)
+	userID := ctx.GetInt("user_id")
+
+	var request Dto.MakeCompanyRequest
+	if err := ctx.ShouldBind(&request); err != nil { // shouldBind should, not shouldBindJSON
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, http.StatusBadRequest)
+		return
+	}
+
+	err, filePath, statusCode := c.companyService.AddCompany(&request, userID, fileHeader.Filename)
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
 		}, statusCode)
+		return
+	}
+
+	successUpload := ctx.SaveUploadedFile(fileHeader, filePath)
+
+	if successUpload != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": "Failed to upload image",
+		}, http.StatusInternalServerError)
 		return
 	}
 

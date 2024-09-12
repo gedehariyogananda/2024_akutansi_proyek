@@ -24,6 +24,7 @@ func main() {
 	}
 
 	setup := gin.Default()
+	setup.RemoveExtraSlash = true
 	setup.Use(Middleware.ExecutionTimeMiddleware())
 
 	setup.MaxMultipartMemory = 8 << 20 // 8 MB
