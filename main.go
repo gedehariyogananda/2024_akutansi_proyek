@@ -27,9 +27,9 @@ func main() {
 	setup.RemoveExtraSlash = true
 	setup.Use(Middleware.ExecutionTimeMiddleware())
 
-	setup.MaxMultipartMemory = 8 << 20 // 8 MB
+	setup.MaxMultipartMemory = int64(Config.MaxMultipartMemory)
 
-	setup.Static("/uploads", "./public/uploads")
+	setup.Static(Config.StaticFileRoute, Config.StaticFileDir)
 
 	setup.Use(Middleware.SetupCORS())
 
