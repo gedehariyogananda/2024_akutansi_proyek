@@ -15,6 +15,7 @@ type (
 		CreateInvoicePurchased(ctx *gin.Context)
 		UpdateInvoiceStatus(ctx *gin.Context)
 		UpdateMoneyReceived(ctx *gin.Context)
+		GetAllInvoices(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -143,5 +144,24 @@ func (c *InvoiceController) UpdateMoneyReceived(ctx *gin.Context) {
 		"success": true,
 		"message": "Success update invoice money received",
 		"data":    invoice,
+	}, statusCode)
+}
+
+func (c *InvoiceController) GetAllInvoices(ctx *gin.Context) {
+	companyId := ctx.GetInt("company_id")
+
+	invoices, err, statusCode := c.InvoiceService.GetAllInvoices(companyId)
+	if err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, statusCode)
+		return
+	}
+
+	Helper.SetResponse(ctx, gin.H{
+		"success": true,
+		"message": "Success get all invoices",
+		"data":    invoices,
 	}, statusCode)
 }

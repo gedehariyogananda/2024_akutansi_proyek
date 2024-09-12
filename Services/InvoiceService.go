@@ -15,6 +15,7 @@ type (
 		CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (invoice *Models.Invoice, err error, statusCode int)
 		UpdateStatusInvoice(request *Dto.InvoiceStatusRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, err error, statusCode int)
 		UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int, company_id int) (invoice *Response.InvoiceResponse, err error, statusCode int)
+		GetAllInvoices(company_id int) (invoices *[]Models.Invoice, err error, statusCode int)
 	}
 
 	InvoiceService struct {
@@ -127,4 +128,13 @@ func (s *InvoiceService) UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRe
 	}
 
 	return invoice, nil, http.StatusOK
+}
+
+func (s *InvoiceService) GetAllInvoices(company_id int) (invoices *[]Models.Invoice, err error, statusCode int) {
+	invoices, err = s.InvoiceRepository.GetAll(company_id)
+	if err != nil {
+		return nil, err, http.StatusInternalServerError
+	}
+
+	return invoices, nil, http.StatusOK
 }

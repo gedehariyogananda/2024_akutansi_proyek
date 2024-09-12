@@ -15,6 +15,7 @@ type (
 		Create(request *Dto.InvoiceRequestDTO, company_id int) (invoice *Models.Invoice, err error)
 		UpdateStatus(request *Dto.InvoiceStatusRequestDTO, invoice_id int) (invoice *Models.Invoice, err error)
 		UpdateMoneyReceived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int) (invoice *Response.InvoiceResponse, err error)
+		GetAll(company_id int) (invoices *[]Models.Invoice, err error)
 	}
 
 	InvoiceRepository struct {
@@ -92,4 +93,17 @@ func (r *InvoiceRepository) UpdateMoneyReceived(request *Dto.InvoiceMoneyReceive
 	}
 
 	return invoiceRes, nil
+}
+
+func (r *InvoiceRepository) GetAll(company_id int) (invoices *[]Models.Invoice, err error) {
+	invoices = &[]Models.Invoice{}
+
+	if err := r.DB.Where("company_id = ?", company_id).
+		Preload("PaymentMethod").
+		Order("created_at DESC").
+		Find(invoices).Error; err != nil {
+		return nil, err
+	}
+
+	return invoices, nil
 }
