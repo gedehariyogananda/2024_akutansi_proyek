@@ -1,6 +1,7 @@
 package Controllers
 
 import (
+	"2024_akutansi_project/Config"
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
@@ -34,6 +35,14 @@ func (c *CompanyController) AddCompany(ctx *gin.Context) {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": "Image company is required",
+		}, http.StatusBadRequest)
+		return
+	}
+
+	if fileHeader.Size > int64(Config.MaxMultipartMemory) {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": "Image size too large",
 		}, http.StatusBadRequest)
 		return
 	}
@@ -93,27 +102,49 @@ func (c *CompanyController) GetAllCompanyUser(ctx *gin.Context) {
 		"companies": companies,
 	}, http.StatusOK)
 }
-
 func (c *CompanyController) UpdateCompany(ctx *gin.Context) {
 	userId := ctx.GetInt("user_id")
 	companyId := ctx.GetInt("company_id")
 
 	var request Dto.EditCompanyRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
+	if err := ctx.ShouldBind(&request); err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
-			"message": "Invalid request body",
+			"message": err.Error(),
 		}, http.StatusBadRequest)
 		return
 	}
 
-	company, statusCode, err := c.companyService.UpdateCompany(&request, companyId, userId)
+	formHandling, err := ctx.FormFile("image_company")
+	var fileName string
+	if err == nil {
+		if formHandling.Size > int64(Config.MaxMultipartMemory) {
+			Helper.SetResponse(ctx, gin.H{
+				"success": false,
+				"message": "Image size too large",
+			}, http.StatusBadRequest)
+			return
+		}
+		fileName = formHandling.Filename
+	}
+
+	company, statusCode, filePath, err := c.companyService.UpdateCompany(&request, companyId, userId, fileName)
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
 		}, statusCode)
 		return
+	}
+
+	if formHandling != nil {
+		if err := ctx.SaveUploadedFile(formHandling, filePath); err != nil {
+			Helper.SetResponse(ctx, gin.H{
+				"success": false,
+				"message": "Failed to upload image",
+			}, http.StatusInternalServerError)
+			return
+		}
 	}
 
 	company.ID = companyId

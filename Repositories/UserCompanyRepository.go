@@ -51,8 +51,7 @@ func (r *UserCompanyRepository) FindAll(user_id int) (userCompany *[]Models.User
 func (r *UserCompanyRepository) Bind(company_id int) (userCompany *Models.UserCompany, err error) {
 	userCompany = &Models.UserCompany{}
 
-	if err := r.DB.Where("company_id = ?", company_id).
-		First(&userCompany).Error; err != nil {
+	if err := r.DB.Where("company_id = ?", company_id).Preload("Company").First(&userCompany).Error; err != nil {
 		return nil, err
 	}
 
