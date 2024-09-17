@@ -47,3 +47,13 @@ type InvoiceStatusRequestDTO struct {
 type InvoiceMoneyReceivedRequestDTO struct {
 	MoneyReceived float64 `json:"money_received" binding:"required"`
 }
+
+type InvoiceUpdateRequestDTO struct {
+	InvoiceNumber   string `json:"invoice_number"`
+	InvoiceCustomer string `json:"invoice_customer"`
+	InvoiceDate     string `json:"invoice_date"`
+	TotalAmount     int    `json:"total_amount"`
+	MoneyReceived   int    `json:"money_received"`
+	StatusInvoice   string `json:"status_invoice"`
+	PaymentMethodId int    `json:"payment_method_id"`
+}

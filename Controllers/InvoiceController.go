@@ -16,6 +16,7 @@ type (
 		UpdateInvoiceStatus(ctx *gin.Context)
 		UpdateMoneyReceived(ctx *gin.Context)
 		GetAllInvoices(ctx *gin.Context)
+		UpdateInvoiceCustomer(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -74,7 +75,7 @@ func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 func (c *InvoiceController) UpdateInvoiceStatus(ctx *gin.Context) {
 	companyId := ctx.GetInt("company_id")
 
-	invoiceParams := ctx.Param("invoice_id") // status "PROCESS", "CANCLE" in body Request
+	invoiceParams := ctx.Param("invoice_id") // status "PROCESS", "CANCLE", "DONE" in body Request
 	invoiceId, _ := strconv.Atoi(invoiceParams)
 	var request Dto.InvoiceStatusRequestDTO
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -109,6 +110,17 @@ func (c *InvoiceController) UpdateInvoiceStatus(ctx *gin.Context) {
 		Helper.SetResponse(ctx, gin.H{
 			"success": true,
 			"message": "Success update invoice status to CANCEL",
+			"data": gin.H{
+				"status_invoice": invoice.StatusInvoice,
+			},
+		}, statusCode)
+		return
+	}
+
+	if request.StatusInvoice == "DONE" {
+		Helper.SetResponse(ctx, gin.H{
+			"success": true,
+			"message": "Success update invoice status to DONE",
 			"data": gin.H{
 				"status_invoice": invoice.StatusInvoice,
 			},
@@ -163,5 +175,35 @@ func (c *InvoiceController) GetAllInvoices(ctx *gin.Context) {
 		"success": true,
 		"message": "Success get all invoices",
 		"data":    invoices,
+	}, statusCode)
+}
+
+func (c *InvoiceController) UpdateInvoiceCustomer(ctx *gin.Context) {
+	companyId := ctx.GetInt("company_id")
+
+	invoiceParams := ctx.Param("invoice_id")
+	invoiceId, _ := strconv.Atoi(invoiceParams)
+	var request Dto.InvoiceUpdateRequestDTO
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, http.StatusBadRequest)
+		return
+	}
+
+	invoice, err, statusCode := c.InvoiceService.UpdateInvoiceCustomer(companyId, invoiceId, &request)
+	if err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, statusCode)
+		return
+	}
+
+	Helper.SetResponse(ctx, gin.H{
+		"success": true,
+		"message": "Success update invoice customer",
+		"data":    invoice,
 	}, statusCode)
 }

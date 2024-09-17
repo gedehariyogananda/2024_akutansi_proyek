@@ -16,6 +16,7 @@ type (
 		UpdateStatusInvoice(request *Dto.InvoiceStatusRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, err error, statusCode int)
 		UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int, company_id int) (invoice *Response.InvoiceResponse, err error, statusCode int)
 		GetAllInvoices(company_id int) (invoices *[]Models.Invoice, err error, statusCode int)
+		UpdateInvoiceCustomer(company_id int, invoice_id int, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error, statusCode int)
 	}
 
 	InvoiceService struct {
@@ -137,4 +138,45 @@ func (s *InvoiceService) GetAllInvoices(company_id int) (invoices *[]Models.Invo
 	}
 
 	return invoices, nil, http.StatusOK
+}
+
+func (s *InvoiceService) UpdateInvoiceCustomer(company_id int, invoice_id int, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error, statusCode int) {
+	invoice, err = s.InvoiceRepository.FindById(invoice_id)
+
+	if err != nil {
+		return nil, err, http.StatusNotFound
+	}
+
+	if invoice.CompanyID != company_id {
+		return nil, fmt.Errorf("access forbidden: company_id mismatch"), http.StatusForbidden
+	}
+
+	switch invoice.StatusInvoice {
+	case "DONE":
+		invoice.StatusInvoice = Models.DONE
+	case "CANCEL":
+		invoice.StatusInvoice = Models.CANCEL
+	case "PROCESS":
+		invoice.StatusInvoice = Models.PROCESS
+	default:
+		invoice.StatusInvoice = Models.WAITING
+	}
+
+	if request.InvoiceCustomer != "" {
+		dateInvoice := invoice.CreatedAt.Format("2006/01/02")
+		invoice.InvoiceCustomer = request.InvoiceCustomer
+		invoice.InvoiceNumber = fmt.Sprintf("%s-%s", dateInvoice, request.InvoiceCustomer)
+	}
+
+	if err := s.InvoiceRepository.Update(invoice); err != nil {
+		return nil, fmt.Errorf("failed to update invoice: %w", err), http.StatusInternalServerError
+	}
+
+	invoice, err = s.InvoiceRepository.FindSelectRelasi(invoice_id)
+
+	if err != nil {
+		return nil, err, http.StatusInternalServerError
+	}
+
+	return invoice, nil, http.StatusOK
 }

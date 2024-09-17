@@ -16,6 +16,10 @@ type (
 		UpdateStatus(request *Dto.InvoiceStatusRequestDTO, invoice_id int) (invoice *Models.Invoice, err error)
 		UpdateMoneyReceived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int) (invoice *Response.InvoiceResponse, err error)
 		GetAll(company_id int) (invoices *[]Models.Invoice, err error)
+		FindById(invoice_id int) (invoice *Models.Invoice, err error)
+		Update(invoice *Models.Invoice) (err error)
+		UpdateInvoice(company_id int, invoice_id int, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error)
+		FindSelectRelasi(invoice_id int) (invoice *Models.Invoice, err error)
 	}
 
 	InvoiceRepository struct {
@@ -106,4 +110,68 @@ func (r *InvoiceRepository) GetAll(company_id int) (invoices *[]Models.Invoice, 
 	}
 
 	return invoices, nil
+}
+
+func (r *InvoiceRepository) UpdateInvoice(company_id int, invoice_id int, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error) {
+	invoice = &Models.Invoice{}
+
+	if err := r.DB.First(invoice, invoice_id).Error; err != nil {
+		return nil, fmt.Errorf("invoice not found")
+	}
+
+	invoice.InvoiceNumber = request.InvoiceNumber
+	invoice.InvoiceCustomer = request.InvoiceCustomer
+	invoice.InvoiceDate = request.InvoiceDate
+	invoice.TotalAmount = float64(request.TotalAmount)
+	invoice.MoneyReceived = float64(request.MoneyReceived)
+	invoice.PaymentMethodID = request.PaymentMethodId
+
+	switch request.StatusInvoice {
+	case "DONE":
+		invoice.StatusInvoice = Models.DONE
+	case "CANCEL":
+		invoice.StatusInvoice = Models.CANCEL
+	case "PROCESS":
+		invoice.StatusInvoice = Models.PROCESS
+	default:
+		invoice.StatusInvoice = Models.WAITING
+	}
+
+	if err := r.DB.Save(invoice).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.DB.Preload("PaymentMethod").First(invoice).Error; err != nil {
+		return nil, err
+	}
+
+	return invoice, nil
+}
+
+func (r *InvoiceRepository) FindById(invoice_id int) (invoice *Models.Invoice, err error) {
+	invoice = &Models.Invoice{}
+
+	if err := r.DB.First(invoice, invoice_id).Error; err != nil {
+		return nil, fmt.Errorf("invoice not found")
+	}
+
+	return invoice, nil
+}
+
+func (r *InvoiceRepository) Update(invoice *Models.Invoice) (err error) {
+	if err := r.DB.Save(invoice).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *InvoiceRepository) FindSelectRelasi(invoice_id int) (invoice *Models.Invoice, err error) {
+	invoice = &Models.Invoice{}
+
+	if err := r.DB.Preload("PaymentMethod").Preload("Company").First(invoice, invoice_id).Error; err != nil {
+		return nil, fmt.Errorf("invoice not found")
+	}
+
+	return invoice, nil
 }
