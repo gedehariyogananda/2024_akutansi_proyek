@@ -58,7 +58,7 @@ func (c *CompanyController) AddCompany(ctx *gin.Context) {
 		return
 	}
 
-	err, filePath, statusCode := c.companyService.AddCompany(&request, userID, fileHeader.Filename)
+	company, err, filePath, statusCode := c.companyService.AddCompany(&request, userID, fileHeader.Filename)
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
@@ -80,6 +80,7 @@ func (c *CompanyController) AddCompany(ctx *gin.Context) {
 	Helper.SetResponse(ctx, gin.H{
 		"success": true,
 		"message": "Success make companies",
+		"data":    company,
 	}, http.StatusOK)
 }
 

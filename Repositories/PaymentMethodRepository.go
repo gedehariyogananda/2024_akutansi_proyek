@@ -22,16 +22,17 @@ func PaymentMethodRepositoryProvider(db *gorm.DB) *PaymentMethodRepository {
 	return &PaymentMethodRepository{DB: db}
 }
 
-func (repository *PaymentMethodRepository) FindAll(company_id int) (paymentMethod *[]Models.PaymentMethod, err error) {
+func (r *PaymentMethodRepository) FindAll(company_id int) (paymentMethod *[]Models.PaymentMethod, err error) {
 	paymentMethod = &[]Models.PaymentMethod{}
-	err = repository.DB.Where("company_id = ?", company_id).Find(paymentMethod).Error
-	if err != nil {
+
+	if err := r.DB.Where("company_id = ?", company_id).Find(paymentMethod).Error; err != nil {
 		return nil, err
 	}
+
 	return paymentMethod, nil
 }
 
-func (repository *PaymentMethodRepository) CreateDefaultPaymentMethod(company_id int) (err error) {
+func (r *PaymentMethodRepository) CreateDefaultPaymentMethod(company_id int) (err error) {
 	defaultPaymentMethod := []string{
 		"Cash",
 		"Credit Card",
@@ -45,7 +46,7 @@ func (repository *PaymentMethodRepository) CreateDefaultPaymentMethod(company_id
 			CompanyID:  company_id,
 		}
 
-		if err := repository.DB.Create(paymentMethod).Error; err != nil {
+		if err := r.DB.Create(paymentMethod).Error; err != nil {
 			return fmt.Errorf("failed to create payment method '%s': %w", methodName, err)
 		}
 	}

@@ -15,7 +15,7 @@ import (
 
 type (
 	ICompanyService interface {
-		AddCompany(request *Dto.MakeCompanyRequest, userID int, fileName string) (err error, filePath string, statusCode int)
+		AddCompany(request *Dto.MakeCompanyRequest, userID int, fileName string) (company *Models.Company, err error, filePath string, statusCode int)
 		GetAllCompanyUser(user_id int) (companyResponse *[]Response.CompanyResponseDTO, err error, statusCode int)
 		UpdateCompany(request *Dto.EditCompanyRequest, company_id int, user_id int, fileName string) (company *Models.Company, statusCode int, filePath string, err error)
 
@@ -37,30 +37,32 @@ func CompanyServiceProvider(companyRepository Repositories.ICompanyRepository, u
 	}
 }
 
-func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID int, fileName string) (err error, filePath string, statusCode int) {
+func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID int, fileName string) (company *Models.Company, err error, filePath string, statusCode int) {
 
 	fileName = Utils.GenerateUniqueFileName(fileName)
 	request.ImageCompany = "/company-file/" + fileName
 
 	filePath = os.Getenv("UPLOAD_DIR") + "/company-file/" + fileName
 
-	company, err := s.companyRepository.InsertCompany(request)
+	company, err = s.companyRepository.InsertCompany(request)
 	if err != nil {
-		return fmt.Errorf("error insert company: %w", err), "", http.StatusBadRequest
+		return nil, fmt.Errorf("error insert company: %w", err), "", http.StatusBadRequest
 	}
 
-	if err := s.userCompanyRepository.InsertUserCompany(&Dto.MakeUserCompanyRequest{
+	companyUser := &Dto.MakeUserCompanyRequest{
 		UserId:    userID,
 		CompanyId: company.ID,
-	}); err != nil {
-		return fmt.Errorf("error insert user company: %w", err), "", http.StatusBadRequest
+	}
+
+	if err := s.userCompanyRepository.InsertUserCompany(companyUser); err != nil {
+		return nil, fmt.Errorf("error insert user company: %w", err), "", http.StatusBadRequest
 	}
 
 	if err := s.paymentMethodRepository.CreateDefaultPaymentMethod(company.ID); err != nil {
-		return fmt.Errorf("error create default payment method: %w", err), "", http.StatusBadRequest
+		return nil, fmt.Errorf("error create default payment method: %w", err), "", http.StatusBadRequest
 	}
 
-	return nil, filePath, http.StatusCreated
+	return company, nil, filePath, http.StatusOK
 }
 
 func (s *CompanyService) GetAllCompanyUser(user_id int) (companyResponse *[]Response.CompanyResponseDTO, err error, statusCode int) {
@@ -98,7 +100,7 @@ func (s *CompanyService) UpdateCompany(request *Dto.EditCompanyRequest, company_
 		nameOldPath := userCompany.Company.ImageCompany
 
 		if strings.HasPrefix(nameOldPath, "/") {
-			nameOldPath = nameOldPath[1:] // Remove the leading "/"
+			nameOldPath = nameOldPath[1:]
 		}
 
 		oldImageCompanyPath := os.Getenv("UPLOAD_DIR") + nameOldPath
@@ -141,7 +143,7 @@ func (s *CompanyService) DeleteCompany(company_id int, user_id int) (statusCode 
 		nameOldPath := userCompany.Company.ImageCompany
 
 		if strings.HasPrefix(nameOldPath, "/") {
-			nameOldPath = nameOldPath[1:] // Remove the leading "/"
+			nameOldPath = nameOldPath[1:]
 		}
 
 		oldImageCompanyPath := os.Getenv("UPLOAD_DIR") + nameOldPath

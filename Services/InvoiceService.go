@@ -3,7 +3,6 @@ package Services
 import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
-	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
 	"fmt"
 	"net/http"
@@ -13,8 +12,8 @@ import (
 type (
 	IInvoiceService interface {
 		CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (invoice *Models.Invoice, err error, statusCode int)
-		UpdateStatusInvoice(request *Dto.InvoiceStatusRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, err error, statusCode int)
-		UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int, company_id int) (invoice *Response.InvoiceResponse, err error, statusCode int)
+		UpdateStatusInvoice(request *Dto.InvoiceUpdateRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, err error, statusCode int)
+		UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, MoneyBack float64, err error, statusCode int)
 		GetAllInvoices(company_id int) (invoices *[]Models.Invoice, err error, statusCode int)
 		UpdateInvoiceCustomer(company_id int, invoice_id int, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error, statusCode int)
 	}
@@ -47,31 +46,29 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 	invoiceRequestDTO := &Dto.InvoiceRequestDTO{
 		InvoiceNumber:   invoiceNumber,
 		InvoiceCustomer: request.InvoiceCustomer,
-		InvoiceDate:     time.Now().Format("2006-01-02"),
+		InvoiceDate:     time.Now().Format("2006-01-02 15:04:05"),
 		TotalAmount:     totalAmount,
 		CompanyID:       company_id,
 		PaymentMethodId: request.PaymentMethodID,
 	}
 
-	invoice, err = s.InvoiceRepository.Create(invoiceRequestDTO, company_id)
+	invoice, err = s.InvoiceRepository.Create(invoiceRequestDTO)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create invoice: %w", err), http.StatusInternalServerError
+		return nil, fmt.Errorf("failed to create invoice: %w", err), http.StatusBadRequest
 	}
-
-	invoiceID := invoice.ID
 
 	// Handle saleable products
 	for _, purchase := range request.Purchaseds {
 		if purchase.IsSaleableProduct {
 			invoiceSaleableRequestDTO := &Dto.InvoiceSaleableRequestDTO{
-				InvoiceID:         invoiceID,
+				InvoiceID:         invoice.ID,
 				SaleableProductID: purchase.ID,
 				QuantitySold:      purchase.QuantitySold,
 				CompanyID:         company_id,
 			}
 
 			if err := s.InvoiceSaleableRepository.Create(invoiceSaleableRequestDTO); err != nil {
-				return nil, fmt.Errorf("failed to create saleable product for invoice: %w", err), http.StatusInternalServerError
+				return nil, fmt.Errorf("failed to create saleable product for invoice: %w", err), http.StatusBadRequest
 			}
 		}
 	}
@@ -80,61 +77,92 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 	for _, purchase := range request.Purchaseds {
 		if !purchase.IsSaleableProduct {
 			invoiceMaterialRequestDTO := &Dto.InvoiceMaterialRequestDTO{
-				InvoiceID:         invoiceID,
+				InvoiceID:         invoice.ID,
 				MaterialProductID: purchase.ID,
 				QuantitySold:      purchase.QuantitySold,
 				CompanyID:         company_id,
 			}
 
 			if err := s.InvoiceMaterialRepository.Create(invoiceMaterialRequestDTO); err != nil {
-				return nil, fmt.Errorf("failed to create material product for invoice: %w", err), http.StatusInternalServerError
+				return nil, fmt.Errorf("failed to create material product for invoice: %w", err), http.StatusBadRequest
 			}
 		}
 	}
 
-	return invoice, nil, http.StatusOK
-}
-
-func (s *InvoiceService) UpdateStatusInvoice(request *Dto.InvoiceStatusRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, err error, statusCode int) {
-	invoice, err = s.InvoiceRepository.UpdateStatus(request, invoice_id)
+	invoice, err = s.InvoiceRepository.FindSelectRelasi(invoice.ID)
 
 	if err != nil {
 		return nil, err, http.StatusNotFound
+	}
+
+	return invoice, nil, http.StatusOK
+}
+
+func (s *InvoiceService) UpdateStatusInvoice(request *Dto.InvoiceUpdateRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, err error, statusCode int) {
+	invoice, err = s.InvoiceRepository.FindById(invoice_id)
+	if err != nil {
+		return nil, fmt.Errorf("invoice Not Found : %w", err), http.StatusNotFound
 	}
 
 	if invoice.CompanyID != company_id {
 		return nil, fmt.Errorf("access forbidden: company_id mismatch"), http.StatusForbidden
 	}
 
+	switch request.StatusInvoice {
+	case "DONE":
+		invoice.StatusInvoice = Models.DONE
+	case "CANCEL":
+		invoice.StatusInvoice = Models.CANCEL
+	case "PROCESS":
+		invoice.StatusInvoice = Models.PROCESS
+	default:
+		return nil, fmt.Errorf("invalid status invoice"), http.StatusBadRequest
+	}
+
+	if err := s.InvoiceRepository.Update(invoice); err != nil {
+		return nil, fmt.Errorf("failed to update invoice: %w", err), http.StatusInternalServerError
+	}
+
+	invoice, err = s.InvoiceRepository.FindSelectRelasi(invoice_id)
+
+	if err != nil {
+		return nil, err, http.StatusInternalServerError
+	}
+
 	return invoice, nil, http.StatusOK
 }
 
-func (s *InvoiceService) UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int, company_id int) (invoice *Response.InvoiceResponse, err error, statusCode int) {
-	invoice, err = s.InvoiceRepository.UpdateMoneyReceived(request, invoice_id)
+func (s *InvoiceService) UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, MoneyBack float64, err error, statusCode int) {
+	invoice, err = s.InvoiceRepository.FindById(invoice_id)
+
 	if err != nil {
-		return nil, err, http.StatusNotFound
+		return nil, 0, fmt.Errorf("invoice not found, %s", err), http.StatusNotFound
 	}
 
-	if invoice.StatusInvoice == "CANCEL" {
-		return nil, fmt.Errorf("invoice is canceled"), http.StatusForbidden
+	if invoice.StatusInvoice == "DONE" || invoice.StatusInvoice == "CANCEL" {
+		return nil, 0, fmt.Errorf("invoice status is already %s", invoice.StatusInvoice), http.StatusBadRequest
 	}
 
 	if invoice.CompanyID != company_id {
-		return nil, fmt.Errorf("access forbidden: company_id mismatch"), http.StatusForbidden
+		return nil, 0, fmt.Errorf("access forbidden: company_id mismatch"), http.StatusForbidden
 	}
 
-	_, err = s.InvoiceRepository.UpdateStatus(&Dto.InvoiceStatusRequestDTO{StatusInvoice: "PROCESS"}, invoice_id)
-	if err != nil {
-		return nil, err, http.StatusNotFound
+	invoice.MoneyReceived = request.MoneyReceived
+
+	if err := s.InvoiceRepository.Update(invoice); err != nil {
+		return nil, 0, fmt.Errorf("failed to update invoice money received: %w", err), http.StatusBadRequest
 	}
 
-	return invoice, nil, http.StatusOK
+	// Calculate money back
+	MoneyBack = request.MoneyReceived - invoice.TotalAmount
+
+	return invoice, MoneyBack, nil, http.StatusOK
 }
 
 func (s *InvoiceService) GetAllInvoices(company_id int) (invoices *[]Models.Invoice, err error, statusCode int) {
 	invoices, err = s.InvoiceRepository.GetAll(company_id)
 	if err != nil {
-		return nil, err, http.StatusInternalServerError
+		return nil, err, http.StatusNotFound
 	}
 
 	return invoices, nil, http.StatusOK

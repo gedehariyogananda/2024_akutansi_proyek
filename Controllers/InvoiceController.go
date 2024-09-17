@@ -77,7 +77,7 @@ func (c *InvoiceController) UpdateInvoiceStatus(ctx *gin.Context) {
 
 	invoiceParams := ctx.Param("invoice_id") // status "PROCESS", "CANCLE", "DONE" in body Request
 	invoiceId, _ := strconv.Atoi(invoiceParams)
-	var request Dto.InvoiceStatusRequestDTO
+	var request Dto.InvoiceUpdateRequestDTO
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
@@ -95,38 +95,34 @@ func (c *InvoiceController) UpdateInvoiceStatus(ctx *gin.Context) {
 		return
 	}
 
-	if request.StatusInvoice == "PROCESS" {
-		Helper.SetResponse(ctx, gin.H{
-			"success": true,
-			"message": "Success update invoice status to PROCESS",
-			"data": gin.H{
-				"status_invoice": invoice.StatusInvoice,
-			},
-		}, statusCode)
-		return
-	}
+	Helper.SetResponse(ctx, gin.H{
+		"success": true,
+		"message": "Success update invoice status to PROCESS",
+		"data":    invoice,
+	}, statusCode)
+	return
 
-	if request.StatusInvoice == "CANCEL" {
-		Helper.SetResponse(ctx, gin.H{
-			"success": true,
-			"message": "Success update invoice status to CANCEL",
-			"data": gin.H{
-				"status_invoice": invoice.StatusInvoice,
-			},
-		}, statusCode)
-		return
-	}
+	// if request.StatusInvoice == "CANCEL" {
+	// 	Helper.SetResponse(ctx, gin.H{
+	// 		"success": true,
+	// 		"message": "Success update invoice status to CANCEL",
+	// 		"data": gin.H{
+	// 			"status_invoice": invoice.StatusInvoice,
+	// 		},
+	// 	}, statusCode)
+	// 	return
+	// }
 
-	if request.StatusInvoice == "DONE" {
-		Helper.SetResponse(ctx, gin.H{
-			"success": true,
-			"message": "Success update invoice status to DONE",
-			"data": gin.H{
-				"status_invoice": invoice.StatusInvoice,
-			},
-		}, statusCode)
-		return
-	}
+	// if request.StatusInvoice == "DONE" {
+	// 	Helper.SetResponse(ctx, gin.H{
+	// 		"success": true,
+	// 		"message": "Success update invoice status to DONE",
+	// 		"data": gin.H{
+	// 			"status_invoice": invoice.StatusInvoice,
+	// 		},
+	// 	}, statusCode)
+	// 	return
+	// }
 }
 
 func (c *InvoiceController) UpdateMoneyReceived(ctx *gin.Context) {
@@ -143,7 +139,7 @@ func (c *InvoiceController) UpdateMoneyReceived(ctx *gin.Context) {
 		return
 	}
 
-	invoice, err, statusCode := c.InvoiceService.UpdateMoneyReveived(&request, invoiceId, companyId)
+	invoice, moneyBack, err, statusCode := c.InvoiceService.UpdateMoneyReveived(&request, invoiceId, companyId)
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
@@ -155,7 +151,16 @@ func (c *InvoiceController) UpdateMoneyReceived(ctx *gin.Context) {
 	Helper.SetResponse(ctx, gin.H{
 		"success": true,
 		"message": "Success update invoice money received",
-		"data":    invoice,
+		"data": gin.H{
+			"invoice": gin.H{
+				"id":             invoice.ID,
+				"invoice_number": invoice.InvoiceNumber,
+				"total_amount":   invoice.TotalAmount,
+				"money_received": invoice.MoneyReceived,
+				"money_back":     moneyBack,
+				"status_invoice": invoice.StatusInvoice,
+			},
+		},
 	}, statusCode)
 }
 

@@ -3,7 +3,6 @@ package Repositories
 import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -30,7 +29,6 @@ func (h *CompanyRepository) InsertCompany(request *Dto.MakeCompanyRequest) (comp
 		Name:         request.Name,
 		Address:      request.Address,
 		ImageCompany: request.ImageCompany,
-		CreatedAt:    time.Now(),
 	}
 
 	if err := h.DB.Create(company).Error; err != nil {
@@ -45,10 +43,9 @@ func (h *CompanyRepository) Update(request *Dto.EditCompanyRequest, company_id i
 		Name:         request.Name,
 		Address:      request.Address,
 		ImageCompany: request.ImageCompany,
-		UpdatedAt:    time.Now(),
 	}
 
-	if err := h.DB.Model(&Models.Company{}).Where("id = ?", company_id).Updates(company).Error; err != nil {
+	if err := h.DB.Model(company).Where("id = ?", company_id).Updates(company).Error; err != nil {
 		return nil, err
 	}
 
@@ -57,11 +54,13 @@ func (h *CompanyRepository) Update(request *Dto.EditCompanyRequest, company_id i
 
 func (h *CompanyRepository) Delete(company_id int) (err error) {
 	userCompanyModel := &Models.UserCompany{}
+	companyModel := &Models.Company{}
 
-	if err := h.DB.Where("id = ?", company_id).Delete(&Models.Company{}).Error; err != nil {
+	if err := h.DB.Where("id = ?", company_id).Delete(companyModel).Error; err != nil {
 		return err
 	}
 
+	// cascade delete safety case
 	if err := h.DB.Where("company_id = ?", company_id).Delete(userCompanyModel).Error; err != nil {
 		return err
 	}
