@@ -48,22 +48,22 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 		return
 	}
 
-	userID, ok := claims["userId"].(float64)
+	userID, ok := claims["userId"].(string)
 	if !ok {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid User ID"})
 		ctx.Abort()
 		return
 	}
 
-	ctx.Set("user_id", int(userID))
+	ctx.Set("user_id", userID)
 
-	if companyID, ok := claims["companyId"].(float64); ok {
-		ctx.Set("company_id", int(companyID))
+	if companyID, ok := claims["companyId"].(string); ok {
+		ctx.Set("company_id", companyID)
 	} else {
 		fmt.Println("companyId not found in claims")
 	}
 
-	if err = m.authRepository.CheckToken(token, int(userID)); err != nil {
+	if err = m.authRepository.CheckToken(token, userID); err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized: Token Mismatch"})
 		ctx.Abort()
 		return

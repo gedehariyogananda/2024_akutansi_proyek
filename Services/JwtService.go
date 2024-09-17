@@ -10,9 +10,9 @@ import (
 
 type (
 	IJwtService interface {
-		GenerateToken(userId int) (token string, err error)
+		GenerateToken(userId string) (token string, err error)
 		ParseToken(token string) (claims jwt.MapClaims, err error)
-		GenerateTokenWithCompany(userId int, company_id int) (token string, err error)
+		GenerateTokenWithCompany(userId string, company_id string) (token string, err error)
 	}
 
 	JwtService struct {
@@ -23,7 +23,7 @@ func JwtServiceProvider() *JwtService {
 	return &JwtService{}
 }
 
-func (s *JwtService) GenerateToken(userId int) (token string, err error) {
+func (s *JwtService) GenerateToken(userId string) (token string, err error) {
 	expiredTime := time.Now().Add(3 * 30 * 24 * time.Hour)
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -57,7 +57,7 @@ func (s *JwtService) ParseToken(token string) (claims jwt.MapClaims, err error) 
 	return claims, nil
 }
 
-func (s *JwtService) GenerateTokenWithCompany(userId int, company_id int) (token string, err error) {
+func (s *JwtService) GenerateTokenWithCompany(userId string, company_id string) (token string, err error) {
 	expiredTime := time.Now().Add(3 * 30 * 24 * time.Hour) // 3 bulan
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{

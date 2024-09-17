@@ -15,11 +15,11 @@ import (
 
 type (
 	ICompanyService interface {
-		AddCompany(request *Dto.MakeCompanyRequest, userID int, fileName string) (company *Models.Company, err error, filePath string, statusCode int)
-		GetAllCompanyUser(user_id int) (companyResponse *[]Response.CompanyResponseDTO, err error, statusCode int)
-		UpdateCompany(request *Dto.EditCompanyRequest, company_id int, user_id int, fileName string) (company *Models.Company, statusCode int, filePath string, err error)
+		AddCompany(request *Dto.MakeCompanyRequest, userID string, fileName string) (company *Models.Company, err error, filePath string, statusCode int)
+		GetAllCompanyUser(user_id string) (companyResponse *[]Response.CompanyResponseDTO, err error, statusCode int)
+		UpdateCompany(request *Dto.EditCompanyRequest, company_id string, user_id string, fileName string) (company *Models.Company, statusCode int, filePath string, err error)
 
-		DeleteCompany(company_id int, user_id int) (statusCode int, err error)
+		DeleteCompany(company_id string, user_id string) (statusCode int, err error)
 	}
 
 	CompanyService struct {
@@ -37,7 +37,7 @@ func CompanyServiceProvider(companyRepository Repositories.ICompanyRepository, u
 	}
 }
 
-func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID int, fileName string) (company *Models.Company, err error, filePath string, statusCode int) {
+func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID string, fileName string) (company *Models.Company, err error, filePath string, statusCode int) {
 
 	fileName = Utils.GenerateUniqueFileName(fileName)
 	request.ImageCompany = "/company-file/" + fileName
@@ -65,7 +65,7 @@ func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID int,
 	return company, nil, filePath, http.StatusOK
 }
 
-func (s *CompanyService) GetAllCompanyUser(user_id int) (companyResponse *[]Response.CompanyResponseDTO, err error, statusCode int) {
+func (s *CompanyService) GetAllCompanyUser(user_id string) (companyResponse *[]Response.CompanyResponseDTO, err error, statusCode int) {
 	userCompany, err := s.userCompanyRepository.FindAll(user_id)
 	if err != nil {
 		return nil, fmt.Errorf("error get all company user: %w", err), http.StatusBadRequest
@@ -81,7 +81,7 @@ func (s *CompanyService) GetAllCompanyUser(user_id int) (companyResponse *[]Resp
 	return &companyResponses, nil, http.StatusOK
 }
 
-func (s *CompanyService) UpdateCompany(request *Dto.EditCompanyRequest, company_id int, user_id int, fileName string) (company *Models.Company, statusCode int, filePath string, err error) {
+func (s *CompanyService) UpdateCompany(request *Dto.EditCompanyRequest, company_id string, user_id string, fileName string) (company *Models.Company, statusCode int, filePath string, err error) {
 	userCompany, _ := s.userCompanyRepository.Bind(company_id)
 
 	if userCompany == nil {
@@ -128,7 +128,7 @@ func (s *CompanyService) UpdateCompany(request *Dto.EditCompanyRequest, company_
 	}
 }
 
-func (s *CompanyService) DeleteCompany(company_id int, user_id int) (statusCode int, err error) {
+func (s *CompanyService) DeleteCompany(company_id string, user_id string) (statusCode int, err error) {
 	userCompany, _ := s.userCompanyRepository.Bind(company_id)
 
 	if userCompany == nil {

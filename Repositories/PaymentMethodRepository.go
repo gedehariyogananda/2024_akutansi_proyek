@@ -9,8 +9,8 @@ import (
 
 type (
 	IPaymentMethodRepository interface {
-		CreateDefaultPaymentMethod(company_id int) (err error)
-		FindAll(company_id int) (paymentMethod *[]Models.PaymentMethod, err error)
+		CreateDefaultPaymentMethod(company_id string) (err error)
+		FindAll(company_id string) (paymentMethod *[]Models.PaymentMethod, err error)
 	}
 
 	PaymentMethodRepository struct {
@@ -22,7 +22,7 @@ func PaymentMethodRepositoryProvider(db *gorm.DB) *PaymentMethodRepository {
 	return &PaymentMethodRepository{DB: db}
 }
 
-func (r *PaymentMethodRepository) FindAll(company_id int) (paymentMethod *[]Models.PaymentMethod, err error) {
+func (r *PaymentMethodRepository) FindAll(company_id string) (paymentMethod *[]Models.PaymentMethod, err error) {
 	paymentMethod = &[]Models.PaymentMethod{}
 
 	if err := r.DB.Where("company_id = ?", company_id).Find(paymentMethod).Error; err != nil {
@@ -32,7 +32,7 @@ func (r *PaymentMethodRepository) FindAll(company_id int) (paymentMethod *[]Mode
 	return paymentMethod, nil
 }
 
-func (r *PaymentMethodRepository) CreateDefaultPaymentMethod(company_id int) (err error) {
+func (r *PaymentMethodRepository) CreateDefaultPaymentMethod(company_id string) (err error) {
 	defaultPaymentMethod := []string{
 		"Cash",
 		"Credit Card",

@@ -12,11 +12,11 @@ import (
 type (
 	IAuthRepository interface {
 		InsertForRegister(request *Dto.RegisterRequest) (user *Models.User, err error)
-		GetUser(user_id int) (user *Models.User, err error)
-		UpdateToken(token string, user_id int) (err error)
+		GetUser(user_id string) (user *Models.User, err error)
+		UpdateToken(token string, user_id string) (err error)
 		CheckUniqueField(request *Dto.RegisterRequest) (err error)
 		FindEmail(email string) (user *Models.User, err error)
-		CheckToken(token string, user_id int) (err error)
+		CheckToken(token string, user_id string) (err error)
 	}
 
 	AuthRepository struct {
@@ -44,7 +44,7 @@ func (h *AuthRepository) InsertForRegister(request *Dto.RegisterRequest) (user *
 	return user, nil
 }
 
-func (h *AuthRepository) UpdateToken(token string, user_id int) (err error) {
+func (h *AuthRepository) UpdateToken(token string, user_id string) (err error) {
 	user := &Models.User{
 		Token: token,
 	}
@@ -78,7 +78,7 @@ func (h *AuthRepository) FindEmail(email string) (user *Models.User, err error) 
 	return user, nil
 }
 
-func (h *AuthRepository) GetUser(user_id int) (user *Models.User, err error) {
+func (h *AuthRepository) GetUser(user_id string) (user *Models.User, err error) {
 	user = &Models.User{}
 
 	if err := h.DB.
@@ -90,7 +90,7 @@ func (h *AuthRepository) GetUser(user_id int) (user *Models.User, err error) {
 	return user, nil
 }
 
-func (h *AuthRepository) CheckToken(token string, user_id int) (err error) {
+func (h *AuthRepository) CheckToken(token string, user_id string) (err error) {
 	user := &Models.User{}
 
 	if err := h.DB.Where("id = ?", user_id).Find(&user).Error; err != nil {

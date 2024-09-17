@@ -47,7 +47,7 @@ func (c *CompanyController) AddCompany(ctx *gin.Context) {
 		return
 	}
 
-	userID := ctx.GetInt("user_id")
+	userID := ctx.GetString("user_id")
 
 	var request Dto.MakeCompanyRequest
 	if err := ctx.ShouldBind(&request); err != nil { // shouldBind should, not shouldBindJSON
@@ -85,7 +85,7 @@ func (c *CompanyController) AddCompany(ctx *gin.Context) {
 }
 
 func (c *CompanyController) GetAllCompanyUser(ctx *gin.Context) {
-	userId := ctx.GetInt("user_id")
+	userId := ctx.GetString("user_id")
 
 	companies, err, statusCode := c.companyService.GetAllCompanyUser(userId)
 
@@ -104,9 +104,8 @@ func (c *CompanyController) GetAllCompanyUser(ctx *gin.Context) {
 	}, http.StatusOK)
 }
 func (c *CompanyController) UpdateCompany(ctx *gin.Context) {
-	userId := ctx.GetInt("user_id")
-	companyId := ctx.GetInt("company_id")
-
+	userId := ctx.GetString("user_id")
+	companyId := ctx.GetString("company_id")
 	var request Dto.EditCompanyRequest
 	if err := ctx.ShouldBind(&request); err != nil {
 		Helper.SetResponse(ctx, gin.H{
@@ -158,8 +157,8 @@ func (c *CompanyController) UpdateCompany(ctx *gin.Context) {
 }
 
 func (c *CompanyController) DeleteCompany(ctx *gin.Context) {
-	userId := ctx.GetInt("user_id")
-	companyId := ctx.GetInt("company_id")
+	userId := ctx.GetString("user_id")
+	companyId := ctx.GetString("company_id")
 
 	statusCode, err := c.companyService.DeleteCompany(companyId, userId)
 	if err != nil {

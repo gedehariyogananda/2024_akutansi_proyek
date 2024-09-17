@@ -24,7 +24,7 @@ func CategoryControllerProvider(categoryService Services.ICategoryService) *Cate
 
 func (c *CategoryController) FindAllCategory(ctx *gin.Context) {
 
-	companyId := ctx.GetInt("company_id")
+	companyId := ctx.GetString("company_id")
 
 	company, err := c.CategoryService.FindAllCategory(companyId)
 
@@ -33,6 +33,7 @@ func (c *CategoryController) FindAllCategory(ctx *gin.Context) {
 			"success": false,
 			"message": err.Error(),
 		}, http.StatusBadRequest)
+		return
 	}
 
 	Helper.SetResponse(ctx, gin.H{

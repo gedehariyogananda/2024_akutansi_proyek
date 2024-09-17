@@ -1,10 +1,10 @@
 package Models
 
 type InvoiceSaleableProduct struct {
-	InvoiceID         int
-	SaleableProductID int
+	InvoiceID         string
+	SaleableProductID string
 	QuantitySold      int
-	CompanyID         int
+	CompanyID         string
 	Invoice           Invoice         `gorm:"foreignKey:InvoiceID"`
 	SaleableProduct   SaleableProduct `gorm:"foreignKey:SaleableProductID"`
 	Company           Company         `gorm:"foreignKey:CompanyID"`

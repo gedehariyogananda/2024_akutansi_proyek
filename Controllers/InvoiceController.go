@@ -5,7 +5,6 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +29,7 @@ func InvoiceControllerProvider(invoiceService Services.IInvoiceService) *Invoice
 
 func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 
-	companyId := ctx.GetInt("company_id")
+	companyId := ctx.GetString("company_id")
 
 	var request Dto.InvoiceRequestClient
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -73,10 +72,9 @@ func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 }
 
 func (c *InvoiceController) UpdateInvoiceStatus(ctx *gin.Context) {
-	companyId := ctx.GetInt("company_id")
+	companyId := ctx.GetString("company_id")
 
 	invoiceParams := ctx.Param("invoice_id") // status "PROCESS", "CANCLE", "DONE" in body Request
-	invoiceId, _ := strconv.Atoi(invoiceParams)
 	var request Dto.InvoiceUpdateRequestDTO
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		Helper.SetResponse(ctx, gin.H{
@@ -86,7 +84,7 @@ func (c *InvoiceController) UpdateInvoiceStatus(ctx *gin.Context) {
 		return
 	}
 
-	invoice, err, statusCode := c.InvoiceService.UpdateStatusInvoice(&request, invoiceId, companyId)
+	invoice, err, statusCode := c.InvoiceService.UpdateStatusInvoice(&request, invoiceParams, companyId)
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
@@ -102,34 +100,12 @@ func (c *InvoiceController) UpdateInvoiceStatus(ctx *gin.Context) {
 	}, statusCode)
 	return
 
-	// if request.StatusInvoice == "CANCEL" {
-	// 	Helper.SetResponse(ctx, gin.H{
-	// 		"success": true,
-	// 		"message": "Success update invoice status to CANCEL",
-	// 		"data": gin.H{
-	// 			"status_invoice": invoice.StatusInvoice,
-	// 		},
-	// 	}, statusCode)
-	// 	return
-	// }
-
-	// if request.StatusInvoice == "DONE" {
-	// 	Helper.SetResponse(ctx, gin.H{
-	// 		"success": true,
-	// 		"message": "Success update invoice status to DONE",
-	// 		"data": gin.H{
-	// 			"status_invoice": invoice.StatusInvoice,
-	// 		},
-	// 	}, statusCode)
-	// 	return
-	// }
 }
 
 func (c *InvoiceController) UpdateMoneyReceived(ctx *gin.Context) {
-	companyId := ctx.GetInt("company_id")
+	companyId := ctx.GetString("company_id")
 
 	invoiceParams := ctx.Param("invoice_id")
-	invoiceId, _ := strconv.Atoi(invoiceParams)
 	var request Dto.InvoiceMoneyReceivedRequestDTO
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		Helper.SetResponse(ctx, gin.H{
@@ -139,7 +115,7 @@ func (c *InvoiceController) UpdateMoneyReceived(ctx *gin.Context) {
 		return
 	}
 
-	invoice, moneyBack, err, statusCode := c.InvoiceService.UpdateMoneyReveived(&request, invoiceId, companyId)
+	invoice, moneyBack, err, statusCode := c.InvoiceService.UpdateMoneyReveived(&request, invoiceParams, companyId)
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
@@ -165,7 +141,7 @@ func (c *InvoiceController) UpdateMoneyReceived(ctx *gin.Context) {
 }
 
 func (c *InvoiceController) GetAllInvoices(ctx *gin.Context) {
-	companyId := ctx.GetInt("company_id")
+	companyId := ctx.GetString("company_id")
 
 	invoices, err, statusCode := c.InvoiceService.GetAllInvoices(companyId)
 	if err != nil {
@@ -184,10 +160,9 @@ func (c *InvoiceController) GetAllInvoices(ctx *gin.Context) {
 }
 
 func (c *InvoiceController) UpdateInvoiceCustomer(ctx *gin.Context) {
-	companyId := ctx.GetInt("company_id")
+	companyId := ctx.GetString("company_id")
 
 	invoiceParams := ctx.Param("invoice_id")
-	invoiceId, _ := strconv.Atoi(invoiceParams)
 	var request Dto.InvoiceUpdateRequestDTO
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		Helper.SetResponse(ctx, gin.H{
@@ -197,7 +172,7 @@ func (c *InvoiceController) UpdateInvoiceCustomer(ctx *gin.Context) {
 		return
 	}
 
-	invoice, err, statusCode := c.InvoiceService.UpdateInvoiceCustomer(companyId, invoiceId, &request)
+	invoice, err, statusCode := c.InvoiceService.UpdateInvoiceCustomer(companyId, invoiceParams, &request)
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,

@@ -84,7 +84,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 }
 
 func (c *AuthController) UpdateTokenCompany(ctx *gin.Context) {
-	authorizeUserID := ctx.GetInt("user_id")
+	authorizeUserID := ctx.GetString("user_id")
 
 	var request Dto.TokenCompanyRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {

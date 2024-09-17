@@ -8,8 +8,8 @@ import (
 
 type (
 	ISaleableProductRepository interface {
-		FindAll(company_id int) (saleableProduct *[]Models.SaleableProduct, err error)
-		FindByCategory(company_id int, category_id int) (saleableProduct *[]Models.SaleableProduct, err error)
+		FindAll(company_id string) (saleableProduct *[]Models.SaleableProduct, err error)
+		FindByCategory(company_id string, category_id string) (saleableProduct *[]Models.SaleableProduct, err error)
 	}
 
 	SaleableProductRepository struct {
@@ -21,7 +21,7 @@ func SaleableProductRepositoryProvider(db *gorm.DB) *SaleableProductRepository {
 	return &SaleableProductRepository{DB: db}
 }
 
-func (r *SaleableProductRepository) FindAll(company_id int) (saleableProduct *[]Models.SaleableProduct, err error) {
+func (r *SaleableProductRepository) FindAll(company_id string) (saleableProduct *[]Models.SaleableProduct, err error) {
 
 	saleableProduct = &[]Models.SaleableProduct{}
 
@@ -34,7 +34,7 @@ func (r *SaleableProductRepository) FindAll(company_id int) (saleableProduct *[]
 	return saleableProduct, nil
 }
 
-func (r *SaleableProductRepository) FindByCategory(company_id int, category_id int) (saleableProduct *[]Models.SaleableProduct, err error) {
+func (r *SaleableProductRepository) FindByCategory(company_id string, category_id string) (saleableProduct *[]Models.SaleableProduct, err error) {
 
 	saleableProduct = &[]Models.SaleableProduct{}
 

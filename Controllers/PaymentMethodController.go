@@ -25,7 +25,7 @@ func PaymentMethodControllerProvider(PaymentMethodService Services.IPaymentMetho
 }
 
 func (controller *PaymentMethodController) FindAllPaymentMethod(ctx *gin.Context) {
-	companyId := ctx.GetInt("company_id")
+	companyId := ctx.GetString("company_id")
 
 	paymentMethod, err := controller.PaymentMethodService.FindAllPaymentMethod(companyId)
 

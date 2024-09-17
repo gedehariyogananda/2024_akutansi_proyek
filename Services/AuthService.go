@@ -15,7 +15,7 @@ type (
 		Register(request *Dto.RegisterRequest) (user *Models.User, err error, statusCode int)
 
 		Login(request *Dto.LoginRequest) (user *Models.User, token string, err error, statusCode int)
-		TokenCompany(request *Dto.TokenCompanyRequest, user_id int) (token string, company *Models.Company, err error, statusCode int)
+		TokenCompany(request *Dto.TokenCompanyRequest, user_id string) (token string, company *Models.Company, err error, statusCode int)
 	}
 
 	AuthService struct {
@@ -83,7 +83,7 @@ func (h *AuthService) Login(request *Dto.LoginRequest) (user *Models.User, token
 	return user, token, err, http.StatusOK
 }
 
-func (h *AuthService) TokenCompany(request *Dto.TokenCompanyRequest, user_id int) (token string, company *Models.Company, err error, statusCode int) {
+func (h *AuthService) TokenCompany(request *Dto.TokenCompanyRequest, user_id string) (token string, company *Models.Company, err error, statusCode int) {
 	token, err = h.jwtService.GenerateTokenWithCompany(user_id, request.CompanyID)
 	if err != nil {
 		return "", nil, errors.New("error generate token"), http.StatusInternalServerError

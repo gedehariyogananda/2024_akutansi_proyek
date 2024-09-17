@@ -8,7 +8,7 @@ import (
 
 type (
 	IMaterialProductRepository interface {
-		FindByAvailableForSale(company_id int) (materialProduct *[]Models.MaterialProduct, err error)
+		FindByAvailableForSale(company_id string) (materialProduct *[]Models.MaterialProduct, err error)
 	}
 
 	MaterialProductRepository struct {
@@ -20,7 +20,7 @@ func MaterialProductRepositoryProvider(db *gorm.DB) *MaterialProductRepository {
 	return &MaterialProductRepository{DB: db}
 }
 
-func (r *MaterialProductRepository) FindByAvailableForSale(company_id int) (materialProduct *[]Models.MaterialProduct, err error) {
+func (r *MaterialProductRepository) FindByAvailableForSale(company_id string) (materialProduct *[]Models.MaterialProduct, err error) {
 
 	materialProduct = &[]Models.MaterialProduct{}
 

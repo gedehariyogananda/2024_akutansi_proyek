@@ -7,7 +7,7 @@ import (
 
 type (
 	IPaymentMethodService interface {
-		FindAllPaymentMethod(company_id int) (paymentMethod *[]Models.PaymentMethod, err error)
+		FindAllPaymentMethod(company_id string) (paymentMethod *[]Models.PaymentMethod, err error)
 	}
 
 	PaymentMethodService struct {
@@ -19,7 +19,7 @@ func PaymentMethodServiceProvider(paymentMethodRepository Repositories.IPaymentM
 	return &PaymentMethodService{PaymentMethodRepository: paymentMethodRepository}
 }
 
-func (service *PaymentMethodService) FindAllPaymentMethod(company_id int) (paymentMethod *[]Models.PaymentMethod, err error) {
+func (service *PaymentMethodService) FindAllPaymentMethod(company_id string) (paymentMethod *[]Models.PaymentMethod, err error) {
 	paymentMethod, err = service.PaymentMethodRepository.FindAll(company_id)
 	if err != nil {
 		return nil, err

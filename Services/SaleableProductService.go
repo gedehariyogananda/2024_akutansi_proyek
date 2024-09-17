@@ -9,7 +9,7 @@ import (
 
 type (
 	ISaleableProductService interface {
-		FindAllSaleableProducts(company_id int, categoryQuery string) (saleableProduct *[]Response.SaleableResponseDTO, materialProduct *[]Response.MaterialResponseDTO, err error, statusCode int)
+		FindAllSaleableProducts(company_id string, categoryQuery string) (saleableProduct *[]Response.SaleableResponseDTO, materialProduct *[]Response.MaterialResponseDTO, err error, statusCode int)
 	}
 
 	SaleableProductService struct {
@@ -27,7 +27,7 @@ func SaleableProductServiceProvider(SaleableProductRepository Repositories.ISale
 	}
 }
 
-func (s *SaleableProductService) FindAllSaleableProducts(company_id int, categoryQuery string) (saleableProduct *[]Response.SaleableResponseDTO, materialProduct *[]Response.MaterialResponseDTO, err error, statusCode int) {
+func (s *SaleableProductService) FindAllSaleableProducts(company_id string, categoryQuery string) (saleableProduct *[]Response.SaleableResponseDTO, materialProduct *[]Response.MaterialResponseDTO, err error, statusCode int) {
 	if categoryQuery == "Lainnya" {
 		materialProductInit, err := s.MaterialProductRepository.FindByAvailableForSale(company_id)
 		if err != nil {

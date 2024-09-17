@@ -1,6 +1,6 @@
-package Dto 
+package Dto
 
 type MakeUserCompanyRequest struct {
-	UserId    int `json:"user_id"`
-	CompanyId int `json:"company_id"`
+	UserId    string `json:"user_id"`
+	CompanyId string `json:"company_id"`
 }

@@ -15,5 +15,5 @@ type LoginRequest struct {
 }
 
 type TokenCompanyRequest struct {
-	CompanyID int `json:"company_id"`
+	CompanyID string `json:"company_id"`
 }

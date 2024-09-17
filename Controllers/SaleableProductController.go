@@ -24,7 +24,7 @@ func SaleableProductControllerProvider(saleableProductService Services.ISaleable
 }
 
 func (c *SaleableProductController) FindAllSaleableProduct(ctx *gin.Context) {
-	companyId := ctx.GetInt("company_id")
+	companyId := ctx.GetString("company_id")
 	categoryQuery := ctx.DefaultQuery("category", "")
 
 	saleableProducts, materialProducts, err, statusCode := c.saleableProductService.FindAllSaleableProducts(companyId, categoryQuery)

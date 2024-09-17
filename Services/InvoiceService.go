@@ -11,11 +11,11 @@ import (
 
 type (
 	IInvoiceService interface {
-		CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (invoice *Models.Invoice, err error, statusCode int)
-		UpdateStatusInvoice(request *Dto.InvoiceUpdateRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, err error, statusCode int)
-		UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, MoneyBack float64, err error, statusCode int)
-		GetAllInvoices(company_id int) (invoices *[]Models.Invoice, err error, statusCode int)
-		UpdateInvoiceCustomer(company_id int, invoice_id int, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error, statusCode int)
+		CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id string) (invoice *Models.Invoice, err error, statusCode int)
+		UpdateStatusInvoice(request *Dto.InvoiceUpdateRequestDTO, invoice_id string, company_id string) (invoice *Models.Invoice, err error, statusCode int)
+		UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id string, company_id string) (invoice *Models.Invoice, MoneyBack float64, err error, statusCode int)
+		GetAllInvoices(company_id string) (invoices *[]Models.Invoice, err error, statusCode int)
+		UpdateInvoiceCustomer(company_id string, invoice_id string, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error, statusCode int)
 	}
 
 	InvoiceService struct {
@@ -33,7 +33,7 @@ func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, i
 	}
 }
 
-func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id int) (invoice *Models.Invoice, err error, statusCode int) {
+func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id string) (invoice *Models.Invoice, err error, statusCode int) {
 	dateInvoice := time.Now().Format("2006/01/02")
 	invoiceNumber := fmt.Sprintf("%s-%s", dateInvoice, request.InvoiceCustomer)
 
@@ -98,7 +98,7 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 	return invoice, nil, http.StatusOK
 }
 
-func (s *InvoiceService) UpdateStatusInvoice(request *Dto.InvoiceUpdateRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, err error, statusCode int) {
+func (s *InvoiceService) UpdateStatusInvoice(request *Dto.InvoiceUpdateRequestDTO, invoice_id string, company_id string) (invoice *Models.Invoice, err error, statusCode int) {
 	invoice, err = s.InvoiceRepository.FindById(invoice_id)
 	if err != nil {
 		return nil, fmt.Errorf("invoice Not Found : %w", err), http.StatusNotFound
@@ -132,7 +132,7 @@ func (s *InvoiceService) UpdateStatusInvoice(request *Dto.InvoiceUpdateRequestDT
 	return invoice, nil, http.StatusOK
 }
 
-func (s *InvoiceService) UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id int, company_id int) (invoice *Models.Invoice, MoneyBack float64, err error, statusCode int) {
+func (s *InvoiceService) UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id string, company_id string) (invoice *Models.Invoice, MoneyBack float64, err error, statusCode int) {
 	invoice, err = s.InvoiceRepository.FindById(invoice_id)
 
 	if err != nil {
@@ -148,6 +148,7 @@ func (s *InvoiceService) UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRe
 	}
 
 	invoice.MoneyReceived = request.MoneyReceived
+	invoice.StatusInvoice = Models.PROCESS
 
 	if err := s.InvoiceRepository.Update(invoice); err != nil {
 		return nil, 0, fmt.Errorf("failed to update invoice money received: %w", err), http.StatusBadRequest
@@ -159,7 +160,7 @@ func (s *InvoiceService) UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRe
 	return invoice, MoneyBack, nil, http.StatusOK
 }
 
-func (s *InvoiceService) GetAllInvoices(company_id int) (invoices *[]Models.Invoice, err error, statusCode int) {
+func (s *InvoiceService) GetAllInvoices(company_id string) (invoices *[]Models.Invoice, err error, statusCode int) {
 	invoices, err = s.InvoiceRepository.GetAll(company_id)
 	if err != nil {
 		return nil, err, http.StatusNotFound
@@ -168,7 +169,7 @@ func (s *InvoiceService) GetAllInvoices(company_id int) (invoices *[]Models.Invo
 	return invoices, nil, http.StatusOK
 }
 
-func (s *InvoiceService) UpdateInvoiceCustomer(company_id int, invoice_id int, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error, statusCode int) {
+func (s *InvoiceService) UpdateInvoiceCustomer(company_id string, invoice_id string, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error, statusCode int) {
 	invoice, err = s.InvoiceRepository.FindById(invoice_id)
 
 	if err != nil {
@@ -179,7 +180,7 @@ func (s *InvoiceService) UpdateInvoiceCustomer(company_id int, invoice_id int, r
 		return nil, fmt.Errorf("access forbidden: company_id mismatch"), http.StatusForbidden
 	}
 
-	switch invoice.StatusInvoice {
+	switch request.StatusInvoice {
 	case "DONE":
 		invoice.StatusInvoice = Models.DONE
 	case "CANCEL":

@@ -7,7 +7,7 @@ import (
 
 type (
 	ICategoryService interface {
-		FindAllCategory(company_id int) (category *[]Models.Category, err error)
+		FindAllCategory(company_id string) (category *[]Models.Category, err error)
 	}
 
 	CategoryService struct {
@@ -19,7 +19,7 @@ func CategoryServiceProvider(categoryRepository Repositories.ICategoryRepository
 	return &CategoryService{CategoryRepository: categoryRepository}
 }
 
-func (s *CategoryService) FindAllCategory(company_id int) (category *[]Models.Category, err error) {
+func (s *CategoryService) FindAllCategory(company_id string) (category *[]Models.Category, err error) {
 	category, err = s.CategoryRepository.FindAll(company_id)
 
 	if err != nil {

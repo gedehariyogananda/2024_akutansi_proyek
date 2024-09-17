@@ -10,8 +10,8 @@ import (
 type (
 	IUserCompanyRepository interface {
 		InsertUserCompany(request *Dto.MakeUserCompanyRequest) (err error)
-		FindAll(user_id int) (userCompany *[]Models.UserCompany, err error)
-		Bind(company_id int) (userCompany *Models.UserCompany, err error)
+		FindAll(user_id string) (userCompany *[]Models.UserCompany, err error)
+		Bind(company_id string) (userCompany *Models.UserCompany, err error)
 	}
 
 	UserCompanyRepository struct {
@@ -36,7 +36,7 @@ func (r *UserCompanyRepository) InsertUserCompany(request *Dto.MakeUserCompanyRe
 	return nil
 }
 
-func (r *UserCompanyRepository) FindAll(user_id int) (userCompany *[]Models.UserCompany, err error) {
+func (r *UserCompanyRepository) FindAll(user_id string) (userCompany *[]Models.UserCompany, err error) {
 	userCompany = &[]Models.UserCompany{}
 
 	if err := r.DB.Where("user_id = ?", user_id).
@@ -48,7 +48,7 @@ func (r *UserCompanyRepository) FindAll(user_id int) (userCompany *[]Models.User
 	return userCompany, nil
 }
 
-func (r *UserCompanyRepository) Bind(company_id int) (userCompany *Models.UserCompany, err error) {
+func (r *UserCompanyRepository) Bind(company_id string) (userCompany *Models.UserCompany, err error) {
 	userCompany = &Models.UserCompany{}
 
 	if err := r.DB.Where("company_id = ?", company_id).Preload("Company").First(&userCompany).Error; err != nil {

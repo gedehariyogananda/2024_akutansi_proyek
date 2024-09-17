@@ -8,7 +8,7 @@ import (
 
 type (
 	ICategoryRepository interface {
-		FindAll(company_id int) (category *[]Models.Category, err error)
+		FindAll(company_id string) (category *[]Models.Category, err error)
 		FindByName(category_name string) (category *Models.Category, err error)
 	}
 
@@ -21,10 +21,10 @@ func CategoryRepositoryProvider(db *gorm.DB) *CategoryRepository {
 	return &CategoryRepository{DB: db}
 }
 
-func (r *CategoryRepository) FindAll(company_id int) (category *[]Models.Category, err error) {
+func (r *CategoryRepository) FindAll(company_id string) (category *[]Models.Category, err error) {
 	if err := r.DB.Where("company_id = ?", company_id).Find(&category).Error; err != nil {
 		return nil, err
-	}
+}
 
 	return category, nil
 }

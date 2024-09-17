@@ -3,12 +3,13 @@ package Models
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type User struct {
-	ID        int       `json:"id"`
+	ID        string    `json:"id"`
 	Name      string    `json:"name"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
@@ -28,6 +29,11 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 			return err
 		}
 		u.Password = string(hashedPassword)
+	}
+
+	// uuid
+	if u.ID == "" {
+		u.ID = uuid.New().String()
 	}
 
 	return
