@@ -12,6 +12,7 @@ type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 	Token    string `json:"token"`
+	Me       bool   `json:"me" binding:"required"`
 }
 
 type TokenCompanyRequest struct {

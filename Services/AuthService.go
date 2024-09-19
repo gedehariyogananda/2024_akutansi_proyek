@@ -64,7 +64,7 @@ func (h *AuthService) Login(request *Dto.LoginRequest) (user *Models.User, token
 		return nil, "", errors.New("password not match"), http.StatusUnauthorized
 	}
 
-	token, err = h.jwtService.GenerateToken(userInit.ID)
+	token, err = h.jwtService.GenerateToken(userInit.ID, request.Me)
 
 	if err != nil {
 		return nil, "", errors.New("error generate token"), http.StatusInternalServerError
