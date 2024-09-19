@@ -18,4 +18,8 @@ func PaymentMethodRoute(c *gin.RouterGroup, db *gorm.DB) {
 	PaymentMethodController := Di.DIPaymentMethod(db)
 
 	route.GET("/", PaymentMethodController.FindAllPaymentMethod)
+	route.POST("/", PaymentMethodController.CreatePaymentMethod)
+	route.PUT("/:id", PaymentMethodController.UpdatePaymentMethod)
+	route.DELETE("/:id", PaymentMethodController.DeletePaymentMethod)
+
 }
