@@ -2,10 +2,9 @@ package Dto
 
 // ----- client request --- //
 type PurchasedItem struct {
-	ID                string `json:"id" binding:"required"`
-	QuantitySold      int    `json:"quantity_sold" binding:"required"`
-	IsSaleableProduct bool   `json:"is_saleable_product"`
-	TotalPrice        int    `json:"total_price" binding:"required"`
+	ID           string `json:"id" binding:"required"`
+	QuantitySold int    `json:"quantity_sold" binding:"required"`
+	TotalPrice   int    `json:"total_price" binding:"required"`
 }
 
 type InvoiceRequestClient struct {

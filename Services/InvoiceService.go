@@ -25,14 +25,16 @@ type (
 		InvoiceRepository         Repositories.IInvoiceRepository
 		InvoiceMaterialRepository Repositories.IInvoiceMaterialRepository
 		InvoiceSaleableRepository Repositories.IInvoiceSaleableRepository
+		SaleableProductRepository Repositories.ISaleableProductRepository
 	}
 )
 
-func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceMaterialRepository Repositories.IInvoiceMaterialRepository, invoiceSaleableRepository Repositories.IInvoiceSaleableRepository) *InvoiceService {
+func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceMaterialRepository Repositories.IInvoiceMaterialRepository, invoiceSaleableRepository Repositories.IInvoiceSaleableRepository, saleableProductRepository Repositories.ISaleableProductRepository) *InvoiceService {
 	return &InvoiceService{
 		InvoiceRepository:         invoiceRepository,
 		InvoiceMaterialRepository: invoiceMaterialRepository,
 		InvoiceSaleableRepository: invoiceSaleableRepository,
+		SaleableProductRepository: saleableProductRepository,
 	}
 }
 
@@ -60,25 +62,15 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 		return nil, fmt.Errorf("failed to create invoice: %w", err), http.StatusBadRequest
 	}
 
-	// Handle saleable products
+	// checked exist if saleable product
 	for _, purchase := range request.Purchaseds {
-		if purchase.IsSaleableProduct {
-			invoiceSaleableRequestDTO := &Dto.InvoiceSaleableRequestDTO{
-				InvoiceID:         invoice.ID,
-				SaleableProductID: purchase.ID,
-				QuantitySold:      purchase.QuantitySold,
-				CompanyID:         company_id,
-			}
+		isExist, err := s.SaleableProductRepository.CheckProductExist(company_id, purchase.ID)
 
-			if err := s.InvoiceSaleableRepository.Create(invoiceSaleableRequestDTO); err != nil {
-				return nil, fmt.Errorf("failed to create saleable product for invoice: %w", err), http.StatusBadRequest
-			}
+		if err != nil {
+			return nil, fmt.Errorf("failed to check product exist: %w", err), http.StatusBadRequest
 		}
-	}
 
-	// Handle material products
-	for _, purchase := range request.Purchaseds {
-		if !purchase.IsSaleableProduct {
+		if !isExist {
 			invoiceMaterialRequestDTO := &Dto.InvoiceMaterialRequestDTO{
 				InvoiceID:         invoice.ID,
 				MaterialProductID: purchase.ID,
@@ -88,6 +80,19 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 
 			if err := s.InvoiceMaterialRepository.Create(invoiceMaterialRequestDTO); err != nil {
 				return nil, fmt.Errorf("failed to create material product for invoice: %w", err), http.StatusBadRequest
+			}
+		}
+
+		if isExist {
+			invoiceSaleableRequestDTO := &Dto.InvoiceSaleableRequestDTO{
+				InvoiceID:         invoice.ID,
+				SaleableProductID: purchase.ID,
+				QuantitySold:      purchase.QuantitySold,
+				CompanyID:         company_id,
+			}
+
+			if err := s.InvoiceSaleableRepository.Create(invoiceSaleableRequestDTO); err != nil {
+				return nil, fmt.Errorf("failed to create saleable product for invoice: %w", err), http.StatusBadRequest
 			}
 		}
 	}

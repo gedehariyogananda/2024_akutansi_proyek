@@ -10,6 +10,7 @@ type (
 	ISaleableProductRepository interface {
 		FindAll(company_id string) (saleableProduct *[]Models.SaleableProduct, err error)
 		FindByCategory(company_id string, category_ids []string) (saleableProduct *[]Models.SaleableProduct, err error)
+		CheckProductExist(company_id string, productId string) (isExist bool, err error)
 	}
 
 	SaleableProductRepository struct {
@@ -44,4 +45,15 @@ func (r *SaleableProductRepository) FindByCategory(company_id string, category_i
 	}
 
 	return saleableProduct, nil
+}
+
+func (r *SaleableProductRepository) CheckProductExist(company_id string, productId string) (isExist bool, err error) {
+	saleableProduct := &Models.SaleableProduct{}
+
+	if err := r.DB.Where("company_id = ? AND id = ?", company_id, productId).
+		First(&saleableProduct).Error; err != nil {
+		return false, nil
+	}
+
+	return true, nil
 }

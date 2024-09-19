@@ -22,7 +22,9 @@ func InvoiceRoute(c *gin.RouterGroup, db *gorm.DB) {
 	})
 
 	route.POST("/create", InvoiceController.CreateInvoicePurchased)
+
 	route.PUT("/status/:invoice_id", InvoiceController.UpdateInvoiceStatus)
+
 	route.PUT("/money-received/:invoice_id", InvoiceController.UpdateMoneyReceived)
 
 	route.GET("/history-transaction", InvoiceController.GetAllInvoices)
