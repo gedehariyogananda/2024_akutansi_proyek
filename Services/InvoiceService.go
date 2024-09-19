@@ -3,6 +3,7 @@ package Services
 import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
+	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
 	"fmt"
 	"net/http"
@@ -14,8 +15,10 @@ type (
 		CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id string) (invoice *Models.Invoice, err error, statusCode int)
 		UpdateStatusInvoice(request *Dto.InvoiceUpdateRequestDTO, invoice_id string, company_id string) (invoice *Models.Invoice, err error, statusCode int)
 		UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id string, company_id string) (invoice *Models.Invoice, MoneyBack float64, err error, statusCode int)
-		GetAllInvoices(company_id string) (invoices *[]Models.Invoice, err error, statusCode int)
+		GetAllInvoices(company_id string, filterDate string) (invoices *[]Models.Invoice, err error, statusCode int)
 		UpdateInvoiceCustomer(company_id string, invoice_id string, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error, statusCode int)
+		GetInvoiceDetail(invoice_id string) (invoiceDetail *[]Response.InvoiceDetailResponse, err error, statusCode int)
+		GetInvoice(invoice_id string) (invoiceSet *Models.Invoice, invoiceRes *[]Response.DetailSaleableResponseDTO, err error, statusCode int)
 	}
 
 	InvoiceService struct {
@@ -160,13 +163,28 @@ func (s *InvoiceService) UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRe
 	return invoice, MoneyBack, nil, http.StatusOK
 }
 
-func (s *InvoiceService) GetAllInvoices(company_id string) (invoices *[]Models.Invoice, err error, statusCode int) {
-	invoices, err = s.InvoiceRepository.GetAll(company_id)
+func (s *InvoiceService) GetAllInvoices(company_id string, filterDate string) (invoices *[]Models.Invoice, err error, statusCode int) {
+	date := filterDate
+
+	if filterDate == "" {
+		invoices, err = s.InvoiceRepository.GetAll(company_id, date)
+
+		if err != nil {
+			return nil, err, http.StatusNotFound
+		}
+
+		return invoices, nil, http.StatusOK
+
+	}
+
+	invoices, err = s.InvoiceRepository.GetAll(company_id, date)
+
 	if err != nil {
 		return nil, err, http.StatusNotFound
 	}
 
 	return invoices, nil, http.StatusOK
+
 }
 
 func (s *InvoiceService) UpdateInvoiceCustomer(company_id string, invoice_id string, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error, statusCode int) {
@@ -208,4 +226,60 @@ func (s *InvoiceService) UpdateInvoiceCustomer(company_id string, invoice_id str
 	}
 
 	return invoice, nil, http.StatusOK
+}
+
+func (s *InvoiceService) GetInvoiceDetail(invoice_id string) (invoiceDetail *[]Response.InvoiceDetailResponse, err error, statusCode int) {
+	return
+}
+
+func (s *InvoiceService) GetInvoice(invoice_id string) (invoiceSet *Models.Invoice, invoiceRes *[]Response.DetailSaleableResponseDTO, err error, statusCode int) {
+	invoices, err := s.InvoiceSaleableRepository.FindByInvoiceId(invoice_id)
+
+	if err != nil {
+		return nil, nil, err, http.StatusNotFound
+
+	}
+
+	invoiceMaterial, err := s.InvoiceMaterialRepository.FindByInvoiceId(invoice_id)
+
+	if err != nil {
+		return nil, nil, err, http.StatusNotFound
+	}
+
+	invoiceRes = &[]Response.DetailSaleableResponseDTO{}
+
+	for _, item := range *invoices {
+
+		invoiceDetail := Response.DetailSaleableResponseDTO{
+			ID:           item.SaleableProduct.ID,
+			ProductName:  item.SaleableProduct.ProductName,
+			Qty:          item.QuantitySold,
+			UnitPrice:    item.SaleableProduct.UnitPrice,
+			CategoryName: item.SaleableProduct.Category.CategoryName,
+			TotalPrice:   item.SaleableProduct.UnitPrice * float64(item.QuantitySold),
+		}
+
+		*invoiceRes = append(*invoiceRes, invoiceDetail)
+	}
+
+	for _, item := range *invoiceMaterial {
+		invoiceDetail := Response.DetailSaleableResponseDTO{
+			ID:           item.MaterialProduct.ID,
+			ProductName:  item.MaterialProduct.MaterialProductName,
+			Qty:          item.QuantitySold,
+			UnitPrice:    item.MaterialProduct.UnitPriceForSelling,
+			CategoryName: "",
+			TotalPrice:   item.MaterialProduct.UnitPriceForSelling * float64(item.QuantitySold),
+		}
+
+		*invoiceRes = append(*invoiceRes, invoiceDetail)
+	}
+
+	invoiceSet, err = s.InvoiceRepository.FindSelectRelasi(invoice_id)
+
+	if err != nil {
+		return nil, nil, err, http.StatusNotFound
+	}
+
+	return invoiceSet, invoiceRes, nil, http.StatusOK
 }

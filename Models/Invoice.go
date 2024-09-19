@@ -28,7 +28,7 @@ type Invoice struct {
 	PaymentMethodID string        `json:"-"`
 	CreatedAt       time.Time     `json:"created_at"`
 	UpdatedAt       time.Time     `json:"updated_at"`
-	Company         Company       `gorm:"foreignKey:CompanyID" json:"company"`
+	Company         Company       `gorm:"foreignKey:CompanyID" json:"-"`
 	PaymentMethod   PaymentMethod `gorm:"foreignKey:PaymentMethodID" json:"payment_method"`
 }
 

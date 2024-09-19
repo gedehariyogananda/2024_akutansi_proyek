@@ -16,6 +16,7 @@ type (
 		UpdateMoneyReceived(ctx *gin.Context)
 		GetAllInvoices(ctx *gin.Context)
 		UpdateInvoiceCustomer(ctx *gin.Context)
+		GetInvoiceDetail(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -141,9 +142,12 @@ func (c *InvoiceController) UpdateMoneyReceived(ctx *gin.Context) {
 }
 
 func (c *InvoiceController) GetAllInvoices(ctx *gin.Context) {
+	filterDate := ctx.DefaultQuery("date", "")
+	formattedDateClient := Helper.FormatDateClient(filterDate)
+
 	companyId := ctx.GetString("company_id")
 
-	invoices, err, statusCode := c.InvoiceService.GetAllInvoices(companyId)
+	invoices, err, statusCode := c.InvoiceService.GetAllInvoices(companyId, formattedDateClient)
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
@@ -185,5 +189,27 @@ func (c *InvoiceController) UpdateInvoiceCustomer(ctx *gin.Context) {
 		"success": true,
 		"message": "Success update invoice customer",
 		"data":    invoice,
+	}, statusCode)
+}
+
+func (c *InvoiceController) GetInvoiceDetail(ctx *gin.Context) {
+	invoiceParams := ctx.Param("invoice_id")
+
+	invoice, purchaseDetail, err, statusCode := c.InvoiceService.GetInvoice(invoiceParams)
+	if err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, statusCode)
+		return
+	}
+
+	Helper.SetResponse(ctx, gin.H{
+		"success": true,
+		"message": "Success get invoice detail",
+		"data": gin.H{
+			"purchase_detail": purchaseDetail,
+			"invoice":         invoice,
+		},
 	}, statusCode)
 }

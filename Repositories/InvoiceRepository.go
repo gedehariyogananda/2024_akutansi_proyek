@@ -12,7 +12,7 @@ import (
 type (
 	IInvoiceRepository interface {
 		Create(request *Dto.InvoiceRequestDTO) (invoice *Models.Invoice, err error)
-		GetAll(company_id string) (invoices *[]Models.Invoice, err error)
+		GetAll(company_id string, date string) (invoices *[]Models.Invoice, err error)
 		FindById(invoice_id string) (invoice *Models.Invoice, err error)
 		Update(invoice *Models.Invoice) (err error)
 		FindSelectRelasi(invoice_id string) (invoice *Models.Invoice, err error)
@@ -48,10 +48,10 @@ func (r *InvoiceRepository) Create(request *Dto.InvoiceRequestDTO) (invoice *Mod
 	return invoice, nil
 }
 
-func (r *InvoiceRepository) GetAll(company_id string) (invoices *[]Models.Invoice, err error) {
+func (r *InvoiceRepository) GetAll(company_id string, date string) (invoices *[]Models.Invoice, err error) {
 	invoices = &[]Models.Invoice{}
 
-	if err := r.DB.Where("company_id = ?", company_id).
+	if err := r.DB.Where("company_id = ? AND DATE(invoice_date) = ?", company_id, date).
 		Preload("PaymentMethod").
 		Preload("Company").
 		Order("created_at DESC").
@@ -83,7 +83,7 @@ func (r *InvoiceRepository) Update(invoice *Models.Invoice) (err error) {
 func (r *InvoiceRepository) FindSelectRelasi(invoice_id string) (invoice *Models.Invoice, err error) {
 	invoice = &Models.Invoice{}
 
-	if err := r.DB.Preload("PaymentMethod").Preload("Company").First(invoice, "id = ?", invoice_id).Error; err != nil {
+	if err := r.DB.Preload("PaymentMethod").First(invoice, "id = ?", invoice_id).Error; err != nil {
 		return nil, fmt.Errorf("invoice not found")
 	}
 

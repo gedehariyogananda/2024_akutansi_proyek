@@ -10,6 +10,7 @@ import (
 type (
 	IInvoiceSaleableRepository interface {
 		Create(request *Dto.InvoiceSaleableRequestDTO) (err error)
+		FindByInvoiceId(invoice_id string) (invoiceSaleable *[]Models.InvoiceSaleableProduct, err error)
 	}
 
 	InvoiceSaleableRepository struct {
@@ -34,4 +35,18 @@ func (r *InvoiceSaleableRepository) Create(request *Dto.InvoiceSaleableRequestDT
 	}
 
 	return nil
+}
+
+func (r *InvoiceSaleableRepository) FindByInvoiceId(invoice_id string) (invoiceSaleable *[]Models.InvoiceSaleableProduct, err error) {
+
+	invoiceSaleable = &[]Models.InvoiceSaleableProduct{}
+
+	if err := r.DB.Where("invoice_id = ?", invoice_id).
+		Preload("SaleableProduct").
+		Preload("SaleableProduct.Category").
+		Find(&invoiceSaleable).Error; err != nil {
+		return nil, err
+	}
+
+	return invoiceSaleable, nil
 }

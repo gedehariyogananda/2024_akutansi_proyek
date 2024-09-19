@@ -10,6 +10,7 @@ import (
 type (
 	IInvoiceMaterialRepository interface {
 		Create(request *Dto.InvoiceMaterialRequestDTO) (err error)
+		FindByInvoiceId(invoice_id string) (invoiceMaterial *[]Models.InvoiceMaterialProduct, err error)
 	}
 
 	InvoiceMaterialRepository struct {
@@ -34,4 +35,16 @@ func (r *InvoiceMaterialRepository) Create(request *Dto.InvoiceMaterialRequestDT
 	}
 
 	return nil
+}
+
+func (r *InvoiceMaterialRepository) FindByInvoiceId(invoice_id string) (invoiceMaterial *[]Models.InvoiceMaterialProduct, err error) {
+	invoiceMaterial = &[]Models.InvoiceMaterialProduct{}
+
+	if err := r.DB.Where("invoice_id = ?", invoice_id).
+		Preload("MaterialProduct").
+		Find(&invoiceMaterial).Error; err != nil {
+		return nil, err
+	}
+
+	return invoiceMaterial, nil
 }
