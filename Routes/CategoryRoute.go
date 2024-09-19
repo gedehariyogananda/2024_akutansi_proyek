@@ -18,4 +18,8 @@ func CategoryRoute(c *gin.RouterGroup, db *gorm.DB) {
 	CategoryController := Di.DICategory(db)
 
 	route.GET("/", CategoryController.FindAllCategory)
+
+	route.POST("/", CategoryController.CreateCategory)
+	route.PUT("/:id", CategoryController.UpdateCategory)
+	route.DELETE("/:id", CategoryController.DeleteCategory)
 }
