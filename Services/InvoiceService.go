@@ -249,7 +249,6 @@ func (s *InvoiceService) GetInvoice(invoice_id string) (invoiceSet *Models.Invoi
 	invoiceRes = &[]Response.DetailSaleableResponseDTO{}
 
 	for _, item := range *invoices {
-
 		invoiceDetail := Response.DetailSaleableResponseDTO{
 			ID:           item.SaleableProduct.ID,
 			ProductName:  item.SaleableProduct.ProductName,

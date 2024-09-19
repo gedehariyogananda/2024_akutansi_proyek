@@ -25,9 +25,9 @@ func SaleableProductControllerProvider(saleableProductService Services.ISaleable
 
 func (c *SaleableProductController) FindAllSaleableProduct(ctx *gin.Context) {
 	companyId := ctx.GetString("company_id")
-	categoryQuery := ctx.DefaultQuery("category", "")
+	categoryQueries := ctx.QueryArray("category")
 
-	saleableProducts, materialProducts, err, statusCode := c.saleableProductService.FindAllSaleableProducts(companyId, categoryQuery)
+	saleableProducts, err, statusCode := c.saleableProductService.FindAllSaleableProducts(companyId, categoryQueries)
 
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
@@ -40,9 +40,6 @@ func (c *SaleableProductController) FindAllSaleableProduct(ctx *gin.Context) {
 	Helper.SetResponse(ctx, gin.H{
 		"success": true,
 		"message": "Success get saleable products",
-		"data": gin.H{
-			"saleable_products": saleableProducts,
-			"material_products": materialProducts,
-		},
+		"data":    saleableProducts,
 	}, statusCode)
 }

@@ -2,14 +2,14 @@ package Services
 
 import (
 	"2024_akutansi_project/Models/Dto/Response"
-	"2024_akutansi_project/Models/Mapper"
 	"2024_akutansi_project/Repositories"
+	"fmt"
 	"net/http"
 )
 
 type (
 	ISaleableProductService interface {
-		FindAllSaleableProducts(company_id string, categoryQuery string) (saleableProduct *[]Response.SaleableResponseDTO, materialProduct *[]Response.MaterialResponseDTO, err error, statusCode int)
+		FindAllSaleableProducts(company_id string, categoryQuery []string) (saleableProduct *[]Response.SaleableResponseDTO, err error, statusCode int)
 	}
 
 	SaleableProductService struct {
@@ -27,76 +27,171 @@ func SaleableProductServiceProvider(SaleableProductRepository Repositories.ISale
 	}
 }
 
-func (s *SaleableProductService) FindAllSaleableProducts(company_id string, categoryQuery string) (saleableProduct *[]Response.SaleableResponseDTO, materialProduct *[]Response.MaterialResponseDTO, err error, statusCode int) {
-	if categoryQuery == "Lainnya" {
-		materialProductInit, err := s.MaterialProductRepository.FindByAvailableForSale(company_id)
-		if err != nil {
-			return nil, nil, err, http.StatusInternalServerError
-		}
+// func (s *SaleableProductService) FindAllSaleableProducts(company_id string, categoryQuery string) (saleableProduct *[]Response.SaleableResponseDTO, err error, statusCode int) {
 
-		materialData := []Response.MaterialResponseDTO{}
-		if materialProductInit != nil {
-			for _, mp := range *materialProductInit {
-				material := Mapper.ToMaterialProductResponseDTO(mp)
-				materialData = append(materialData, material)
-			}
-		}
+// 	saleableProduct = &[]Response.SaleableResponseDTO{}
 
-		return nil, &materialData, nil, http.StatusOK
-	}
+// 	if categoryQuery == "Others" {
+// 		materialProductInit, err := s.MaterialProductRepository.FindByAvailableForSale(company_id)
+// 		if err != nil {
+// 			return nil, err, http.StatusNotFound
+// 		}
 
-	// Handle case when category is empty (get all products)
-	if categoryQuery == "" {
+// 		if materialProductInit != nil {
+// 			for _, item := range *materialProductInit {
+// 				materialData := Response.SaleableResponseDTO{
+// 					ID:           item.ID,
+// 					ProductName:  item.MaterialProductName,
+// 					UnitPrice:    item.UnitPriceForSelling,
+// 					CategoryName: "",
+// 				}
+
+// 				*saleableProduct = append(*saleableProduct, materialData)
+// 			}
+// 		}
+
+// 		return saleableProduct, nil, http.StatusOK
+// 	}
+
+// 	// Handle case when category is empty (get all products)
+// 	if categoryQuery == "" {
+// 		saleableProductInit, err := s.SaleableProductRepository.FindAll(company_id)
+// 		if err != nil {
+// 			return nil, err, http.StatusInternalServerError
+// 		}
+
+// 		if saleableProductInit != nil {
+// 			for _, item := range *saleableProductInit {
+// 				saleableData := Response.SaleableResponseDTO{
+// 					ID:           item.ID,
+// 					ProductName:  item.ProductName,
+// 					UnitPrice:    item.UnitPrice,
+// 					CategoryName: item.Category.CategoryName,
+// 				}
+
+// 				*saleableProduct = append(*saleableProduct, saleableData)
+// 			}
+// 		}
+
+// 		materialProductInit, err := s.MaterialProductRepository.FindByAvailableForSale(company_id)
+// 		if err != nil {
+// 			return nil, err, http.StatusInternalServerError
+// 		}
+
+// 		if materialProductInit != nil {
+// 			for _, item := range *materialProductInit {
+// 				materialData := Response.SaleableResponseDTO{
+// 					ID:           item.ID,
+// 					ProductName:  item.MaterialProductName,
+// 					UnitPrice:    item.UnitPriceForSelling,
+// 					CategoryName: "",
+// 				}
+
+// 				*saleableProduct = append(*saleableProduct, materialData)
+// 			}
+// 		}
+
+// 		return saleableProduct, nil, http.StatusOK
+// 	}
+
+// 	category, err := s.CategoryRepository.FindByName(categoryQuery)
+// 	if err != nil {
+// 		return nil, err, http.StatusNotFound
+// 	}
+
+// 	saleableProductInit, err := s.SaleableProductRepository.FindByCategory(company_id, category.ID)
+// 	if err != nil {
+// 		return nil, err, http.StatusInternalServerError
+// 	}
+
+// 	if saleableProductInit != nil {
+// 		for _, item := range *saleableProductInit {
+// 			saleableData := Response.SaleableResponseDTO{
+// 				ID:           item.ID,
+// 				ProductName:  item.ProductName,
+// 				UnitPrice:    item.UnitPrice,
+// 				CategoryName: item.Category.CategoryName,
+// 			}
+
+// 			*saleableProduct = append(*saleableProduct, saleableData)
+// 		}
+// 	}
+
+// 	return saleableProduct, nil, http.StatusOK
+
+// }
+
+func (s *SaleableProductService) FindAllSaleableProducts(company_id string, categoryQueries []string) (saleableProduct *[]Response.SaleableResponseDTO, err error, statusCode int) {
+	saleableProduct = &[]Response.SaleableResponseDTO{}
+
+	if len(categoryQueries) == 0 {
 		saleableProductInit, err := s.SaleableProductRepository.FindAll(company_id)
 		if err != nil {
-			return nil, nil, err, http.StatusInternalServerError
+			return nil, err, http.StatusInternalServerError
 		}
 
-		saleableData := []Response.SaleableResponseDTO{}
+		// Pengolahan saleable products tetap sama
 		if saleableProductInit != nil {
-			for _, sp := range *saleableProductInit {
-				saleable := Mapper.ToSaleableProductResponsDTO(sp)
-				saleableData = append(saleableData, saleable)
+			for _, item := range *saleableProductInit {
+				saleableData := Response.SaleableResponseDTO{
+					ID:           item.ID,
+					ProductName:  item.ProductName,
+					UnitPrice:    item.UnitPrice,
+					CategoryName: item.Category.CategoryName,
+				}
+
+				*saleableProduct = append(*saleableProduct, saleableData)
 			}
 		}
 
 		materialProductInit, err := s.MaterialProductRepository.FindByAvailableForSale(company_id)
 		if err != nil {
-			return nil, nil, err, http.StatusInternalServerError
+			return nil, err, http.StatusInternalServerError
 		}
 
-		materialData := []Response.MaterialResponseDTO{}
 		if materialProductInit != nil {
-			for _, mp := range *materialProductInit {
-				material := Mapper.ToMaterialProductResponseDTO(mp)
-				materialData = append(materialData, material)
+			for _, item := range *materialProductInit {
+				materialData := Response.SaleableResponseDTO{
+					ID:           item.ID,
+					ProductName:  item.MaterialProductName,
+					UnitPrice:    item.UnitPriceForSelling,
+					CategoryName: "",
+				}
+
+				*saleableProduct = append(*saleableProduct, materialData)
 			}
 		}
 
-		return &saleableData, &materialData, nil, http.StatusOK
+		return saleableProduct, nil, http.StatusOK
 	}
 
-	if categoryQuery != "" {
-		category, err := s.CategoryRepository.FindByName(categoryQuery)
-		if err != nil {
-			return nil, nil, err, http.StatusNotFound
-		}
+	categories, err := s.CategoryRepository.FindByNames(categoryQueries)
+	if err != nil || len(categories) == 0 {
+		return nil, fmt.Errorf("categories not found"), http.StatusNotFound
+	}
 
-		saleableProductInit, err := s.SaleableProductRepository.FindByCategory(company_id, category.ID)
-		if err != nil {
-			return nil, nil, err, http.StatusInternalServerError
-		}
+	var categoryIDs []string
+	for _, category := range categories {
+		categoryIDs = append(categoryIDs, category.ID)
+	}
 
-		saleableData := []Response.SaleableResponseDTO{}
-		if saleableProductInit != nil {
-			for _, sp := range *saleableProductInit {
-				saleable := Mapper.ToSaleableProductResponsDTO(sp)
-				saleableData = append(saleableData, saleable)
+	saleableProductInit, err := s.SaleableProductRepository.FindByCategory(company_id, categoryIDs)
+	if err != nil {
+		return nil, err, http.StatusInternalServerError
+	}
+
+	if saleableProductInit != nil {
+		for _, item := range *saleableProductInit {
+			saleableData := Response.SaleableResponseDTO{
+				ID:           item.ID,
+				ProductName:  item.ProductName,
+				UnitPrice:    item.UnitPrice,
+				CategoryName: item.Category.CategoryName,
 			}
-		}
 
-		return &saleableData, nil, nil, http.StatusOK
+			*saleableProduct = append(*saleableProduct, saleableData)
+		}
 	}
 
-	return nil, nil, nil, http.StatusOK
+	return saleableProduct, nil, http.StatusOK
 }

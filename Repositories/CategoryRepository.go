@@ -9,7 +9,7 @@ import (
 type (
 	ICategoryRepository interface {
 		FindAll(company_id string) (category *[]Models.Category, err error)
-		FindByName(category_name string) (category *Models.Category, err error)
+		FindByNames(category_names []string) (category []Models.Category, err error)
 	}
 
 	CategoryRepository struct {
@@ -24,15 +24,15 @@ func CategoryRepositoryProvider(db *gorm.DB) *CategoryRepository {
 func (r *CategoryRepository) FindAll(company_id string) (category *[]Models.Category, err error) {
 	if err := r.DB.Where("company_id = ?", company_id).Find(&category).Error; err != nil {
 		return nil, err
-}
-
-	return category, nil
-}
-
-func (r *CategoryRepository) FindByName(category_name string) (category *Models.Category, err error) {
-	if err := r.DB.Where("category_name = ?", category_name).First(&category).Error; err != nil {
-		return nil, err
 	}
 
 	return category, nil
+}
+
+func (r *CategoryRepository) FindByNames(category_names []string) (categories []Models.Category, err error) {
+	if err := r.DB.Where("category_name IN (?)", category_names).Find(&categories).Error; err != nil {
+		return nil, err
+	}
+
+	return categories, nil
 }
