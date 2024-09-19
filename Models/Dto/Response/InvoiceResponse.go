@@ -12,11 +12,3 @@ type InvoiceResponse struct {
 	TotalAmount   float64              `json:"total_amount"`
 }
 
-type InvoiceDetailResponse struct {
-	ID           string  `json:"id"`
-	ProductName  string  `json:"product_name"`
-	UnitPrice    float64 `json:"unit_price"`
-	CompanyID    string  `json:"company_id"`
-	CategoryName string  `json:"category_name"`
-	Qty          int     `json:"qty"`
-}

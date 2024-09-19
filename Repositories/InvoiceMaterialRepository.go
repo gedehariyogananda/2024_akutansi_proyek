@@ -10,6 +10,7 @@ import (
 type (
 	IInvoiceMaterialRepository interface {
 		Create(request *Dto.InvoiceMaterialRequestDTO) (err error)
+		Update(request *Dto.InvoiceMaterialRequestDTO, invoice_id string) (err error)
 		FindByInvoiceId(invoice_id string) (invoiceMaterial *[]Models.InvoiceMaterialProduct, err error)
 	}
 
@@ -47,4 +48,20 @@ func (r *InvoiceMaterialRepository) FindByInvoiceId(invoice_id string) (invoiceM
 	}
 
 	return invoiceMaterial, nil
+}
+
+func (r *InvoiceMaterialRepository) Update(request *Dto.InvoiceMaterialRequestDTO, invoice_id string) (err error) {
+	invoiceMaterial := &Models.InvoiceMaterialProduct{
+		InvoiceID:         request.InvoiceID,
+		MaterialProductID: request.MaterialProductID,
+		QuantitySold:      request.QuantitySold,
+		CompanyID:         request.CompanyID,
+	}
+
+	if err := r.DB.Where("invoice_id = ? AND material_product_id = ?", invoice_id, request.MaterialProductID).
+		Updates(invoiceMaterial).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

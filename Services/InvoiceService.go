@@ -17,8 +17,9 @@ type (
 		UpdateMoneyReveived(request *Dto.InvoiceMoneyReceivedRequestDTO, invoice_id string, company_id string) (invoice *Models.Invoice, MoneyBack float64, err error, statusCode int)
 		GetAllInvoices(company_id string, filterDate string) (invoices *[]Models.Invoice, err error, statusCode int)
 		UpdateInvoiceCustomer(company_id string, invoice_id string, request *Dto.InvoiceUpdateRequestDTO) (invoice *Models.Invoice, err error, statusCode int)
-		GetInvoiceDetail(invoice_id string) (invoiceDetail *[]Response.InvoiceDetailResponse, err error, statusCode int)
 		GetInvoice(invoice_id string) (invoiceSet *Models.Invoice, invoiceRes *[]Response.DetailSaleableResponseDTO, err error, statusCode int)
+		DeleteInvoice(invoice_id string, company_id string) (statusCode int, err error)
+		UpdateInvoiceDetail(company_id string, invoice_id string, request *Dto.InvoiceRequestClient) (invoice *Models.Invoice, err error, statusCode int)
 	}
 
 	InvoiceService struct {
@@ -26,15 +27,17 @@ type (
 		InvoiceMaterialRepository Repositories.IInvoiceMaterialRepository
 		InvoiceSaleableRepository Repositories.IInvoiceSaleableRepository
 		SaleableProductRepository Repositories.ISaleableProductRepository
+		PaymentMethodRepository   Repositories.IPaymentMethodRepository
 	}
 )
 
-func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceMaterialRepository Repositories.IInvoiceMaterialRepository, invoiceSaleableRepository Repositories.IInvoiceSaleableRepository, saleableProductRepository Repositories.ISaleableProductRepository) *InvoiceService {
+func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceMaterialRepository Repositories.IInvoiceMaterialRepository, invoiceSaleableRepository Repositories.IInvoiceSaleableRepository, saleableProductRepository Repositories.ISaleableProductRepository, paymentMethodRepository Repositories.IPaymentMethodRepository) *InvoiceService {
 	return &InvoiceService{
 		InvoiceRepository:         invoiceRepository,
 		InvoiceMaterialRepository: invoiceMaterialRepository,
 		InvoiceSaleableRepository: invoiceSaleableRepository,
 		SaleableProductRepository: saleableProductRepository,
+		PaymentMethodRepository:   paymentMethodRepository,
 	}
 }
 
@@ -48,13 +51,29 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 		totalAmount += purchase.TotalPrice
 	}
 
+	payment, err := s.PaymentMethodRepository.FindById(request.PaymentMethodID)
+
+	if err != nil {
+		return nil, fmt.Errorf("payment method not found"), http.StatusNotFound
+	}
+
+	statusInv := Models.PROCESS
+	moneyReceive := 0
+
+	if payment.MethodName != "Cash" {
+		statusInv = Models.PROCESS
+		moneyReceive = totalAmount
+	}
+
 	invoiceRequestDTO := &Dto.InvoiceRequestDTO{
 		InvoiceNumber:   invoiceNumber,
 		InvoiceCustomer: request.InvoiceCustomer,
 		InvoiceDate:     time.Now().Format("2006-01-02 15:04:05"),
 		TotalAmount:     totalAmount,
+		StatusInvoice:   string(statusInv),
 		CompanyID:       company_id,
 		PaymentMethodId: request.PaymentMethodID,
+		MoneyReceived:   moneyReceive,
 	}
 
 	invoice, err = s.InvoiceRepository.Create(invoiceRequestDTO)
@@ -233,10 +252,6 @@ func (s *InvoiceService) UpdateInvoiceCustomer(company_id string, invoice_id str
 	return invoice, nil, http.StatusOK
 }
 
-func (s *InvoiceService) GetInvoiceDetail(invoice_id string) (invoiceDetail *[]Response.InvoiceDetailResponse, err error, statusCode int) {
-	return
-}
-
 func (s *InvoiceService) GetInvoice(invoice_id string) (invoiceSet *Models.Invoice, invoiceRes *[]Response.DetailSaleableResponseDTO, err error, statusCode int) {
 	invoices, err := s.InvoiceSaleableRepository.FindByInvoiceId(invoice_id)
 
@@ -257,7 +272,7 @@ func (s *InvoiceService) GetInvoice(invoice_id string) (invoiceSet *Models.Invoi
 		invoiceDetail := Response.DetailSaleableResponseDTO{
 			ID:           item.SaleableProduct.ID,
 			ProductName:  item.SaleableProduct.ProductName,
-			Qty:          item.QuantitySold,
+			QuantitySold: item.QuantitySold,
 			UnitPrice:    item.SaleableProduct.UnitPrice,
 			CategoryName: item.SaleableProduct.Category.CategoryName,
 			TotalPrice:   item.SaleableProduct.UnitPrice * float64(item.QuantitySold),
@@ -270,7 +285,7 @@ func (s *InvoiceService) GetInvoice(invoice_id string) (invoiceSet *Models.Invoi
 		invoiceDetail := Response.DetailSaleableResponseDTO{
 			ID:           item.MaterialProduct.ID,
 			ProductName:  item.MaterialProduct.MaterialProductName,
-			Qty:          item.QuantitySold,
+			QuantitySold: item.QuantitySold,
 			UnitPrice:    item.MaterialProduct.UnitPriceForSelling,
 			CategoryName: "",
 			TotalPrice:   item.MaterialProduct.UnitPriceForSelling * float64(item.QuantitySold),
@@ -286,4 +301,118 @@ func (s *InvoiceService) GetInvoice(invoice_id string) (invoiceSet *Models.Invoi
 	}
 
 	return invoiceSet, invoiceRes, nil, http.StatusOK
+}
+
+func (s *InvoiceService) DeleteInvoice(invoice_id string, company_id string) (statusCode int, err error) {
+	invoice, err := s.InvoiceRepository.FindById(invoice_id)
+
+	if err != nil {
+		return http.StatusNotFound, fmt.Errorf("invoice not found")
+	}
+
+	if invoice.CompanyID != company_id {
+		return http.StatusForbidden, fmt.Errorf("access forbidden: company_id mismatch")
+	}
+
+	if err := s.InvoiceRepository.Delete(invoice_id); err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("failed to delete invoice: %w", err)
+	}
+
+	return http.StatusOK, nil
+}
+
+func (s *InvoiceService) UpdateInvoiceDetail(company_id string, invoice_id string, request *Dto.InvoiceRequestClient) (invoice *Models.Invoice, err error, statusCode int) {
+	invoice, err = s.InvoiceRepository.FindById(invoice_id)
+
+	if err != nil {
+		return nil, err, http.StatusNotFound
+	}
+
+	if invoice.CompanyID != company_id {
+		return nil, fmt.Errorf("access forbidden: company_id mismatch"), http.StatusForbidden
+	}
+
+	totalAmount := 0
+	for _, purchase := range request.Purchaseds {
+		totalAmount += purchase.TotalPrice
+	}
+
+	InvoiceNumber := invoice.InvoiceNumber
+
+	if request.InvoiceCustomer != invoice.InvoiceCustomer {
+		dateInvoice := invoice.CreatedAt.Format("2006/01/02")
+		invoiceCustomer := request.InvoiceCustomer
+		InvoiceNumber = fmt.Sprintf("%s-%s", dateInvoice, invoiceCustomer)
+	}
+
+	payment, err := s.PaymentMethodRepository.FindById(request.PaymentMethodID)
+
+	if err != nil {
+		return nil, fmt.Errorf("payment method not found"), http.StatusNotFound
+	}
+
+	moneyInit := invoice.MoneyReceived
+	statusInv := invoice.StatusInvoice
+
+	if payment.MethodName != "Cash" {
+		moneyInit = float64(totalAmount)
+		statusInv = Models.PROCESS
+
+	}
+
+	invoiceRequestDTO := &Dto.InvoiceRequestDTO{
+		InvoiceCustomer: request.InvoiceCustomer,
+		TotalAmount:     totalAmount,
+		CompanyID:       company_id,
+		MoneyReceived:   int(moneyInit),
+		PaymentMethodId: request.PaymentMethodID,
+		InvoiceNumber:   InvoiceNumber,
+		StatusInvoice:   string(statusInv),
+	}
+
+	if err := s.InvoiceRepository.UpdateByInvoiceId(invoice_id, company_id, invoiceRequestDTO); err != nil {
+		return nil, fmt.Errorf("failed to update invoice: %w", err), http.StatusBadRequest
+	}
+
+	for _, purchase := range request.Purchaseds {
+		isExist, err := s.SaleableProductRepository.CheckProductExist(company_id, purchase.ID)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to check product exist: %w", err), http.StatusBadRequest
+		}
+
+		if !isExist {
+			invoiceMaterialRequestDTO := &Dto.InvoiceMaterialRequestDTO{
+				InvoiceID:         invoice_id,
+				MaterialProductID: purchase.ID,
+				QuantitySold:      purchase.QuantitySold,
+				CompanyID:         company_id,
+			}
+
+			if err := s.InvoiceMaterialRepository.Update(invoiceMaterialRequestDTO, invoice_id); err != nil {
+				return nil, fmt.Errorf("failed to create material product for invoice: %w", err), http.StatusBadRequest
+			}
+		}
+
+		if isExist {
+			invoiceSaleableRequestDTO := &Dto.InvoiceSaleableRequestDTO{
+				InvoiceID:         invoice_id,
+				SaleableProductID: purchase.ID,
+				QuantitySold:      purchase.QuantitySold,
+				CompanyID:         company_id,
+			}
+
+			if err := s.InvoiceSaleableRepository.Update(invoiceSaleableRequestDTO, invoice_id); err != nil {
+				return nil, fmt.Errorf("failed to create saleable product for invoice: %w", err), http.StatusBadRequest
+			}
+		}
+	}
+
+	invoice, err = s.InvoiceRepository.FindSelectRelasi(invoice.ID)
+
+	if err != nil {
+		return nil, err, http.StatusNotFound
+	}
+
+	return invoice, nil, http.StatusOK
 }

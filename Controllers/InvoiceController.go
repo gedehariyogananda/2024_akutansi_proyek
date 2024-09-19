@@ -17,6 +17,8 @@ type (
 		GetAllInvoices(ctx *gin.Context)
 		UpdateInvoiceCustomer(ctx *gin.Context)
 		GetInvoiceDetail(ctx *gin.Context)
+		DeleteInvoice(ctx *gin.Context)
+		UpdateInvoiceDetail(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -212,4 +214,66 @@ func (c *InvoiceController) GetInvoiceDetail(ctx *gin.Context) {
 			"invoice":         invoice,
 		},
 	}, statusCode)
+}
+
+func (c *InvoiceController) DeleteInvoice(ctx *gin.Context) {
+	invoiceParams := ctx.Param("invoice_id")
+	companyId := ctx.GetString("company_id")
+
+	statusCode, err := c.InvoiceService.DeleteInvoice(invoiceParams, companyId)
+	if err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, statusCode)
+		return
+	}
+
+	Helper.SetResponse(ctx, gin.H{
+		"success": true,
+		"message": "Success delete invoice",
+	}, statusCode)
+}
+
+func (c *InvoiceController) UpdateInvoiceDetail(ctx *gin.Context) {
+	companyId := ctx.GetString("company_id")
+
+	invoiceParams := ctx.Param("invoice_id")
+	var request Dto.InvoiceRequestClient
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, http.StatusBadRequest)
+		return
+	}
+
+	invoice, err, statusCode := c.InvoiceService.UpdateInvoiceDetail(companyId, invoiceParams, &request)
+	if err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, statusCode)
+		return
+	}
+
+	if invoice.PaymentMethod.MethodName == "Cash" {
+		Helper.SetResponse(ctx, gin.H{
+			"success": true,
+			"message": "Success update invoice detail",
+			"data": gin.H{
+				"invoice":     invoice,
+				"is_cashless": true,
+			},
+		}, statusCode)
+	} else {
+		Helper.SetResponse(ctx, gin.H{
+			"success": true,
+			"message": "Success update invoice detail",
+			"data": gin.H{
+				"invoice":     invoice,
+				"is_cashless": false,
+			},
+		}, statusCode)
+	}
 }

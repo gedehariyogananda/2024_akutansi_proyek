@@ -11,6 +11,7 @@ type (
 	IPaymentMethodRepository interface {
 		CreateDefaultPaymentMethod(company_id string) (err error)
 		FindAll(company_id string) (paymentMethod *[]Models.PaymentMethod, err error)
+		FindById(id string) (paymentMethof *Models.PaymentMethod, err error)
 	}
 
 	PaymentMethodRepository struct {
@@ -52,4 +53,14 @@ func (r *PaymentMethodRepository) CreateDefaultPaymentMethod(company_id string) 
 	}
 
 	return nil
+}
+
+func (r *PaymentMethodRepository) FindById(id string) (paymentMethod *Models.PaymentMethod, err error) {
+	paymentMethod = &Models.PaymentMethod{}
+
+	if err := r.DB.Where("id = ?", id).First(paymentMethod).Error; err != nil {
+		return nil, err
+	}
+
+	return paymentMethod, nil
 }

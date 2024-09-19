@@ -10,6 +10,7 @@ import (
 type (
 	IInvoiceSaleableRepository interface {
 		Create(request *Dto.InvoiceSaleableRequestDTO) (err error)
+		Update(request *Dto.InvoiceSaleableRequestDTO, invoice_id string) (err error)
 		FindByInvoiceId(invoice_id string) (invoiceSaleable *[]Models.InvoiceSaleableProduct, err error)
 	}
 
@@ -49,4 +50,20 @@ func (r *InvoiceSaleableRepository) FindByInvoiceId(invoice_id string) (invoiceS
 	}
 
 	return invoiceSaleable, nil
+}
+
+func (r *InvoiceSaleableRepository) Update(request *Dto.InvoiceSaleableRequestDTO, invoice_id string) (err error) {
+	invoiceSaleable := &Models.InvoiceSaleableProduct{
+		InvoiceID:         request.InvoiceID,
+		SaleableProductID: request.SaleableProductID,
+		QuantitySold:      request.QuantitySold,
+		CompanyID:         request.CompanyID,
+	}
+
+	if err := r.DB.Where("invoice_id = ? AND saleable_product_id = ?", invoice_id, request.SaleableProductID).
+		Updates(invoiceSaleable).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

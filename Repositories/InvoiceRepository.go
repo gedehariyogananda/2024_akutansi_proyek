@@ -16,6 +16,8 @@ type (
 		FindById(invoice_id string) (invoice *Models.Invoice, err error)
 		Update(invoice *Models.Invoice) (err error)
 		FindSelectRelasi(invoice_id string) (invoice *Models.Invoice, err error)
+		Delete(invoice_id string) (err error)
+		UpdateByInvoiceId(invoice_id string, company_id string, request *Dto.InvoiceRequestDTO) (err error)
 	}
 
 	InvoiceRepository struct {
@@ -37,7 +39,7 @@ func (r *InvoiceRepository) Create(request *Dto.InvoiceRequestDTO) (invoice *Mod
 		InvoiceDate:     request.InvoiceDate,
 		TotalAmount:     float64(request.TotalAmount),
 		MoneyReceived:   float64(request.MoneyReceived),
-		StatusInvoice:   Models.WAITING,
+		StatusInvoice:   Models.StatusInvoice(request.StatusInvoice),
 		CreatedAt:       time.Now(),
 	}
 
@@ -88,4 +90,34 @@ func (r *InvoiceRepository) FindSelectRelasi(invoice_id string) (invoice *Models
 	}
 
 	return invoice, nil
+}
+
+func (r *InvoiceRepository) Delete(invoice_id string) (err error) {
+	if err := r.DB.Delete(&Models.Invoice{}, "id = ?", invoice_id).Error; err != nil {
+		return fmt.Errorf("failed to delete invoice: %w", err)
+	}
+
+	return nil
+}
+
+func (r *InvoiceRepository) UpdateByInvoiceId(invoice_id string, company_id string, request *Dto.InvoiceRequestDTO) (err error) {
+	var invoice Models.Invoice
+	if err := r.DB.First(&invoice, "id = ? AND company_id = ?", invoice_id, company_id).Error; err != nil {
+		return fmt.Errorf("invoice not found")
+	}
+
+	invoice.InvoiceNumber = request.InvoiceNumber
+	invoice.InvoiceCustomer = request.InvoiceCustomer
+	invoice.CompanyID = request.CompanyID
+	invoice.PaymentMethodID = request.PaymentMethodId
+	invoice.TotalAmount = float64(request.TotalAmount)
+	invoice.MoneyReceived = float64(request.MoneyReceived)
+	invoice.StatusInvoice = Models.StatusInvoice(request.StatusInvoice)
+	invoice.UpdatedAt = time.Now()
+
+	if err := r.DB.Save(&invoice).Error; err != nil {
+		return fmt.Errorf("failed to update invoice: %w", err)
+	}
+
+	return nil
 }

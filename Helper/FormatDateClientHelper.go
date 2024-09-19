@@ -11,3 +11,9 @@ func FormatDateClient(date string) string {
 
 	return parseDate.Format("2006-01-02")
 }
+
+func FormatDateInvoiceNumber(date string) string {
+	parseDate, _ := time.Parse("2006-01-02", date)
+
+	return parseDate.Format("2006/01/02")
+}
