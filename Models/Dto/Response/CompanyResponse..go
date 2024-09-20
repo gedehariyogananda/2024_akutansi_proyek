@@ -5,6 +5,7 @@ type CompanyResponseDTO struct {
 	Name         string `json:"name"`
 	Address      string `json:"address"`
 	ImageCompany string `json:"image_company"`
+	CodeCompany  string `json:"code_company"`
 	CreatedAt    string `json:"created_at"`
 	UpdatedAt    string `json:"updated_at"`
 }

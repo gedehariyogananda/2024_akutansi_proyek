@@ -12,6 +12,7 @@ type Company struct {
 	Name         string    `json:"name"`
 	Address      string    `json:"address"`
 	ImageCompany string    `json:"image_company"`
+	CodeCompany  string    `json:"code_company"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }

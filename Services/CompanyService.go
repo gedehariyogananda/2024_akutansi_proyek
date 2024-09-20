@@ -44,7 +44,16 @@ func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID stri
 
 	filePath = os.Getenv("UPLOAD_DIR") + "/company-file/" + fileName
 
-	company, err = s.companyRepository.InsertCompany(request)
+	var codeCompany string
+
+	if request.CodeCompany != "" {
+		suffix := Utils.GenerateUniqueSuffix()
+		codeCompany = fmt.Sprintf("%s-%s", request.CodeCompany, suffix)
+	} else {
+		codeCompany = Utils.GenerateCodeCompany(request.Name)
+	}
+
+	company, err = s.companyRepository.InsertCompany(request, codeCompany)
 	if err != nil {
 		return nil, fmt.Errorf("error insert company: %w", err), "", http.StatusBadRequest
 	}

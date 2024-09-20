@@ -56,7 +56,8 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 	invoiceSaleableRepository := Repositories.InvoiceSaleableRepositoryProvider(db)
 	saleableProductRepository := Repositories.SaleableProductRepositoryProvider(db)
 	paymentMethodRepository := Repositories.PaymentMethodRepositoryProvider(db)
-	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceMaterialRepository, invoiceSaleableRepository, saleableProductRepository, paymentMethodRepository)
+	companyRepository := Repositories.CompanyRepositoryProvider(db)
+	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceMaterialRepository, invoiceSaleableRepository, saleableProductRepository, paymentMethodRepository, companyRepository)
 	invoiceController := Controllers.InvoiceControllerProvider(invoiceService)
 	return invoiceController
 }

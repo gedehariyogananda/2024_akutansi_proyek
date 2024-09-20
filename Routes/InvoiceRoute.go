@@ -28,7 +28,7 @@ func InvoiceRoute(c *gin.RouterGroup, db *gorm.DB) {
 	route.PUT("/money-received/:invoice_id", InvoiceController.UpdateMoneyReceived)
 
 	route.GET("/history-transaction", InvoiceController.GetAllInvoices)
-	route.PUT("/history-transaction/:invoice_id", InvoiceController.UpdateInvoiceCustomer)
+	route.PATCH("/history-transaction/:invoice_id", InvoiceController.UpdateInvoiceCustomer)
 	route.GET("/history-transaction/:invoice_id", InvoiceController.GetInvoiceDetail)
 	route.DELETE("/history-transaction/:invoice_id", InvoiceController.DeleteInvoice)
 

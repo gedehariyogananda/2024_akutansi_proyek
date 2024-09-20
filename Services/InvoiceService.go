@@ -28,23 +28,22 @@ type (
 		InvoiceSaleableRepository Repositories.IInvoiceSaleableRepository
 		SaleableProductRepository Repositories.ISaleableProductRepository
 		PaymentMethodRepository   Repositories.IPaymentMethodRepository
+		CompanyRepository         Repositories.ICompanyRepository
 	}
 )
 
-func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceMaterialRepository Repositories.IInvoiceMaterialRepository, invoiceSaleableRepository Repositories.IInvoiceSaleableRepository, saleableProductRepository Repositories.ISaleableProductRepository, paymentMethodRepository Repositories.IPaymentMethodRepository) *InvoiceService {
+func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceMaterialRepository Repositories.IInvoiceMaterialRepository, invoiceSaleableRepository Repositories.IInvoiceSaleableRepository, saleableProductRepository Repositories.ISaleableProductRepository, paymentMethodRepository Repositories.IPaymentMethodRepository, companyRepository Repositories.ICompanyRepository) *InvoiceService {
 	return &InvoiceService{
 		InvoiceRepository:         invoiceRepository,
 		InvoiceMaterialRepository: invoiceMaterialRepository,
 		InvoiceSaleableRepository: invoiceSaleableRepository,
 		SaleableProductRepository: saleableProductRepository,
 		PaymentMethodRepository:   paymentMethodRepository,
+		CompanyRepository:         companyRepository,
 	}
 }
 
 func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClient, company_id string) (invoice *Models.Invoice, err error, statusCode int) {
-	dateInvoice := time.Now().Format("2006/01/02")
-	invoiceNumber := fmt.Sprintf("%s-%s", dateInvoice, request.InvoiceCustomer)
-
 	// Calculate total amount
 	totalAmount := 0
 	for _, purchase := range request.Purchaseds {
@@ -57,6 +56,12 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 		return nil, fmt.Errorf("payment method not found"), http.StatusNotFound
 	}
 
+	company, err := s.CompanyRepository.FindCompany(company_id)
+
+	if err != nil {
+		return nil, fmt.Errorf("company not found"), http.StatusNotFound
+	}
+
 	statusInv := Models.PROCESS
 	moneyReceive := 0
 
@@ -66,7 +71,6 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 	}
 
 	invoiceRequestDTO := &Dto.InvoiceRequestDTO{
-		InvoiceNumber:   invoiceNumber,
 		InvoiceCustomer: request.InvoiceCustomer,
 		InvoiceDate:     time.Now().Format("2006-01-02 15:04:05"),
 		TotalAmount:     totalAmount,
@@ -76,7 +80,7 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 		MoneyReceived:   moneyReceive,
 	}
 
-	invoice, err = s.InvoiceRepository.Create(invoiceRequestDTO)
+	invoice, err = s.InvoiceRepository.Create(invoiceRequestDTO, company.CodeCompany, company_id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create invoice: %w", err), http.StatusBadRequest
 	}
@@ -222,21 +226,20 @@ func (s *InvoiceService) UpdateInvoiceCustomer(company_id string, invoice_id str
 		return nil, fmt.Errorf("access forbidden: company_id mismatch"), http.StatusForbidden
 	}
 
-	switch request.StatusInvoice {
-	case "DONE":
-		invoice.StatusInvoice = Models.DONE
-	case "CANCEL":
-		invoice.StatusInvoice = Models.CANCEL
-	case "PROCESS":
-		invoice.StatusInvoice = Models.PROCESS
-	default:
-		invoice.StatusInvoice = Models.WAITING
+	// not permision to update status, hanya bisa button aja
+
+	invoice.InvoiceCustomer = request.InvoiceCustomer
+	invoice.MoneyReceived = float64(request.MoneyReceived)
+	invoice.PaymentMethodID = request.PaymentMethodId
+
+	paymentMethod, err := s.PaymentMethodRepository.FindById(request.PaymentMethodId)
+
+	if err != nil {
+		return nil, fmt.Errorf("payment method not found"), http.StatusNotFound
 	}
 
-	if request.InvoiceCustomer != "" {
-		dateInvoice := invoice.CreatedAt.Format("2006/01/02")
-		invoice.InvoiceCustomer = request.InvoiceCustomer
-		invoice.InvoiceNumber = fmt.Sprintf("%s-%s", dateInvoice, request.InvoiceCustomer)
+	if paymentMethod.MethodName != "Cash" {
+		invoice.MoneyReceived = invoice.TotalAmount
 	}
 
 	if err := s.InvoiceRepository.Update(invoice); err != nil {
@@ -337,14 +340,6 @@ func (s *InvoiceService) UpdateInvoiceDetail(company_id string, invoice_id strin
 		totalAmount += purchase.TotalPrice
 	}
 
-	InvoiceNumber := invoice.InvoiceNumber
-
-	if request.InvoiceCustomer != invoice.InvoiceCustomer {
-		dateInvoice := invoice.CreatedAt.Format("2006/01/02")
-		invoiceCustomer := request.InvoiceCustomer
-		InvoiceNumber = fmt.Sprintf("%s-%s", dateInvoice, invoiceCustomer)
-	}
-
 	payment, err := s.PaymentMethodRepository.FindById(request.PaymentMethodID)
 
 	if err != nil {
@@ -366,7 +361,6 @@ func (s *InvoiceService) UpdateInvoiceDetail(company_id string, invoice_id strin
 		CompanyID:       company_id,
 		MoneyReceived:   int(moneyInit),
 		PaymentMethodId: request.PaymentMethodID,
-		InvoiceNumber:   InvoiceNumber,
 		StatusInvoice:   string(statusInv),
 	}
 

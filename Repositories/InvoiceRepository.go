@@ -3,6 +3,7 @@ package Repositories
 import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
+	"2024_akutansi_project/Utils"
 	"fmt"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 
 type (
 	IInvoiceRepository interface {
-		Create(request *Dto.InvoiceRequestDTO) (invoice *Models.Invoice, err error)
+		Create(request *Dto.InvoiceRequestDTO, codeCompany string, company_id string) (invoice *Models.Invoice, err error)
 		GetAll(company_id string, date string) (invoices *[]Models.Invoice, err error)
 		FindById(invoice_id string) (invoice *Models.Invoice, err error)
 		Update(invoice *Models.Invoice) (err error)
@@ -29,10 +30,17 @@ func InvoiceRepositoryProvider(db *gorm.DB) *InvoiceRepository {
 	return &InvoiceRepository{DB: db}
 }
 
-func (r *InvoiceRepository) Create(request *Dto.InvoiceRequestDTO) (invoice *Models.Invoice, err error) {
+func (r *InvoiceRepository) Create(request *Dto.InvoiceRequestDTO, codeCompany string, company_id string) (invoice *Models.Invoice, err error) {
+
+	// generate invoice number nan
+	invoiceNumber, err := Utils.GenerateInvoiceNumber(r.DB, codeCompany, company_id)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate invoice number: %w", err)
+	}
 
 	invoice = &Models.Invoice{
-		InvoiceNumber:   request.InvoiceNumber,
+		InvoiceNumber:   invoiceNumber,
 		InvoiceCustomer: request.InvoiceCustomer,
 		CompanyID:       request.CompanyID,
 		PaymentMethodID: request.PaymentMethodId,
@@ -106,7 +114,6 @@ func (r *InvoiceRepository) UpdateByInvoiceId(invoice_id string, company_id stri
 		return fmt.Errorf("invoice not found")
 	}
 
-	invoice.InvoiceNumber = request.InvoiceNumber
 	invoice.InvoiceCustomer = request.InvoiceCustomer
 	invoice.CompanyID = request.CompanyID
 	invoice.PaymentMethodID = request.PaymentMethodId
