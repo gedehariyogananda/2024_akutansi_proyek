@@ -5,7 +5,9 @@ type InvoiceSaleableProduct struct {
 	SaleableProductID string          `json:"saleable_product_id"`
 	QuantitySold      int             `json:"quantity_sold"`
 	CompanyID         string          `json:"-"`
+	Notes             string          `json:"notes"`
 	Invoice           Invoice         `gorm:"foreignKey:InvoiceID" json:"-"`
 	SaleableProduct   SaleableProduct `gorm:"foreignKey:SaleableProductID" json:"saleable_product"`
 	Company           Company         `gorm:"foreignKey:CompanyID" json:"-"`
 }
+
