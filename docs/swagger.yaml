@@ -1,12 +1,47 @@
 basePath: /api/v1
-host: localhost:8888
+definitions:
+  Dto.LoginRequest:
+    properties:
+      email:
+        example: ari@gmail.com
+        type: string
+      me:
+        type: boolean
+      password:
+        type: string
+      token:
+        type: string
+    required:
+    - email
+    - me
+    - password
+    type: object
+host: localhost:8899
 info:
   contact: {}
-  description: Documentation for Akutansi Project
-  title: 2024_akutansi_proyek API
+  description: This is a documentation API SPEC for the 2024akutansi project.
+  title: 2024akutansi
   version: "1.0"
-paths: {}
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and return a token
+      parameters:
+      - description: Login request
+        in: body
+        name: loginRequest
+        required: true
+        schema:
+          $ref: '#/definitions/Dto.LoginRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Login
+      tags:
+      - Auth
 schemes:
-- http,
+- http
 - https
 swagger: "2.0"

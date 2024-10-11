@@ -6,7 +6,7 @@ import (
 )
 
 func Init(c *gin.Engine, db *gorm.DB) {
-
+	
 	apiPrefix := c.Group("/api/v1/")
 
 	// Initialize routes

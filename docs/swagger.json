@@ -1,16 +1,69 @@
 {
     "schemes": [
-        "http,",
+        "http",
         "https"
     ],
     "swagger": "2.0",
     "info": {
-        "description": "Documentation for Akutansi Project",
-        "title": "2024_akutansi_proyek API",
+        "description": "This is a documentation API SPEC for the 2024akutansi project.",
+        "title": "2024akutansi",
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8888",
+    "host": "localhost:8899",
     "basePath": "/api/v1",
-    "paths": {}
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Authenticate a user and return a token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login",
+                "parameters": [
+                    {
+                        "description": "Login request",
+                        "name": "loginRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Dto.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    },
+    "definitions": {
+        "Dto.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "me",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "ari@gmail.com"
+                },
+                "me": {
+                    "type": "boolean"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 }

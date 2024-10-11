@@ -11,6 +11,7 @@ type (
 		FindAll(company_id string) (saleableProduct *[]Models.SaleableProduct, err error)
 		FindByCategory(company_id string, category_ids []string) (saleableProduct *[]Models.SaleableProduct, err error)
 		CheckProductExist(company_id string, productId string) (isExist bool, err error)
+		FindByName(company_id string, productName string, categoryId []string) (saleableProduct *[]Models.SaleableProduct, err error)
 	}
 
 	SaleableProductRepository struct {
@@ -56,4 +57,20 @@ func (r *SaleableProductRepository) CheckProductExist(company_id string, product
 	}
 
 	return true, nil
+}
+
+func (r *SaleableProductRepository) FindByName(company_id string, productName string, categoryId []string) (saleableProduct *[]Models.SaleableProduct, err error) {
+	saleableProduct = &[]Models.SaleableProduct{}
+
+	query := r.DB.Where("company_id = ? AND product_name LIKE ?", company_id, "%"+productName+"%")
+
+	if len(categoryId) > 0 {
+		query = query.Where("category_id IN ?", categoryId)
+	}
+
+	if err := query.Preload("Category").Find(&saleableProduct).Error; err != nil {
+		return nil, err
+	}
+
+	return saleableProduct, nil
 }

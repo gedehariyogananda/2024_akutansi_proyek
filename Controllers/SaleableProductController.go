@@ -26,8 +26,9 @@ func SaleableProductControllerProvider(saleableProductService Services.ISaleable
 func (c *SaleableProductController) FindAllSaleableProduct(ctx *gin.Context) {
 	companyId := ctx.GetString("company_id")
 	categoryQueries := ctx.QueryArray("category")
+	searchingProducct := ctx.DefaultQuery("search", "")
 
-	saleableProducts, err, statusCode := c.saleableProductService.FindAllSaleableProducts(companyId, categoryQueries)
+	saleableProducts, err, statusCode := c.saleableProductService.FindAllSaleableProducts(companyId, categoryQueries, searchingProducct)
 
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{

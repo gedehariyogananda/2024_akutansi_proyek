@@ -9,9 +9,9 @@ type RegisterRequest struct {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
+	Email    string `json:"email" example:"ari@gmail.com" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
-	Token    string `json:"token"`
+	Token    string `json:"token" swagger:"ignore"`
 	Me       bool   `json:"me" binding:"required"`
 }
 

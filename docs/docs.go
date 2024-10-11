@@ -14,17 +14,70 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Authenticate a user and return a token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login",
+                "parameters": [
+                    {
+                        "description": "Login request",
+                        "name": "loginRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Dto.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    },
+    "definitions": {
+        "Dto.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "me",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "ari@gmail.com"
+                },
+                "me": {
+                    "type": "boolean"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8888",
+	Host:             "localhost:8899",
 	BasePath:         "/api/v1",
-	Schemes:          []string{"http,", "https"},
-	Title:            "2024_akutansi_proyek API",
-	Description:      "Documentation for Akutansi Project",
+	Schemes:          []string{"http", "https"},
+	Title:            "2024akutansi",
+	Description:      "This is a documentation API SPEC for the 2024akutansi project.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
