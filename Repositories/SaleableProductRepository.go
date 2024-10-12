@@ -29,6 +29,7 @@ func (r *SaleableProductRepository) FindAll(company_id string) (saleableProduct 
 
 	if err := r.DB.Where("company_id = ?", company_id).
 		Preload("Category").
+		Preload("SaleableProductToping.Toping").
 		Find(&saleableProduct).Error; err != nil {
 		return nil, err
 	}

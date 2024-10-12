@@ -8,15 +8,16 @@ import (
 )
 
 type SaleableProduct struct {
-	ID          string    `json:"id"`
-	ProductName string    `json:"product_name"`
-	UnitPrice   float64   `json:"unit_price"`
-	CompanyID   string    `json:"company_id"`
-	CategoryID  string    `json:"category_id"`
-	CreatedAt   time.Time `json:"-"`
-	UpdatedAt   time.Time `json:"-"`
-	Company     Company   `gorm:"foreignKey:CompanyID"`
-	Category    Category  `gorm:"foreignKey:CategoryID"`
+	ID                    string                  `json:"id"`
+	ProductName           string                  `json:"product_name"`
+	UnitPrice             float64                 `json:"unit_price"`
+	CompanyID             string                  `json:"company_id"`
+	CategoryID            string                  `json:"category_id"`
+	CreatedAt             time.Time               `json:"-"`
+	UpdatedAt             time.Time               `json:"-"`
+	Company               Company                 `gorm:"foreignKey:CompanyID"`
+	Category              Category                `gorm:"foreignKey:CategoryID"`
+	SaleableProductToping []SaleableProductToping `gorm:"foreignKey:SaleableProductID"`
 }
 
 // create uuid

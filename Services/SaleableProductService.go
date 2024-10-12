@@ -27,101 +27,6 @@ func SaleableProductServiceProvider(SaleableProductRepository Repositories.ISale
 	}
 }
 
-// func (s *SaleableProductService) FindAllSaleableProducts(company_id string, categoryQueries []string, searchingProduct string) (saleableProduct *[]Response.SaleableResponseDTO, err error, statusCode int) {
-// 	saleableProduct = &[]Response.SaleableResponseDTO{}
-
-// 	if len(categoryQueries) == 0 {
-// 		saleableProductInit, err := s.SaleableProductRepository.FindAll(company_id)
-// 		if err != nil {
-// 			return nil, err, http.StatusInternalServerError
-// 		}
-
-// 		// Pengolahan saleable products tetap sama
-// 		if saleableProductInit != nil {
-// 			for _, item := range *saleableProductInit {
-// 				saleableData := Response.SaleableResponseDTO{
-// 					ID:           item.ID,
-// 					ProductName:  item.ProductName,
-// 					UnitPrice:    item.UnitPrice,
-// 					CategoryName: item.Category.CategoryName,
-// 				}
-
-// 				*saleableProduct = append(*saleableProduct, saleableData)
-// 			}
-// 		}
-
-// 		materialProductInit, err := s.MaterialProductRepository.FindByAvailableForSale(company_id)
-// 		if err != nil {
-// 			return nil, err, http.StatusInternalServerError
-// 		}
-
-// 		if materialProductInit != nil {
-// 			for _, item := range *materialProductInit {
-// 				materialData := Response.SaleableResponseDTO{
-// 					ID:           item.ID,
-// 					ProductName:  item.MaterialProductName,
-// 					UnitPrice:    item.UnitPriceForSelling,
-// 					CategoryName: "",
-// 				}
-
-// 				*saleableProduct = append(*saleableProduct, materialData)
-// 			}
-// 		}
-
-// 		return saleableProduct, nil, http.StatusOK
-// 	}
-
-// 	categories, err := s.CategoryRepository.FindByNames(categoryQueries)
-// 	if err != nil || len(categories) == 0 {
-// 		return nil, fmt.Errorf("categories not found"), http.StatusNotFound
-// 	}
-
-// 	var categoryIDs []string
-// 	for _, category := range categories {
-// 		categoryIDs = append(categoryIDs, category.ID)
-// 	}
-
-// 	saleableProductInit, err := s.SaleableProductRepository.FindByCategory(company_id, categoryIDs)
-// 	if err != nil {
-// 		return nil, err, http.StatusInternalServerError
-// 	}
-
-// 	if saleableProductInit != nil {
-// 		if searchingProduct != "" {
-// 			searchProduct, err := s.SaleableProductRepository.FindByName(company_id, searchingProduct, categoryIDs)
-// 			if err != nil {
-// 				return nil, err, http.StatusInternalServerError
-// 			}
-
-// 			for _, item := range *searchProduct {
-// 				saleableData := Response.SaleableResponseDTO{
-// 					ID:           item.ID,
-// 					ProductName:  item.ProductName,
-// 					UnitPrice:    item.UnitPrice,
-// 					CategoryName: item.Category.CategoryName,
-// 				}
-
-// 				*saleableProduct = append(*saleableProduct, saleableData)
-// 			}
-
-// 			return saleableProduct, nil, http.StatusOK
-// 		}
-
-// 		for _, item := range *saleableProductInit {
-// 			saleableData := Response.SaleableResponseDTO{
-// 				ID:           item.ID,
-// 				ProductName:  item.ProductName,
-// 				UnitPrice:    item.UnitPrice,
-// 				CategoryName: item.Category.CategoryName,
-// 			}
-
-// 			*saleableProduct = append(*saleableProduct, saleableData)
-// 		}
-// 	}
-
-// 	return saleableProduct, nil, http.StatusOK
-// }
-
 func (s *SaleableProductService) FindAllSaleableProducts(company_id string, categoryQueries []string, searchingProduct string) (saleableProduct *[]Response.SaleableResponseDTO, err error, statusCode int) {
 	saleableProduct = &[]Response.SaleableResponseDTO{}
 
@@ -133,11 +38,26 @@ func (s *SaleableProductService) FindAllSaleableProducts(company_id string, cate
 
 		if saleableProductInit != nil {
 			for _, item := range *saleableProductInit {
+				toping := &[]Response.TopingDTO{}
+
+				if item.SaleableProductToping != nil {
+					for _, topingItem := range item.SaleableProductToping {
+						topingData := Response.TopingDTO{
+							ID:          topingItem.TopingID,
+							TopingName:  topingItem.Toping.TopingName,
+							PriceToping: topingItem.Toping.PriceToping,
+						}
+
+						*toping = append(*toping, topingData)
+					}
+				}
+
 				saleableData := Response.SaleableResponseDTO{
-					ID:           item.ID,
-					ProductName:  item.ProductName,
-					UnitPrice:    item.UnitPrice,
-					CategoryName: item.Category.CategoryName,
+					ID:                    item.ID,
+					ProductName:           item.ProductName,
+					UnitPrice:             item.UnitPrice,
+					CategoryName:          item.Category.CategoryName,
+					SaleableProductToping: *toping,
 				}
 
 				*saleableProduct = append(*saleableProduct, saleableData)
