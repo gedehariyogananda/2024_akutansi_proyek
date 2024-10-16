@@ -9,7 +9,7 @@ import (
 
 type (
 	IInvoiceSaleableRepository interface {
-		Create(request *Dto.InvoiceSaleableRequestDTO) (err error)
+		Create(request *Dto.InvoiceSaleableRequestDTO) (invoiceSaleable *Models.InvoiceSaleableProduct, err error)
 		Update(request *Dto.InvoiceSaleableRequestDTO, invoice_id string) (err error)
 		FindByInvoiceId(invoice_id string) (invoiceSaleable *[]Models.InvoiceSaleableProduct, err error)
 	}
@@ -23,8 +23,8 @@ func InvoiceSaleableRepositoryProvider(db *gorm.DB) *InvoiceSaleableRepository {
 	return &InvoiceSaleableRepository{DB: db}
 }
 
-func (r *InvoiceSaleableRepository) Create(request *Dto.InvoiceSaleableRequestDTO) (err error) {
-	invoiceSaleable := &Models.InvoiceSaleableProduct{
+func (r *InvoiceSaleableRepository) Create(request *Dto.InvoiceSaleableRequestDTO) (invoiceSaleable *Models.InvoiceSaleableProduct, err error) {
+	invoiceSaleable = &Models.InvoiceSaleableProduct{
 		InvoiceID:         request.InvoiceID,
 		SaleableProductID: request.SaleableProductID,
 		QuantitySold:      request.QuantitySold,
@@ -32,10 +32,10 @@ func (r *InvoiceSaleableRepository) Create(request *Dto.InvoiceSaleableRequestDT
 	}
 
 	if err := r.DB.Create(invoiceSaleable).Error; err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return invoiceSaleable, nil
 }
 
 func (r *InvoiceSaleableRepository) FindByInvoiceId(invoice_id string) (invoiceSaleable *[]Models.InvoiceSaleableProduct, err error) {

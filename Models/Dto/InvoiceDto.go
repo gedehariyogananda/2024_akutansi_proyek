@@ -1,10 +1,18 @@
 package Dto
 
 // ----- client request --- //
+
+type TopingsItem struct {
+	TopingID string `json:"toping_id" binding:"required"`
+	// SaleableProductID string `json:"saleable_product_id" binding:"required"`
+	// CompanyID         string `json:"company_id" binding:"required"`
+}
+
 type PurchasedItem struct {
-	ID           string `json:"id" binding:"required"`
-	QuantitySold int    `json:"quantity_sold" binding:"required"`
-	TotalPrice   int    `json:"total_price" binding:"required"`
+	ID           string        `json:"id" binding:"required"`
+	QuantitySold int           `json:"quantity_sold" binding:"required"`
+	TotalPrice   int           `json:"total_price" binding:"required"`
+	Topings      []TopingsItem `json:"topings" binding:"required,dive"`
 }
 
 type InvoiceRequestClient struct {

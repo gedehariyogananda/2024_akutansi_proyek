@@ -23,23 +23,27 @@ type (
 	}
 
 	InvoiceService struct {
-		InvoiceRepository         Repositories.IInvoiceRepository
-		InvoiceMaterialRepository Repositories.IInvoiceMaterialRepository
-		InvoiceSaleableRepository Repositories.IInvoiceSaleableRepository
-		SaleableProductRepository Repositories.ISaleableProductRepository
-		PaymentMethodRepository   Repositories.IPaymentMethodRepository
-		CompanyRepository         Repositories.ICompanyRepository
+		InvoiceRepository               Repositories.IInvoiceRepository
+		InvoiceMaterialRepository       Repositories.IInvoiceMaterialRepository
+		InvoiceSaleableRepository       Repositories.IInvoiceSaleableRepository
+		SaleableProductRepository       Repositories.ISaleableProductRepository
+		PaymentMethodRepository         Repositories.IPaymentMethodRepository
+		CompanyRepository               Repositories.ICompanyRepository
+		SaleableProductTopingRepository Repositories.ISaleableProductTopingRepository
+		InvoiceSaleableTopingRepository Repositories.IInvoiceSaleableTopingRepository
 	}
 )
 
-func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceMaterialRepository Repositories.IInvoiceMaterialRepository, invoiceSaleableRepository Repositories.IInvoiceSaleableRepository, saleableProductRepository Repositories.ISaleableProductRepository, paymentMethodRepository Repositories.IPaymentMethodRepository, companyRepository Repositories.ICompanyRepository) *InvoiceService {
+func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceMaterialRepository Repositories.IInvoiceMaterialRepository, invoiceSaleableRepository Repositories.IInvoiceSaleableRepository, saleableProductRepository Repositories.ISaleableProductRepository, paymentMethodRepository Repositories.IPaymentMethodRepository, companyRepository Repositories.ICompanyRepository, saleableProductTopingRepository Repositories.ISaleableProductTopingRepository, invoiceSaleableTopingRepository Repositories.IInvoiceSaleableTopingRepository) *InvoiceService {
 	return &InvoiceService{
-		InvoiceRepository:         invoiceRepository,
-		InvoiceMaterialRepository: invoiceMaterialRepository,
-		InvoiceSaleableRepository: invoiceSaleableRepository,
-		SaleableProductRepository: saleableProductRepository,
-		PaymentMethodRepository:   paymentMethodRepository,
-		CompanyRepository:         companyRepository,
+		InvoiceRepository:               invoiceRepository,
+		InvoiceMaterialRepository:       invoiceMaterialRepository,
+		InvoiceSaleableRepository:       invoiceSaleableRepository,
+		SaleableProductRepository:       saleableProductRepository,
+		PaymentMethodRepository:         paymentMethodRepository,
+		CompanyRepository:               companyRepository,
+		SaleableProductTopingRepository: saleableProductTopingRepository,
+		InvoiceSaleableTopingRepository: invoiceSaleableTopingRepository,
 	}
 }
 
@@ -114,9 +118,31 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 				CompanyID:         company_id,
 			}
 
-			if err := s.InvoiceSaleableRepository.Create(invoiceSaleableRequestDTO); err != nil {
+			invoiceSaleableProduct, err := s.InvoiceSaleableRepository.Create(invoiceSaleableRequestDTO)
+
+			// log invoiceSaleabelToping
+			fmt.Println("invoiceSaleableProduct : ", invoiceSaleableProduct)
+			fmt.Printf("InvoiceSaleableProduct ID: %s\n", invoiceSaleableProduct.ID)
+
+			if err != nil {
 				return nil, fmt.Errorf("failed to create saleable product for invoice: %w", err), http.StatusBadRequest
 			}
+
+			if len(purchase.Topings) > 0 {
+
+				for _, toping := range purchase.Topings {
+					invoiceSaleableTopingRequestDTO := &Dto.TopingsItem{
+						TopingID: toping.TopingID,
+						// SaleableProductID: purchase.ID,
+						// CompanyID:         company_id,
+					}
+
+					if err := s.InvoiceSaleableTopingRepository.Create(invoiceSaleableTopingRequestDTO, company_id, invoiceSaleableProduct.ID); err != nil {
+						return nil, fmt.Errorf("failed to create saleable product toping for invoice: %w", err), http.StatusBadRequest
+					}
+				}
+			}
+
 		}
 	}
 

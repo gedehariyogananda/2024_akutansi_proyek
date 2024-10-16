@@ -38,7 +38,7 @@ func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
-			"message": "Invalid request body",
+			"message": "Invalid request body : " + err.Error(),
 		}, http.StatusBadRequest)
 		return
 	}
