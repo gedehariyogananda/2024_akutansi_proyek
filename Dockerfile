@@ -5,8 +5,6 @@ ADD . /app
 WORKDIR /app
 RUN go build -o main .
 
-RUN touch .env
-
-EXPOSE 8899
+EXPOSE ${SERVER_PORT}
 
 CMD ["sh", "-c", "/app/main"]

@@ -10,7 +10,7 @@ func GetServerAddress() string {
 
 	app := os.Getenv("APP_ENV")
 
-	if app == "development" {
+	if app == "localhost" {
 		return "127.0.0.1:" + portServer
 	}
 	return ":" + portServer

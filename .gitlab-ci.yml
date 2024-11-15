@@ -1,0 +1,14 @@
+stages:
+  - build
+
+build-image:
+  stage: build
+  tags:
+    - be-duitku
+  only:
+    - main
+  script:
+    - echo "running build stage"
+    - docker image prune -f
+    - docker compose --env-file /home/duitku-env/.env-duitku-backend up -d --build
+
