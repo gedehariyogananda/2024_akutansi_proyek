@@ -10,6 +10,5 @@ build-image:
   script:
     - echo "running build stage"
     - docker image prune -f
-    - cp /home/duitku-env/.env-duitku-backend .env
     - docker compose up -d --build
 
