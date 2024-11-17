@@ -11,6 +11,7 @@ import (
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
+	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 )
 
@@ -76,4 +77,11 @@ func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
 	paymentMethodService := Services.PaymentMethodServiceProvider(paymentMethodRepository)
 	paymentMethodController := Controllers.PaymentMethodControllerProvider(paymentMethodService)
 	return paymentMethodController
+}
+
+func DIWebhook(db *gorm.DB, mongo2 *mongo.Client) *Controllers.WebhookController {
+	webhookRepository := Repositories.WebhookRepositoryProvider(mongo2)
+	webhookService := Services.WebhookServiceProvider(webhookRepository)
+	webhookController := Controllers.WebhookControllerProvider(webhookService)
+	return webhookController
 }

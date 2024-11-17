@@ -2,10 +2,10 @@ package main
 
 import (
 	"2024_akutansi_project/Config"
+	"2024_akutansi_project/Dependencies"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Routes"
 	"2024_akutansi_project/Utils"
-
 	_ "2024_akutansi_project/docs"
 
 	"github.com/gin-gonic/gin"
@@ -21,14 +21,12 @@ import (
 // @host localhost:8899
 
 func main() {
-
 	Utils.LoadEnv()
 
-	Config.Connect()
-	db := Config.DB
-	if db == nil {
-		panic("Failed to connect to database!")
-	}
+	deps := Dependencies.InitDependencies(
+		Dependencies.WithDB(),
+		Dependencies.WithMongo(),
+	)
 
 	setup := gin.Default()
 	setup.RemoveExtraSlash = true
@@ -40,7 +38,7 @@ func main() {
 
 	setup.Use(Middleware.SetupCORS())
 
-	Routes.Init(setup, db)
+	Routes.Init(setup, deps)
 
 	setup.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

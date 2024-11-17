@@ -8,6 +8,7 @@ import (
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/google/wire"
 	"gorm.io/gorm"
@@ -142,4 +143,19 @@ func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
 	))
 
 	return &Controllers.PaymentMethodController{}
+}
+
+func DIWebhook(db *gorm.DB, mongo *mongo.Client) *Controllers.WebhookController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.WebhookRepositoryProvider,
+		Services.WebhookServiceProvider,
+		Controllers.WebhookControllerProvider,
+
+		wire.Bind(new(Controllers.IWebhookController), new(*Controllers.WebhookController)),
+		wire.Bind(new(Services.IWebhookService), new(*Services.WebhookService)),
+		wire.Bind(new(Repositories.IWebhookRepository), new(*Repositories.WebhookRepository)),
+	),
+	))
+
+	return &Controllers.WebhookController{}
 }
