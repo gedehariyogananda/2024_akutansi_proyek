@@ -10,19 +10,18 @@ import (
 
 type User struct {
 	ID        string    `json:"id"`
-	Name      string    `json:"name"`
 	Username  string    `json:"username"`
+	Phone     string    `json:"phone"`
+	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	Password  string    `json:"-"`
-	Phone     string    `json:"phone"`
-	Token     string    `json:"-"`
 	CreatedAt time.Time `json:"created_at"`
+	DeletedAt time.Time `json:"deleted_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 
-	// hashed password
 	if u.Password != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 		if err != nil {

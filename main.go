@@ -23,7 +23,7 @@ import (
 func main() {
 
 	Utils.LoadEnv()
-
+	Config.InitRedis()
 	Config.Connect()
 	db := Config.DB
 	if db == nil {

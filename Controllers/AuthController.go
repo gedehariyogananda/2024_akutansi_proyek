@@ -52,15 +52,6 @@ func (c *AuthController) Register(ctx *gin.Context) {
 		"data":    user,
 	}, statusCode)
 }
-
-// Login godoc
-// @Summary Login
-// @Description Authenticate a user and return a token
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param loginRequest body Dto.LoginRequest true "Login request"
-// @Router /auth/login [post]
 func (c *AuthController) Login(ctx *gin.Context) {
 	var loginRequest Dto.LoginRequest
 

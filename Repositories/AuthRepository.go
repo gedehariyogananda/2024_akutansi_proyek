@@ -46,7 +46,7 @@ func (h *AuthRepository) InsertForRegister(request *Dto.RegisterRequest) (user *
 
 func (h *AuthRepository) UpdateToken(token string, user_id string) (err error) {
 	user := &Models.User{
-		Token: token,
+		// Token: token,
 	}
 
 	if err := h.DB.Model(&user).Where("id = ?", user_id).Update("token", token).Error; err != nil {
@@ -97,9 +97,9 @@ func (h *AuthRepository) CheckToken(token string, user_id string) (err error) {
 		return errors.New("user not found")
 	}
 
-	if user.Token != token {
-		return errors.New("token not match")
-	}
+	// if user.Token != token {
+	// 	return errors.New("token not match")
+	// }
 
 	return nil
 }
