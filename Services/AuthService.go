@@ -1,6 +1,7 @@
 package Services
 
 import (
+	"2024_akutansi_project/Config"
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Repositories"
@@ -14,7 +15,7 @@ type (
 	IAuthService interface {
 		Register(request *Dto.RegisterRequest) (user *Models.User, err error, statusCode int)
 
-		Login(request *Dto.LoginRequest) (user *Models.User, token string, err error, statusCode int)
+		Login(request *Dto.LoginOwnerRequest) (token string, statusCode int, err error)
 		TokenCompany(request *Dto.TokenCompanyRequest, user_id string) (token string, company *Models.Company, err error, statusCode int)
 	}
 
@@ -53,34 +54,37 @@ func (h *AuthService) Register(request *Dto.RegisterRequest) (user *Models.User,
 	return user, nil, http.StatusCreated
 }
 
-func (h *AuthService) Login(request *Dto.LoginRequest) (user *Models.User, token string, err error, statusCode int) {
-	userInit, err := h.authRepository.FindEmail(request.Email)
+func (h *AuthService) Login(request *Dto.LoginOwnerRequest) (token string, statusCode int, err error) {
+	userData, err := h.authRepository.FindEmail(request.Email)
 
 	if err != nil {
-		return nil, "", errors.New("email not found"), http.StatusNotFound
+		return "", http.StatusNotFound, errors.New("email not found")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(userInit.Password), []byte(request.Password)); err != nil {
-		return nil, "", errors.New("password not match"), http.StatusUnauthorized
+	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(request.Password)); err != nil {
+		return "", http.StatusUnauthorized, errors.New("password not match")
 	}
 
-	token, err = h.jwtService.GenerateToken(userInit.ID, request.Me)
+	token, duration, err := h.jwtService.GenerateToken(userData.ID, request.Me)
 
 	if err != nil {
-		return nil, "", errors.New("error generate token"), http.StatusInternalServerError
+		return "", http.StatusInternalServerError, errors.New("error generate token")
 	}
 
-	if err := h.authRepository.UpdateToken(token, userInit.ID); err != nil {
-		return nil, "", errors.New("error update token"), http.StatusInternalServerError
-	}
-
-	user, err = h.authRepository.GetUser(userInit.ID)
+	err = Config.SetToRedis(userData.ID, token, duration)
 
 	if err != nil {
-		return nil, "", errors.New("error get user"), http.StatusInternalServerError
+		return "", http.StatusInternalServerError, errors.New("error set redis")
 	}
 
-	return user, token, err, http.StatusOK
+	// checkTokenRedis, err := Config.GetFromRedis(userData.ID)
+	// if err != nil {
+	// 	return "", http.StatusInternalServerError, errors.New("error get token from redis")
+	// }
+
+	// log.Println("log: data token in redis: ", checkTokenRedis)
+
+	return token, http.StatusOK, err
 }
 
 func (h *AuthService) TokenCompany(request *Dto.TokenCompanyRequest, user_id string) (token string, company *Models.Company, err error, statusCode int) {

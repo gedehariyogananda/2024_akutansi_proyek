@@ -3,10 +3,12 @@ package Common
 import (
 	"os"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Meta struct {
-	PerPage         int    `json:"per_page"`
+	Limit           int    `json:"limit"`
 	Page            int    `json:"page"`
 	TotalData       int64  `json:"total_data"`
 	TotalPage       int64  `json:"total_page"`
@@ -14,27 +16,30 @@ type Meta struct {
 	NextPageURL     string `json:"next_page"`
 }
 
-func PaginateMetadata(totalData int64, perPage, page int, path string) (Meta Meta) {
-	Meta.PerPage = perPage
-	Meta.Page = page
-	Meta.TotalData = totalData
-
-	if perPage > 0 {
-		Meta.TotalPage = (totalData + int64(perPage) - 1) / int64(perPage)
-	} else {
-		Meta.TotalPage = 0
+func PaginateMetadata(ctx *gin.Context, totalData int64, limit int, page int) Meta {
+	totalPage := int64(0)
+	if limit > 0 {
+		totalPage = (totalData + int64(limit) - 1) / int64(limit)
 	}
 
-	Meta.PreviousPageURL = getPageURL(page-1, perPage, Meta.TotalPage, path)
-	Meta.NextPageURL = getPageURL(page+1, perPage, Meta.TotalPage, path)
+	path := ctx.Request.URL.Path
 
-	return Meta
+	meta := Meta{
+		Limit:     limit,
+		Page:      page,
+		TotalData: totalData,
+		TotalPage: totalPage,
+	}
+
+	meta.PreviousPageURL = getPageURL(page-1, limit, totalPage, path)
+	meta.NextPageURL = getPageURL(page+1, limit, totalPage, path)
+
+	return meta
 }
 
-// getPageURL Paginate
-func getPageURL(page int, perPage int, totalPage int64, path string) string {
+func getPageURL(page int, limit int, totalPage int64, path string) string {
 	if page < 1 || page > int(totalPage) {
 		return "-"
 	}
-	return os.Getenv("API_URL_V1") + path + "?perPage=" + strconv.Itoa(perPage) + "&page=" + strconv.Itoa(page)
+	return os.Getenv("API_URL_V1") + path + "?limit=" + strconv.Itoa(limit) + "&page=" + strconv.Itoa(page)
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"2024_akutansi_project/Config"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
 
@@ -41,6 +42,7 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 		token = token[7:]
 	}
 
+
 	claims, err := m.jwtService.ParseToken(token)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
@@ -55,18 +57,21 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 		return
 	}
 
+	// check token in redis
+	checkTokenRedis, err := Config.GetFromRedis(userID)
+
+	if err != nil || checkTokenRedis != token {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "UNAUTHORIZE: Token Mismatch"})
+		ctx.Abort()
+		return
+	}
+
 	ctx.Set("user_id", userID)
 
 	if companyID, ok := claims["companyId"].(string); ok {
 		ctx.Set("company_id", companyID)
 	} else {
 		fmt.Println("companyId not found in claims")
-	}
-
-	if err = m.authRepository.CheckToken(token, userID); err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized: Token Mismatch"})
-		ctx.Abort()
-		return
 	}
 
 	ctx.Next()

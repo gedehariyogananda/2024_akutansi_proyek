@@ -21,7 +21,7 @@ func AuthRoute(c *gin.RouterGroup, db *gorm.DB) {
 	})
 
 	route.POST("/register", authController.Register)
-	route.POST("/login", authController.Login)
+	route.POST("/login/owner", authController.LoginOwner)
 
 	// to update where user clicked spesify company
 	route.PUT("/changes-token/set", middleware.IsAuthenticate, authController.UpdateTokenCompany)

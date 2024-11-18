@@ -8,7 +8,7 @@ type RegisterRequest struct {
 	Phone    string `json:"phone" binding:"required"`
 }
 
-type LoginRequest struct {
+type LoginOwnerRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 	Me       bool   `json:"me" binding:"required"`

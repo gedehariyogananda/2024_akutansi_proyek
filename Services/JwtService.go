@@ -10,7 +10,7 @@ import (
 
 type (
 	IJwtService interface {
-		GenerateToken(userId string, me bool) (token string, err error)
+		GenerateToken(userId string, me bool) (token string, duration time.Duration, err error)
 		ParseToken(token string) (claims jwt.MapClaims, err error)
 		GenerateTokenWithCompany(userId string, company_id string) (token string, err error)
 	}
@@ -23,11 +23,14 @@ func JwtServiceProvider() *JwtService {
 	return &JwtService{}
 }
 
-func (s *JwtService) GenerateToken(userId string, me bool) (token string, err error) {
-	expiredTime := time.Now().Add(7 * 24 * time.Hour)
+func (s *JwtService) GenerateToken(userId string, me bool) (token string, duration time.Duration, err error) {
+
+	duration = 7 * 24 * time.Hour
+	expiredTime := time.Now().Add(duration) // 1 minggu
 
 	if me {
-		expiredTime = time.Now().Add(1 * 30 * 24 * time.Hour) // 1 bulan
+		duration = 30 * 24 * time.Hour
+		expiredTime = time.Now().Add(duration) // 1 bulan
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -37,10 +40,10 @@ func (s *JwtService) GenerateToken(userId string, me bool) (token string, err er
 
 	token, err = jwtToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
-		return "", err
+		return "", 0, fmt.Errorf("failed to sign JWT token: %w", err)
 	}
 
-	return token, nil
+	return token, duration, nil
 }
 
 func (s *JwtService) ParseToken(token string) (claims jwt.MapClaims, err error) {

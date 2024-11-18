@@ -52,33 +52,22 @@ func (c *AuthController) Register(ctx *gin.Context) {
 		"data":    user,
 	}, statusCode)
 }
-func (c *AuthController) Login(ctx *gin.Context) {
-	var loginRequest Dto.LoginRequest
+func (c *AuthController) LoginOwner(ctx *gin.Context) {
+	var loginOwnerDTO Dto.LoginOwnerRequest
 
-	if err := ctx.ShouldBind(&loginRequest); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+	if err := ctx.ShouldBind(&loginOwnerDTO); err != nil {
+		Helper.SetValidationErrorResponse(ctx, err.Error())
 		return
 	}
 
-	user, token, err, statusCode := c.service.Login(&loginRequest)
+	token, statusCode, err := c.service.Login(&loginOwnerDTO)
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Login successful",
-		"data": gin.H{
-			"user":  user,
-			"token": token,
-		},
+	Helper.SetSuccessResponse(ctx, "Login Owner Successful", gin.H{
+		"token": token,
 	}, statusCode)
 }
 
