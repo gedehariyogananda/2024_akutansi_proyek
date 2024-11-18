@@ -145,17 +145,17 @@ func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
 	return &Controllers.PaymentMethodController{}
 }
 
-func DIWebhook(db *gorm.DB, mongo *mongo.Client) *Controllers.WebhookController {
+func DIProfile(db *gorm.DB, mongo *mongo.Client) *Controllers.ProfileController {
 	panic(wire.Build(wire.NewSet(
-		Repositories.WebhookRepositoryProvider,
-		Services.WebhookServiceProvider,
-		Controllers.WebhookControllerProvider,
+		Repositories.ProfileRepositoryProvider,
+		Services.ProfileServiceProvider,
+		Controllers.ProfileControllerProvider,
 
-		wire.Bind(new(Controllers.IWebhookController), new(*Controllers.WebhookController)),
-		wire.Bind(new(Services.IWebhookService), new(*Services.WebhookService)),
-		wire.Bind(new(Repositories.IWebhookRepository), new(*Repositories.WebhookRepository)),
+		wire.Bind(new(Controllers.IProfileController), new(*Controllers.ProfileController)),
+		wire.Bind(new(Services.IProfileService), new(*Services.ProfileService)),
+		wire.Bind(new(Repositories.IProfileRepository), new(*Repositories.ProfileRepository)),
 	),
 	))
 
-	return &Controllers.WebhookController{}
+	return &Controllers.ProfileController{}
 }

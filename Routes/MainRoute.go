@@ -17,5 +17,5 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	CategoryRoute(apiPrefix, deps.DB)
 	PaymentMethodRoute(apiPrefix, deps.DB)
 
-	WebhookRoute(apiPrefix, deps.DB, deps.Mongo)
+	ProfileRoute(apiPrefix, deps.DB, deps.Mongo)
 }

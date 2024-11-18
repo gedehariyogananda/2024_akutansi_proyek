@@ -79,9 +79,9 @@ func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
 	return paymentMethodController
 }
 
-func DIWebhook(db *gorm.DB, mongo2 *mongo.Client) *Controllers.WebhookController {
-	webhookRepository := Repositories.WebhookRepositoryProvider(mongo2)
-	webhookService := Services.WebhookServiceProvider(webhookRepository)
-	webhookController := Controllers.WebhookControllerProvider(webhookService)
-	return webhookController
+func DIProfile(db *gorm.DB, mongo2 *mongo.Client) *Controllers.ProfileController {
+	profileRepository := Repositories.ProfileRepositoryProvider(mongo2)
+	profileService := Services.ProfileServiceProvider(profileRepository)
+	profileController := Controllers.ProfileControllerProvider(profileService)
+	return profileController
 }
