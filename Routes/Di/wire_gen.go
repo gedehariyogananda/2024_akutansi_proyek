@@ -7,6 +7,7 @@
 package Di
 
 import (
+	"2024_akutansi_project/Connector"
 	"2024_akutansi_project/Controllers"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
@@ -81,7 +82,8 @@ func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
 
 func DIProfile(db *gorm.DB, mongo2 *mongo.Client) *Controllers.ProfileController {
 	profileRepository := Repositories.ProfileRepositoryProvider(mongo2)
-	profileService := Services.ProfileServiceProvider(profileRepository)
+	shopeeConnector := Connector.ShopeeConnectorProvider()
+	profileService := Services.ProfileServiceProvider(profileRepository, shopeeConnector)
 	profileController := Controllers.ProfileControllerProvider(profileService)
 	return profileController
 }

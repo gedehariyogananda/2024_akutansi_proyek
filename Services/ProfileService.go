@@ -1,6 +1,7 @@
 package Services
 
 import (
+	"2024_akutansi_project/Connector"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Repositories"
 	"context"
@@ -18,11 +19,15 @@ type (
 
 	ProfileService struct {
 		ProfileRepository Repositories.IProfileRepository
+		ShopeeConnector   Connector.IShopeeConnector
 	}
 )
 
-func ProfileServiceProvider(paymentMethodRepository Repositories.IProfileRepository) *ProfileService {
-	return &ProfileService{ProfileRepository: paymentMethodRepository}
+func ProfileServiceProvider(profileRepository Repositories.IProfileRepository, shopeeConnector Connector.IShopeeConnector) *ProfileService {
+	return &ProfileService{
+		ProfileRepository: profileRepository,
+		ShopeeConnector:   shopeeConnector,
+	}
 }
 
 func (service *ProfileService) IntegrateShopeeProfile(ctx context.Context, request *Dto.ShopeeIntegrateRequest) (statusCode int, err error) {
@@ -45,8 +50,18 @@ func (service *ProfileService) IntegrateShopeeProfile(ctx context.Context, reque
 
 	var shopeeToken string
 	if integratedProfile.ShopeeToken == nil {
-		// todo :: integrate to get shopee token and adjust mock token
-		shopeeToken = "1234qwerasdf5678"
+		if err = service.ShopeeConnector.SetPushNotification(ctx, &Dto.SetPushNotificationShopeeRequest{
+			PartnerID:         request.PartnerID,
+			PartnerKey:        request.PartnerKey,
+			BlockedShopIdList: nil,
+			CallbackUrl:       "",
+			SetPushConfigOff:  nil,
+			SetPushConfigOn:   nil,
+		}); err != nil {
+			return http.StatusBadRequest, err
+		}
+
+		shopeeToken = request.PartnerID
 	} else {
 		shopeeToken = *integratedProfile.ShopeeToken
 	}

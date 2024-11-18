@@ -12,6 +12,8 @@ type IntegratedProfile struct {
 }
 
 type ShopeeIntegrateRequest struct {
+	PartnerID  string `json:"partner_id"`
+	PartnerKey string `json:"partner_key"`
 }
 
 type TiktokIntegrateRequest struct {

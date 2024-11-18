@@ -4,6 +4,7 @@
 package Di
 
 import (
+	"2024_akutansi_project/Connector"
 	"2024_akutansi_project/Controllers"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
@@ -150,10 +151,12 @@ func DIProfile(db *gorm.DB, mongo *mongo.Client) *Controllers.ProfileController 
 		Repositories.ProfileRepositoryProvider,
 		Services.ProfileServiceProvider,
 		Controllers.ProfileControllerProvider,
+		Connector.ShopeeConnectorProvider,
 
 		wire.Bind(new(Controllers.IProfileController), new(*Controllers.ProfileController)),
 		wire.Bind(new(Services.IProfileService), new(*Services.ProfileService)),
 		wire.Bind(new(Repositories.IProfileRepository), new(*Repositories.ProfileRepository)),
+		wire.Bind(new(Connector.IShopeeConnector), new(*Connector.ShopeeConnector)),
 	),
 	))
 
