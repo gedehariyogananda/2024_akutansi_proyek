@@ -17,18 +17,18 @@ import (
 // Injectors from wire.go:
 
 func DIAuth(db *gorm.DB) *Controllers.AuthController {
-	authRepository := Repositories.AuthRepositoryProvider(db)
+	userRepository := Repositories.UserRepositoryProvider(db)
 	jwtService := Services.JwtServiceProvider()
 	companyRepository := Repositories.CompanyRepositoryProvider(db)
-	authService := Services.AuthServiceProvider(authRepository, jwtService, companyRepository)
+	subUserRepository := Repositories.SubUserRepositoryProvider(db)
+	authService := Services.AuthServiceProvider(userRepository, jwtService, companyRepository, subUserRepository)
 	authController := Controllers.AuthControllerProvider(authService)
 	return authController
 }
 
 func DICommonMiddleware(db *gorm.DB) *Middleware.CommondMiddleware {
 	jwtService := Services.JwtServiceProvider()
-	authRepository := Repositories.AuthRepositoryProvider(db)
-	commondMiddleware := Middleware.CommonMiddlewareProvider(jwtService, authRepository)
+	commondMiddleware := Middleware.CommonMiddlewareProvider(jwtService)
 	return commondMiddleware
 }
 

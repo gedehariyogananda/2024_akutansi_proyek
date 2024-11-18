@@ -1,10 +1,10 @@
 package Models
 
 import (
+	"2024_akutansi_project/Utils"
 	"time"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -15,24 +15,29 @@ type User struct {
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	Password  string    `json:"-"`
+	CompanyID string    `json:"company_id"`
 	CreatedAt time.Time `json:"created_at"`
 	DeletedAt time.Time `json:"deleted_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-
-	if u.Password != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if u.ID == "" {
+		uuid, err := uuid.NewV7()
 		if err != nil {
 			return err
 		}
-		u.Password = string(hashedPassword)
+
+		u.ID = uuid.String()
 	}
 
-	// uuid
-	if u.ID == "" {
-		u.ID = uuid.New().String()
+	if u.Password != "" {
+		hashed, err := Utils.HashPassword(u.Password)
+		if err != nil {
+			return err
+		}
+
+		u.Password = hashed
 	}
 
 	return

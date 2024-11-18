@@ -1,12 +1,10 @@
 package Middleware
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
 	"2024_akutansi_project/Config"
-	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
 
 	"github.com/gin-gonic/gin"
@@ -18,15 +16,13 @@ type (
 	}
 
 	CommondMiddleware struct {
-		jwtService     Services.IJwtService
-		authRepository Repositories.IAuthRepository
+		jwtService Services.IJwtService
 	}
 )
 
-func CommonMiddlewareProvider(jwtService Services.IJwtService, authRespository Repositories.IAuthRepository) *CommondMiddleware {
+func CommonMiddlewareProvider(jwtService Services.IJwtService) *CommondMiddleware {
 	return &CommondMiddleware{
-		jwtService:     jwtService,
-		authRepository: authRespository,
+		jwtService: jwtService,
 	}
 }
 
@@ -42,7 +38,6 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 		token = token[7:]
 	}
 
-
 	claims, err := m.jwtService.ParseToken(token)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
@@ -50,15 +45,19 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 		return
 	}
 
-	userID, ok := claims["userId"].(string)
+	// all claims
+	id, ok := claims["id"].(string)
+	companyId, _ := claims["companyId"].(string)
+	isEmployee, _ := claims["is_employee"].(bool)
+
 	if !ok {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid User ID"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid ID"})
 		ctx.Abort()
 		return
 	}
 
-	// check token in redis
-	checkTokenRedis, err := Config.GetFromRedis(userID)
+	// check safety token in redis
+	checkTokenRedis, err := Config.GetFromRedis(id)
 
 	if err != nil || checkTokenRedis != token {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "UNAUTHORIZE: Token Mismatch"})
@@ -66,13 +65,10 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Set("user_id", userID)
-
-	if companyID, ok := claims["companyId"].(string); ok {
-		ctx.Set("company_id", companyID)
-	} else {
-		fmt.Println("companyId not found in claims")
-	}
+	// set to context
+	ctx.Set("id", id)
+	ctx.Set("companyId", companyId)
+	ctx.Set("isEmployee", isEmployee)
 
 	ctx.Next()
 }

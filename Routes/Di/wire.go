@@ -15,15 +15,17 @@ import (
 
 func DIAuth(db *gorm.DB) *Controllers.AuthController {
 	panic(wire.Build(wire.NewSet(
-		Repositories.AuthRepositoryProvider,
+		Repositories.UserRepositoryProvider,
 		Services.AuthServiceProvider,
 		Controllers.AuthControllerProvider,
 		Services.JwtServiceProvider,
+		Repositories.SubUserRepositoryProvider,
 		Repositories.CompanyRepositoryProvider,
 
 		wire.Bind(new(Controllers.IAuthController), new(*Controllers.AuthController)),
+		wire.Bind(new(Repositories.ISubUserRepository), new(*Repositories.SubUserRepository)),
 		wire.Bind(new(Services.IAuthService), new(*Services.AuthService)),
-		wire.Bind(new(Repositories.IAuthRepository), new(*Repositories.AuthRepository)),
+		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
 		wire.Bind(new(Services.IJwtService), new(*Services.JwtService)),
 		wire.Bind(new(Repositories.ICompanyRepository), new(*Repositories.CompanyRepository)),
 	),
@@ -36,10 +38,10 @@ func DICommonMiddleware(db *gorm.DB) *Middleware.CommondMiddleware {
 	panic(wire.Build(wire.NewSet(
 		Middleware.CommonMiddlewareProvider,
 		Services.JwtServiceProvider,
-		Repositories.AuthRepositoryProvider,
+		Repositories.UserRepositoryProvider,
 
 		wire.Bind(new(Services.IJwtService), new(*Services.JwtService)),
-		wire.Bind(new(Repositories.IAuthRepository), new(*Repositories.AuthRepository)),
+		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
 		wire.Bind(new(Middleware.ICommonMiddleware), new(*Middleware.CommondMiddleware)),
 	),
 	))

@@ -12,17 +12,8 @@ func AuthRoute(c *gin.RouterGroup, db *gorm.DB) {
 
 	authController := Di.DIAuth(db)
 
-	middleware := Di.DICommonMiddleware(db)
-
-	route.GET("/checked", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{
-			"message": "checked healt",
-		})
-	})
-
 	route.POST("/register", authController.Register)
 	route.POST("/login/owner", authController.LoginOwner)
+	route.POST("/login/employee", authController.LoginEmployee)
 
-	// to update where user clicked spesify company
-	route.PUT("/changes-token/set", middleware.IsAuthenticate, authController.UpdateTokenCompany)
 }

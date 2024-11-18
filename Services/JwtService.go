@@ -10,7 +10,7 @@ import (
 
 type (
 	IJwtService interface {
-		GenerateToken(userId string, me bool) (token string, duration time.Duration, err error)
+		GenerateToken(id string, company_id string, is_employee bool, me bool) (token string, duration time.Duration, err error)
 		ParseToken(token string) (claims jwt.MapClaims, err error)
 		GenerateTokenWithCompany(userId string, company_id string) (token string, err error)
 	}
@@ -23,7 +23,7 @@ func JwtServiceProvider() *JwtService {
 	return &JwtService{}
 }
 
-func (s *JwtService) GenerateToken(userId string, me bool) (token string, duration time.Duration, err error) {
+func (s *JwtService) GenerateToken(id string, company_id string, is_employee bool, me bool) (token string, duration time.Duration, err error) {
 
 	duration = 7 * 24 * time.Hour
 	expiredTime := time.Now().Add(duration) // 1 minggu
@@ -34,8 +34,10 @@ func (s *JwtService) GenerateToken(userId string, me bool) (token string, durati
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userId": userId,
-		"exp":    expiredTime.Unix(),
+		"id":          id,
+		"companyId":   company_id,
+		"is_employee": is_employee,
+		"exp":         expiredTime.Unix(),
 	})
 
 	token, err = jwtToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
