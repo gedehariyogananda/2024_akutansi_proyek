@@ -39,37 +39,42 @@ func (service *ProfileService) IntegrateShopeeProfile(ctx context.Context, reque
 		}
 
 		integratedProfile, err = service.ProfileRepository.IntegrateProfile(ctx, Dto.IntegratedProfile{
-			UserID:      userID,
-			ShopeeToken: nil,
-			TiktokToken: nil,
+			UserID: userID,
+			Shopee: nil,
+			Tiktok: nil,
 		})
 		if err != nil {
 			return http.StatusBadRequest, err
 		}
 	}
 
-	var shopeeToken string
-	if integratedProfile.ShopeeToken == nil {
-		if err = service.ShopeeConnector.SetPushNotification(ctx, &Dto.SetPushNotificationShopeeRequest{
-			PartnerID:         request.PartnerID,
-			PartnerKey:        request.PartnerKey,
-			BlockedShopIdList: nil,
-			CallbackUrl:       "",
-			SetPushConfigOff:  nil,
-			SetPushConfigOn:   nil,
-		}); err != nil {
-			return http.StatusBadRequest, err
-		}
-
-		shopeeToken = request.PartnerID
-	} else {
-		shopeeToken = *integratedProfile.ShopeeToken
+	var shopeeToken Dto.Integration
+	// force reintegrate
+	if err = service.ShopeeConnector.SetPushNotification(ctx, &Dto.SetPushNotificationShopeeRequest{
+		PartnerID:         request.PartnerID,
+		PartnerKey:        request.PartnerKey,
+		BlockedShopIdList: nil,
+		CallbackUrl:       "",
+		SetPushConfigOff:  nil,
+		SetPushConfigOn:   nil,
+	}); err != nil {
+		return http.StatusBadRequest, err
 	}
 
+	// build integrated credential to store
+	shopeeToken = Dto.Integration{
+		Integrated: true,
+		Credential: map[string]string{
+			"partner_id":  request.PartnerID,
+			"partner_key": request.PartnerKey,
+		},
+	}
+
+	// store integrate status and credential on user
 	_, err = service.ProfileRepository.IntegrateProfile(ctx, Dto.IntegratedProfile{
-		UserID:      userID,
-		ShopeeToken: &shopeeToken,
-		TiktokToken: integratedProfile.TiktokToken,
+		UserID: userID,
+		Shopee: &shopeeToken,
+		Tiktok: integratedProfile.Tiktok,
 	})
 
 	return http.StatusOK, nil

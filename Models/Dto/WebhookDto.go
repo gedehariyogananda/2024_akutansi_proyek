@@ -6,9 +6,14 @@ import (
 )
 
 type IntegratedProfile struct {
-	UserID      string  `json:"user_id" bson:"user_id"`
-	ShopeeToken *string `json:"shopee_token,omitempty" bson:"shopee_token,omitempty"`
-	TiktokToken *string `json:"tiktok_token,omitempty" bson:"tiktok_token,omitempty"`
+	UserID string       `json:"user_id" bson:"user_id"`
+	Shopee *Integration `json:"shopee,omitempty" bson:"shopee,omitempty"`
+	Tiktok *Integration `json:"tiktok,omitempty" bson:"tiktok,omitempty"`
+}
+
+type Integration struct {
+	Integrated bool `json:"integrated" bson:"integrated"`
+	Credential any  `json:"credential" bson:"credential"`
 }
 
 type ShopeeIntegrateRequest struct {
@@ -22,31 +27,43 @@ type TiktokIntegrateRequest struct {
 }
 
 func (i *IntegratedProfile) EncryptTokenData() {
-	if i.ShopeeToken != nil {
-		byteShopeeToken, _ := json.Marshal(i.ShopeeToken)
+	if i.Shopee != nil {
+		byteShopeeToken, _ := json.Marshal(i.Shopee.Credential)
 		encryptedData, _ := Helper.EncryptData(byteShopeeToken)
-		i.ShopeeToken = &encryptedData
+		i.Shopee = &Integration{
+			Integrated: i.Shopee.Integrated,
+			Credential: encryptedData,
+		}
 	}
 
-	if i.TiktokToken != nil {
-		byteTiktokToken, _ := json.Marshal(i.TiktokToken)
+	if i.Tiktok != nil {
+		byteTiktokToken, _ := json.Marshal(i.Tiktok.Credential)
 		encryptedData, _ := Helper.EncryptData(byteTiktokToken)
-		i.TiktokToken = &encryptedData
+		i.Tiktok = &Integration{
+			Integrated: i.Tiktok.Integrated,
+			Credential: encryptedData,
+		}
 	}
 }
 
 func (i *IntegratedProfile) DecryptTokenData() {
-	if i.ShopeeToken != nil {
-		decryptedData, _ := Helper.DecryptData(*i.ShopeeToken)
-		var tokenData string
+	if i.Shopee != nil {
+		decryptedData, _ := Helper.DecryptData(i.Shopee.Credential.(string))
+		var tokenData map[string]string
 		_ = json.Unmarshal(decryptedData, &tokenData)
-		i.ShopeeToken = &tokenData
+		i.Shopee = &Integration{
+			Integrated: i.Shopee.Integrated,
+			Credential: tokenData,
+		}
 	}
 
-	if i.TiktokToken != nil {
-		decryptedData, _ := Helper.DecryptData(*i.TiktokToken)
-		var tokenData string
+	if i.Tiktok != nil {
+		decryptedData, _ := Helper.DecryptData(i.Tiktok.Credential.(string))
+		var tokenData map[string]string
 		_ = json.Unmarshal(decryptedData, &tokenData)
-		i.TiktokToken = &tokenData
+		i.Tiktok = &Integration{
+			Integrated: i.Tiktok.Integrated,
+			Credential: tokenData,
+		}
 	}
 }

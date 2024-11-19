@@ -40,12 +40,12 @@ func (r *ProfileRepository) IntegrateProfile(ctx context.Context, payload Dto.In
 	update := bson.D{{Key: "$set", Value: payload}}
 
 	// Perform the upsert operation
-	data, err := collection.UpdateOne(ctx, filter, update, opts)
+	_, err := collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upsert document: %v", err)
 	}
 
-	fmt.Printf("Upserted document with ID: %v\n", data.UpsertedID)
+	fmt.Printf("Upserted document on user_id: %v\n", payload.UserID)
 
 	return &payload, nil
 }
@@ -57,9 +57,9 @@ func (r *ProfileRepository) GetIntegratedProfile(ctx context.Context, userID str
 	filter := bson.D{{Key: "user_id", Value: userID}}
 
 	var result struct {
-		UserID      string  `bson:"user_id"`
-		ShopeeToken *string `bson:"shopee_token,omitempty"`
-		TiktokToken *string `bson:"tiktok_token,omitempty"`
+		UserID string           `bson:"user_id"`
+		Shopee *Dto.Integration `bson:"shopee,omitempty"`
+		Tiktok *Dto.Integration `bson:"tiktok,omitempty"`
 	}
 
 	// Find the document
@@ -70,9 +70,9 @@ func (r *ProfileRepository) GetIntegratedProfile(ctx context.Context, userID str
 
 	// Map the result back to the DTO structure
 	payload := &Dto.IntegratedProfile{
-		UserID:      result.UserID,
-		ShopeeToken: result.ShopeeToken,
-		TiktokToken: result.TiktokToken,
+		UserID: result.UserID,
+		Shopee: result.Shopee,
+		Tiktok: result.Tiktok,
 	}
 
 	payload.DecryptTokenData()

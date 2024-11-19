@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -29,6 +30,7 @@ func ShopeeConnectorProvider() *ShopeeConnector {
 	return &ShopeeConnector{}
 }
 
+// TODO :: adjust the integrate shopee
 func (c *ShopeeConnector) SetPushNotification(ctx context.Context, request *Dto.SetPushNotificationShopeeRequest) error {
 	params := url.Values{}
 
@@ -82,7 +84,18 @@ func (c *ShopeeConnector) SetPushNotification(ctx context.Context, request *Dto.
 		return err
 	}
 
-	fmt.Println(fmt.Sprintf("set push notification to shopee got %v, response : %v", resp.StatusCode, resp.Body))
+	// Re-usable response body for logging
+	rawBody, _ := io.ReadAll(resp.Body)
+	resp.Body.Close() // must immediately close
+	resp.Body = io.NopCloser(bytes.NewBuffer(rawBody))
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		err = fmt.Errorf("set push notification to shopee got %v, response : %v", resp.StatusCode, string(rawBody))
+		fmt.Println(fmt.Sprintf("set push notif got err = %v", err))
+		return err
+	}
+
+	fmt.Println(fmt.Sprintf("set push notification to shopee got %v, response : %v", resp.StatusCode, string(rawBody)))
 
 	return nil
 }
