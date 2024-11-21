@@ -77,3 +77,10 @@ func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
 	paymentMethodController := Controllers.PaymentMethodControllerProvider(paymentMethodService)
 	return paymentMethodController
 }
+
+func DIWaitingList(db *gorm.DB) *Controllers.WaitingListController {
+	waitingListRepository := Repositories.WaitingListRepositoryProvider(db)
+	waitingListService := Services.WaitingListServiceProvider(waitingListRepository)
+	waitingListController := Controllers.WaitingListControllerProvider(waitingListService)
+	return waitingListController
+}
