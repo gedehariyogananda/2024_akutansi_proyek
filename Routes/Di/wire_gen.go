@@ -77,3 +77,10 @@ func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
 	paymentMethodController := Controllers.PaymentMethodControllerProvider(paymentMethodService)
 	return paymentMethodController
 }
+
+func DIUnit(db *gorm.DB) *Controllers.UnitController {
+	unitRepository := Repositories.UnitProvider(db)
+	unitService := Services.UnitProvider(unitRepository)
+	unitController := Controllers.UnitProvider(unitService)
+	return unitController
+}
