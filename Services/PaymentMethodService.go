@@ -12,7 +12,7 @@ type (
 	IPaymentMethodService interface {
 		FindAllPaymentMethod(company_id string) (paymentMethod *[]Models.PaymentMethod, err error)
 		CreatePaymentMethod(request *Dto.CreatePaymentMethodRequestDTO, company_id string) (paymentMethod *Models.PaymentMethod, statusCode int, err error)
-		UpdatePaymentMethod(request *Dto.UpdatePaymentMethodRequestDTO, id string, company_id string) (paymentMethod *Models.PaymentMethod, statusCode int, err error)
+	UpdatePaymentMethod(request *Dto.UpdatePaymentMethodRequestDTO, id string, company_id string) (paymentMethod *Models.PaymentMethod, statusCode int, err error)
 		DeletePaymentMethod(id string) (statusCode int, err error)
 	}
 

@@ -1,20 +1,21 @@
 package Dto
 
 type RegisterRequest struct {
-	Name     string `json:"name" binding:"required"`
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
-	Phone    string `json:"phone" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Phone       string `json:"phone" binding:"required"`
+	Email       string `json:"email" binding:"required,email"`
+	Password    string `json:"password" binding:"required"`
+	CompanyName string `json:"company_name" binding:"required"`
 }
 
-type LoginRequest struct {
-	Email    string `json:"email" example:"ari@gmail.com" binding:"required,email"`
+type LoginOwnerRequest struct {
+	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
-	Token    string `json:"token" swagger:"ignore"`
 	Me       bool   `json:"me" binding:"required"`
 }
 
-type TokenCompanyRequest struct {
-	CompanyID string `json:"company_id"`
+type LoginEmployeeRequest struct {
+	EmployeeKey string `json:"employee_key" binding:"required"`
+	Password    string `json:"password" binding:"required"`
+	Me          bool   `json:"me" binding:"required"`
 }

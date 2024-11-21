@@ -11,24 +11,25 @@ import (
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 // Injectors from wire.go:
 
-func DIAuth(db *gorm.DB) *Controllers.AuthController {
-	authRepository := Repositories.AuthRepositoryProvider(db)
+func DIAuth(db *gorm.DB, redis2 *redis.Client) *Controllers.AuthController {
+	userRepository := Repositories.UserRepositoryProvider(db)
 	jwtService := Services.JwtServiceProvider()
 	companyRepository := Repositories.CompanyRepositoryProvider(db)
-	authService := Services.AuthServiceProvider(authRepository, jwtService, companyRepository)
+	subUserRepository := Repositories.SubUserRepositoryProvider(db)
+	authService := Services.AuthServiceProvider(userRepository, jwtService, companyRepository, subUserRepository, redis2)
 	authController := Controllers.AuthControllerProvider(authService)
 	return authController
 }
 
-func DICommonMiddleware(db *gorm.DB) *Middleware.CommondMiddleware {
+func DICommonMiddleware(db *gorm.DB, redis2 *redis.Client) *Middleware.CommondMiddleware {
 	jwtService := Services.JwtServiceProvider()
-	authRepository := Repositories.AuthRepositoryProvider(db)
-	commondMiddleware := Middleware.CommonMiddlewareProvider(jwtService, authRepository)
+	commondMiddleware := Middleware.CommonMiddlewareProvider(jwtService, redis2)
 	return commondMiddleware
 }
 
