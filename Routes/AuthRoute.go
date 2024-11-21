@@ -4,13 +4,14 @@ import (
 	"2024_akutansi_project/Routes/Di"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-func AuthRoute(c *gin.RouterGroup, db *gorm.DB) {
+func AuthRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	route := c.Group("/auth")
 
-	authController := Di.DIAuth(db)
+	authController := Di.DIAuth(db, redis)
 
 	route.POST("/register", authController.Register)
 	route.POST("/login/owner", authController.LoginOwner)

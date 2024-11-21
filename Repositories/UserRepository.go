@@ -11,7 +11,7 @@ import (
 type (
 	IUserRepository interface {
 		Create(userClient *Models.User) (*Models.User, error)
-		GetUser(user_id string) (user *Models.User, err error)
+		GetUser(userID string) (user *Models.User, err error)
 		FindEmail(email string) (user *Models.User, err error)
 	}
 
@@ -44,11 +44,11 @@ func (h *UserRepository) FindEmail(email string) (user *Models.User, err error) 
 	return user, nil
 }
 
-func (h *UserRepository) GetUser(user_id string) (user *Models.User, err error) {
+func (h *UserRepository) GetUser(userID string) (user *Models.User, err error) {
 	user = &Models.User{}
 
 	if err := h.DB.
-		Where("id = ?", user_id).
+		Where("id = ?", userID).
 		First(user).Error; err != nil {
 		return nil, errors.New("user not found")
 	}

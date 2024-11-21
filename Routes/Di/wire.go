@@ -10,10 +10,11 @@ import (
 	"2024_akutansi_project/Services"
 
 	"github.com/google/wire"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-func DIAuth(db *gorm.DB) *Controllers.AuthController {
+func DIAuth(db *gorm.DB, redis *redis.Client) *Controllers.AuthController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.UserRepositoryProvider,
 		Services.AuthServiceProvider,
@@ -34,7 +35,7 @@ func DIAuth(db *gorm.DB) *Controllers.AuthController {
 	return &Controllers.AuthController{}
 }
 
-func DICommonMiddleware(db *gorm.DB) *Middleware.CommondMiddleware {
+func DICommonMiddleware(db *gorm.DB, redis *redis.Client) *Middleware.CommondMiddleware {
 	panic(wire.Build(wire.NewSet(
 		Middleware.CommonMiddlewareProvider,
 		Services.JwtServiceProvider,

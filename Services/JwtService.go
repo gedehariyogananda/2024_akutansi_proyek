@@ -10,9 +10,8 @@ import (
 
 type (
 	IJwtService interface {
-		GenerateToken(id string, company_id string, is_employee bool, me bool) (token string, duration time.Duration, err error)
+		GenerateToken(id string, companyID string, isEmployee bool, me bool) (token string, duration time.Duration, err error)
 		ParseToken(token string) (claims jwt.MapClaims, err error)
-		GenerateTokenWithCompany(userId string, company_id string) (token string, err error)
 	}
 
 	JwtService struct {
@@ -23,7 +22,7 @@ func JwtServiceProvider() *JwtService {
 	return &JwtService{}
 }
 
-func (s *JwtService) GenerateToken(id string, company_id string, is_employee bool, me bool) (token string, duration time.Duration, err error) {
+func (s *JwtService) GenerateToken(id string, companyID string, isEmployee bool, me bool) (token string, duration time.Duration, err error) {
 
 	duration = 7 * 24 * time.Hour
 	expiredTime := time.Now().Add(duration) // 1 minggu
@@ -35,8 +34,8 @@ func (s *JwtService) GenerateToken(id string, company_id string, is_employee boo
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":          id,
-		"companyId":   company_id,
-		"is_employee": is_employee,
+		"company_id":  companyID,
+		"is_employee": isEmployee,
 		"exp":         expiredTime.Unix(),
 	})
 
@@ -64,21 +63,4 @@ func (s *JwtService) ParseToken(token string) (claims jwt.MapClaims, err error) 
 	}
 
 	return claims, nil
-}
-
-func (s *JwtService) GenerateTokenWithCompany(userId string, company_id string) (token string, err error) {
-	expiredTime := time.Now().Add(1 * 30 * 24 * time.Hour) // 1 bulan
-
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userId":    userId,
-		"companyId": company_id,
-		"exp":       expiredTime.Unix(),
-	})
-
-	token, err = jwtToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
 }

@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strings"
 
-	"2024_akutansi_project/Config"
 	"2024_akutansi_project/Services"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 type (
@@ -16,13 +16,15 @@ type (
 	}
 
 	CommondMiddleware struct {
-		jwtService Services.IJwtService
+		jwtService  Services.IJwtService
+		redisClient *redis.Client
 	}
 )
 
-func CommonMiddlewareProvider(jwtService Services.IJwtService) *CommondMiddleware {
+func CommonMiddlewareProvider(jwtService Services.IJwtService, redisClient *redis.Client) *CommondMiddleware {
 	return &CommondMiddleware{
-		jwtService: jwtService,
+		jwtService:  jwtService,
+		redisClient: redisClient,
 	}
 }
 
@@ -46,18 +48,17 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 	}
 
 	// all claims
-	id, ok := claims["id"].(string)
-	companyId, _ := claims["companyId"].(string)
+	key, ok := claims["id"].(string)
+	companyId, _ := claims["company_id"].(string)
 	isEmployee, _ := claims["is_employee"].(bool)
 
 	if !ok {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid ID"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid key"})
 		ctx.Abort()
 		return
 	}
 
-	// check safety token in redis
-	checkTokenRedis, err := Config.GetFromRedis(id)
+	checkTokenRedis, err := m.redisClient.Get(ctx, key).Result()
 
 	if err != nil || checkTokenRedis != token {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "UNAUTHORIZE: Token Mismatch"})
@@ -66,9 +67,9 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 	}
 
 	// set to context
-	ctx.Set("id", id)
-	ctx.Set("companyId", companyId)
-	ctx.Set("isEmployee", isEmployee)
+	ctx.Set("id", key)
+	ctx.Set("company_id", companyId)
+	ctx.Set("is_employee", isEmployee)
 
 	ctx.Next()
 }

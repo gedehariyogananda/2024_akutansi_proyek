@@ -50,7 +50,7 @@ func (c *AuthController) LoginOwner(ctx *gin.Context) {
 		return
 	}
 
-	token, statusCode, err := c.service.LoginOwner(&loginOwnerDTO)
+	token, statusCode, err := c.service.LoginOwner(ctx.Request.Context(), &loginOwnerDTO)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
@@ -69,7 +69,7 @@ func (c *AuthController) LoginEmployee(ctx *gin.Context) {
 		return
 	}
 
-	token, statusCode, err := c.service.LoginEmployee(&loginEmployeeDTO)
+	token, statusCode, err := c.service.LoginEmployee(ctx.Request.Context(), &loginEmployeeDTO)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return

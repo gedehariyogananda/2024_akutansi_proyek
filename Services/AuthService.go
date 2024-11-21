@@ -1,21 +1,23 @@
 package Services
 
 import (
-	"2024_akutansi_project/Config"
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Utils"
+	"context"
 	"errors"
 	"log"
 	"net/http"
+
+	"github.com/redis/go-redis/v9"
 )
 
 type (
 	IAuthService interface {
 		Register(request *Dto.RegisterRequest) (user *Models.User, statusCode int, err error)
-		LoginOwner(request *Dto.LoginOwnerRequest) (token string, statusCode int, err error)
-		LoginEmployee(request *Dto.LoginEmployeeRequest) (token string, statusCode int, err error)
+		LoginOwner(ctx context.Context, request *Dto.LoginOwnerRequest) (token string, statusCode int, err error)
+		LoginEmployee(ctx context.Context, request *Dto.LoginEmployeeRequest) (token string, statusCode int, err error)
 	}
 
 	AuthService struct {
@@ -23,23 +25,21 @@ type (
 		subUserRepository Repositories.ISubUserRepository
 		companyRepository Repositories.ICompanyRepository
 		jwtService        IJwtService
+		redisClient       *redis.Client
 	}
 )
 
-func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository) *AuthService {
+func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client) *AuthService {
 	return &AuthService{
 		userRepository:    userRepository,
 		companyRepository: companyRepository,
 		jwtService:        jwtService,
 		subUserRepository: subUser,
+		redisClient:       redisClient,
 	}
 }
 
 func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models.User, statusCode int, err error) {
-
-	// if err := service.userRepository.CheckUniqueField(request); err != nil {
-	// 	return nil, errors.New("account already exist"), http.StatusConflict
-	// }
 
 	company := &Models.Company{
 		Code: Utils.GenerateCodeCompany(request.CompanyName),
@@ -68,7 +68,7 @@ func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models
 	return user, http.StatusCreated, nil
 }
 
-func (service *AuthService) LoginOwner(request *Dto.LoginOwnerRequest) (token string, statusCode int, err error) {
+func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOwnerRequest) (token string, statusCode int, err error) {
 	ownerData, err := service.userRepository.FindEmail(request.Email)
 
 	if err != nil {
@@ -85,23 +85,16 @@ func (service *AuthService) LoginOwner(request *Dto.LoginOwnerRequest) (token st
 		return "", http.StatusInternalServerError, errors.New("error generate token")
 	}
 
-	err = Config.SetToRedis(ownerData.ID, token, duration)
+	err = service.redisClient.Set(ctx, ownerData.ID, token, duration).Err()
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error set redis")
 	}
 
-	// checkTokenRedis, err := Config.GetFromRedis(ownerData.ID)
-	// if err != nil {
-	// 	return "", http.StatusInternalServerError, errors.New("error get token from redis")
-	// }
-
-	// log.Println("log: data token in redis: ", checkTokenRedis)
-
 	return token, http.StatusOK, err
 }
 
-func (service *AuthService) LoginEmployee(request *Dto.LoginEmployeeRequest) (token string, statusCode int, err error) {
+func (service *AuthService) LoginEmployee(ctx context.Context, request *Dto.LoginEmployeeRequest) (token string, statusCode int, err error) {
 	employeeData, err := service.subUserRepository.FindByEmployeeKey(request.EmployeeKey)
 
 	if err != nil {
@@ -118,7 +111,7 @@ func (service *AuthService) LoginEmployee(request *Dto.LoginEmployeeRequest) (to
 		return "", http.StatusInternalServerError, errors.New("error generate token")
 	}
 
-	err = Config.SetToRedis(employeeData.ID, token, duration)
+	err = service.redisClient.Set(ctx, employeeData.ID, token, duration).Err()
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error set redis")
