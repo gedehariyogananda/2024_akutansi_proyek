@@ -1,8 +1,6 @@
 package Controllers
 
 import (
-	"net/http"
-
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
@@ -13,8 +11,8 @@ import (
 type (
 	IAuthController interface {
 		Register(ctx *gin.Context)
-		Login(ctx *gin.Context)
-		UpdateTokenCompany(ctx *gin.Context)
+		LoginOwner(ctx *gin.Context)
+		LoginEmployee(ctx *gin.Context)
 	}
 
 	AuthController struct {
@@ -30,94 +28,54 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	var registerRequest Dto.RegisterRequest
 
 	if err := ctx.ShouldBind(&registerRequest); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+		Helper.SetValidationErrorResponse(ctx, err.Error())
 		return
 	}
 
-	user, err, statusCode := c.service.Register(&registerRequest)
+	user, statusCode, err := c.service.Register(&registerRequest)
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Registration successful",
-		"data":    user,
+	Helper.SetSuccessResponse(ctx, "Register Successful", gin.H{
+		"user": user,
+	}, statusCode)
+}
+func (c *AuthController) LoginOwner(ctx *gin.Context) {
+	var loginOwnerDTO Dto.LoginOwnerRequest
+
+	if err := ctx.ShouldBind(&loginOwnerDTO); err != nil {
+		Helper.SetValidationErrorResponse(ctx, err.Error())
+		return
+	}
+
+	token, statusCode, err := c.service.LoginOwner(ctx.Request.Context(), &loginOwnerDTO)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Login Owner Successful", gin.H{
+		"token": token,
 	}, statusCode)
 }
 
-// Login godoc
-// @Summary Login
-// @Description Authenticate a user and return a token
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param loginRequest body Dto.LoginRequest true "Login request"
-// @Router /auth/login [post]
-func (c *AuthController) Login(ctx *gin.Context) {
-	var loginRequest Dto.LoginRequest
+func (c *AuthController) LoginEmployee(ctx *gin.Context) {
+	var loginEmployeeDTO Dto.LoginEmployeeRequest
 
-	if err := ctx.ShouldBind(&loginRequest); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+	if err := ctx.ShouldBind(&loginEmployeeDTO); err != nil {
+		Helper.SetValidationErrorResponse(ctx, err.Error())
 		return
 	}
 
-	user, token, err, statusCode := c.service.Login(&loginRequest)
+	token, statusCode, err := c.service.LoginEmployee(ctx.Request.Context(), &loginEmployeeDTO)
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Login successful",
-		"data": gin.H{
-			"user":  user,
-			"token": token,
-		},
-	}, statusCode)
-}
-
-func (c *AuthController) UpdateTokenCompany(ctx *gin.Context) {
-	authorizeUserID := ctx.GetString("user_id")
-
-	var request Dto.TokenCompanyRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": "Invalid request body",
-		}, http.StatusBadRequest)
-		return
-	}
-
-	token, company, err, statusCode := c.service.TokenCompany(&request, authorizeUserID)
-	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
-		return
-	}
-
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Token updated successfully",
-		"data": gin.H{
-			"token":        token,
-			"company_user": company,
-		},
+	Helper.SetSuccessResponse(ctx, "Login Employee Successful", gin.H{
+		"token": token,
 	}, statusCode)
 }

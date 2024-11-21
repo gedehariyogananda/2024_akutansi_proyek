@@ -84,7 +84,7 @@ func (s *InvoiceService) CreateInvoicePurchased(request *Dto.InvoiceRequestClien
 		MoneyReceived:   moneyReceive,
 	}
 
-	invoice, err = s.InvoiceRepository.Create(invoiceRequestDTO, company.CodeCompany, company_id)
+	invoice, err = s.InvoiceRepository.Create(invoiceRequestDTO, company.Code, company_id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create invoice: %w", err), http.StatusBadRequest
 	}

@@ -6,11 +6,8 @@ import (
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Models/Mapper"
 	"2024_akutansi_project/Repositories"
-	"2024_akutansi_project/Utils"
 	"fmt"
 	"net/http"
-	"os"
-	"strings"
 )
 
 type (
@@ -39,37 +36,37 @@ func CompanyServiceProvider(companyRepository Repositories.ICompanyRepository, u
 
 func (s *CompanyService) AddCompany(request *Dto.MakeCompanyRequest, userID string, fileName string) (company *Models.Company, err error, filePath string, statusCode int) {
 
-	fileName = Utils.GenerateUniqueFileName(fileName)
-	request.ImageCompany = "/company-file/" + fileName
+	// fileName = Utils.GenerateUniqueFileName(fileName)
+	// request.ImageCompany = "/company-file/" + fileName
 
-	filePath = os.Getenv("UPLOAD_DIR") + "/company-file/" + fileName
+	// filePath = os.Getenv("UPLOAD_DIR") + "/company-file/" + fileName
 
-	var codeCompany string
+	// var codeCompany string
 
-	if request.CodeCompany != "" {
-		suffix := Utils.GenerateUniqueSuffix()
-		codeCompany = fmt.Sprintf("%s-%s", request.CodeCompany, suffix)
-	} else {
-		codeCompany = Utils.GenerateCodeCompany(request.Name)
-	}
+	// if request.CodeCompany != "" {
+	// 	suffix := Utils.GenerateUniqueSuffix()
+	// 	codeCompany = fmt.Sprintf("%s-%s", request.CodeCompany, suffix)
+	// } else {
+	// 	codeCompany = Utils.GenerateCodeCompany(request.Name)
+	// }
 
-	company, err = s.companyRepository.InsertCompany(request, codeCompany)
-	if err != nil {
-		return nil, fmt.Errorf("error insert company: %w", err), "", http.StatusBadRequest
-	}
+	// company, err = s.companyRepository.InsertCompany(request, codeCompany)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("error insert company: %w", err), "", http.StatusBadRequest
+	// }
 
-	companyUser := &Dto.MakeUserCompanyRequest{
-		UserId:    userID,
-		CompanyId: company.ID,
-	}
+	// companyUser := &Dto.MakeUserCompanyRequest{
+	// 	UserId:    userID,
+	// 	CompanyId: company.ID,
+	// }
 
-	if err := s.userCompanyRepository.InsertUserCompany(companyUser); err != nil {
-		return nil, fmt.Errorf("error insert user company: %w", err), "", http.StatusBadRequest
-	}
+	// if err := s.userCompanyRepository.InsertUserCompany(companyUser); err != nil {
+	// 	return nil, fmt.Errorf("error insert user company: %w", err), "", http.StatusBadRequest
+	// }
 
-	if err := s.paymentMethodRepository.CreateDefaultPaymentMethod(company.ID); err != nil {
-		return nil, fmt.Errorf("error create default payment method: %w", err), "", http.StatusBadRequest
-	}
+	// if err := s.paymentMethodRepository.CreateDefaultPaymentMethod(company.ID); err != nil {
+	// 	return nil, fmt.Errorf("error create default payment method: %w", err), "", http.StatusBadRequest
+	// }
 
 	return company, nil, filePath, http.StatusOK
 }
@@ -91,80 +88,84 @@ func (s *CompanyService) GetAllCompanyUser(user_id string) (companyResponse *[]R
 }
 
 func (s *CompanyService) UpdateCompany(request *Dto.EditCompanyRequest, company_id string, user_id string, fileName string) (company *Models.Company, statusCode int, filePath string, err error) {
-	userCompany, _ := s.userCompanyRepository.Bind(company_id)
+	// userCompany, _ := s.userCompanyRepository.Bind(company_id)
 
-	if userCompany == nil {
-		return nil, http.StatusNotFound, "", fmt.Errorf("company not found")
-	}
+	// if userCompany == nil {
+	// 	return nil, http.StatusNotFound, "", fmt.Errorf("company not found")
+	// }
 
-	if userCompany.UserID != user_id {
-		return nil, http.StatusForbidden, "", fmt.Errorf("you are not allowed to update this company")
-	}
+	// if userCompany.UserID != user_id {
+	// 	return nil, http.StatusForbidden, "", fmt.Errorf("you are not allowed to update this company")
+	// }
 
-	if fileName != "" {
-		fileName = Utils.GenerateUniqueFileName(fileName)
-		request.ImageCompany = "/company-file/" + fileName
-		filePath = os.Getenv("UPLOAD_DIR") + "/company-file/" + fileName
+	// if fileName != "" {
+	// 	fileName = Utils.GenerateUniqueFileName(fileName)
+	// 	request.ImageCompany = "/company-file/" + fileName
+	// 	filePath = os.Getenv("UPLOAD_DIR") + "/company-file/" + fileName
 
-		nameOldPath := userCompany.Company.ImageCompany
+	// 	nameOldPath := userCompany.Company.ImageCompany
 
-		if strings.HasPrefix(nameOldPath, "/") {
-			nameOldPath = nameOldPath[1:]
-		}
+	// 	if strings.HasPrefix(nameOldPath, "/") {
+	// 		nameOldPath = nameOldPath[1:]
+	// 	}
 
-		oldImageCompanyPath := os.Getenv("UPLOAD_DIR") + nameOldPath
+	// 	oldImageCompanyPath := os.Getenv("UPLOAD_DIR") + nameOldPath
 
-		if userCompany.Company.ImageCompany != "" {
-			if err := os.Remove(oldImageCompanyPath); err != nil {
-				return nil, http.StatusBadRequest, "", fmt.Errorf("error remove old image company: %w", err)
-			}
-		}
-	} else {
-		// save without image
-		request.ImageCompany = userCompany.Company.ImageCompany
-	}
+	// 	if userCompany.Company.ImageCompany != "" {
+	// 		if err := os.Remove(oldImageCompanyPath); err != nil {
+	// 			return nil, http.StatusBadRequest, "", fmt.Errorf("error remove old image company: %w", err)
+	// 		}
+	// 	}
+	// } else {
+	// 	// save without image
+	// 	request.ImageCompany = userCompany.Company.ImageCompany
+	// }
 
-	company, err = s.companyRepository.Update(request, company_id)
+	// company, err = s.companyRepository.Update(request, company_id)
 
-	if err != nil {
-		return nil, http.StatusBadRequest, "", fmt.Errorf("error update company: %w", err)
-	}
+	// if err != nil {
+	// 	return nil, http.StatusBadRequest, "", fmt.Errorf("error update company: %w", err)
+	// }
 
-	if filePath != "" {
-		return company, http.StatusOK, filePath, nil
-	} else {
-		return company, http.StatusOK, "", nil
-	}
+	// if filePath != "" {
+	// 	return company, http.StatusOK, filePath, nil
+	// } else {
+	// 	return company, http.StatusOK, "", nil
+	// }
+
+	return nil, http.StatusOK, "", nil
 }
 
 func (s *CompanyService) DeleteCompany(company_id string, user_id string) (statusCode int, err error) {
-	userCompany, _ := s.userCompanyRepository.Bind(company_id)
+	// userCompany, _ := s.userCompanyRepository.Bind(company_id)
 
-	if userCompany == nil {
-		return http.StatusNotFound, fmt.Errorf("company not found")
-	}
+	// if userCompany == nil {
+	// 	return http.StatusNotFound, fmt.Errorf("company not found")
+	// }
 
-	if userCompany.UserID != user_id {
-		return http.StatusForbidden, fmt.Errorf("you are not allowed to delete this company")
-	}
+	// if userCompany.UserID != user_id {
+	// 	return http.StatusForbidden, fmt.Errorf("you are not allowed to delete this company")
+	// }
 
-	if userCompany.Company.ImageCompany != "" {
-		nameOldPath := userCompany.Company.ImageCompany
+	// if userCompany.Company.Image != "" {
+	// 	nameOldPath := userCompany.Company.ImageCompany
 
-		if strings.HasPrefix(nameOldPath, "/") {
-			nameOldPath = nameOldPath[1:]
-		}
+	// 	if strings.HasPrefix(nameOldPath, "/") {
+	// 		nameOldPath = nameOldPath[1:]
+	// 	}
 
-		oldImageCompanyPath := os.Getenv("UPLOAD_DIR") + nameOldPath
+	// 	oldImageCompanyPath := os.Getenv("UPLOAD_DIR") + nameOldPath
 
-		if err := os.Remove(oldImageCompanyPath); err != nil {
-			return http.StatusBadRequest, fmt.Errorf("error remove old image company: %w", err)
-		}
-	}
+	// 	if err := os.Remove(oldImageCompanyPath); err != nil {
+	// 		return http.StatusBadRequest, fmt.Errorf("error remove old image company: %w", err)
+	// 	}
+	// }
 
-	if err := s.companyRepository.Delete(company_id); err != nil {
-		return http.StatusBadRequest, fmt.Errorf("error delete company: %w", err)
-	}
+	// if err := s.companyRepository.Delete(company_id); err != nil {
+	// 	return http.StatusBadRequest, fmt.Errorf("error delete company: %w", err)
+	// }
+
+	// return http.StatusOK, nil
 
 	return http.StatusOK, nil
 

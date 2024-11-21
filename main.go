@@ -2,6 +2,7 @@ package main
 
 import (
 	"2024_akutansi_project/Config"
+	Dependencies "2024_akutansi_project/Depedencies"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Routes"
 	"2024_akutansi_project/Utils"
@@ -24,11 +25,10 @@ func main() {
 
 	Utils.LoadEnv()
 
-	Config.Connect()
-	db := Config.DB
-	if db == nil {
-		panic("Failed to connect to database!")
-	}
+	deps := Dependencies.InitDepedencies(
+		Dependencies.WithDB(),
+		Dependencies.WithRedis(),
+	)
 
 	setup := gin.Default()
 	setup.RemoveExtraSlash = true
@@ -40,7 +40,7 @@ func main() {
 
 	setup.Use(Middleware.SetupCORS())
 
-	Routes.Init(setup, db)
+	Routes.Init(setup, deps)
 
 	setup.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
