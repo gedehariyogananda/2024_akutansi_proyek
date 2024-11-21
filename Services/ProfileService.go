@@ -14,6 +14,7 @@ import (
 type (
 	IProfileService interface {
 		IntegrateShopeeProfile(ctx context.Context, request *Dto.ShopeeIntegrateRequest) (statusCode int, err error)
+		IntegrateTiktokProfile(ctx context.Context, request *Dto.TiktokIntegrateRequest) (statusCode int, err error)
 		GetIntegratedProfile(ctx context.Context) (resp *Dto.IntegratedProfile, statusCode int, err error)
 	}
 
@@ -75,6 +76,47 @@ func (service *ProfileService) IntegrateShopeeProfile(ctx context.Context, reque
 		UserID: userID,
 		Shopee: &shopeeToken,
 		Tiktok: integratedProfile.Tiktok,
+	})
+
+	return http.StatusOK, nil
+}
+
+func (service *ProfileService) IntegrateTiktokProfile(ctx context.Context, request *Dto.TiktokIntegrateRequest) (statusCode int, err error) {
+	userID := ctx.Value("user_id").(string)
+	integratedProfile, err := service.ProfileRepository.GetIntegratedProfile(ctx, userID)
+	if err != nil {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
+			return http.StatusBadRequest, err
+		}
+
+		integratedProfile, err = service.ProfileRepository.IntegrateProfile(ctx, Dto.IntegratedProfile{
+			UserID: userID,
+			Shopee: nil,
+			Tiktok: nil,
+		})
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
+	}
+
+	var tiktokToken Dto.Integration
+	// force reintegrate
+	// todo :: integrate tiktok
+
+	// build integrated credential to store
+	tiktokToken = Dto.Integration{
+		Integrated: true,
+		Credential: map[string]string{
+			"client_id":     request.ClientID,
+			"client_secret": request.ClientSecret,
+		},
+	}
+
+	// store integrate status and credential on user
+	_, err = service.ProfileRepository.IntegrateProfile(ctx, Dto.IntegratedProfile{
+		UserID: userID,
+		Shopee: integratedProfile.Tiktok,
+		Tiktok: &tiktokToken,
 	})
 
 	return http.StatusOK, nil

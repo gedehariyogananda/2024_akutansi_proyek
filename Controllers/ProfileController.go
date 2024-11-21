@@ -57,6 +57,37 @@ func (controller *ProfileController) IntegrateShopeeProfile(ctx *gin.Context) {
 	}, statusCode)
 }
 
+func (controller *ProfileController) IntegrateTiktokProfile(ctx *gin.Context) {
+	var request Dto.TiktokIntegrateRequest
+
+	ctx.Set("user_id", "123")
+	userID, _ := ctx.Get("user_id")
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, http.StatusBadRequest)
+		return
+	}
+
+	ctx.Request = ctx.Request.WithContext(context.WithValue(ctx.Request.Context(), "user_id", userID))
+
+	statusCode, err := controller.ProfileService.IntegrateTiktokProfile(ctx.Request.Context(), &request)
+	if err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, statusCode)
+		return
+	}
+
+	Helper.SetResponse(ctx, gin.H{
+		"success": true,
+		"message": "Success",
+	}, statusCode)
+}
+
 func (controller *ProfileController) GetIntegratedProfile(ctx *gin.Context) {
 	ctx.Set("user_id", "123")
 	userID, _ := ctx.Get("user_id")
