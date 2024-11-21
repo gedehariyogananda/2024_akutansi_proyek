@@ -146,3 +146,18 @@ func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
 
 	return &Controllers.PaymentMethodController{}
 }
+
+func DIWaitingList(db *gorm.DB) *Controllers.WaitingListController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.WaitingListRepositoryProvider,
+		Services.WaitingListServiceProvider,
+		Controllers.WaitingListControllerProvider,
+
+		wire.Bind(new(Controllers.IWaitingListController), new(*Controllers.WaitingListController)),
+		wire.Bind(new(Services.IWaitingListService), new(*Services.WaitingListService)),
+		wire.Bind(new(Repositories.IWaitingListRepository), new(*Repositories.WaitingListRepository)),
+	),
+	))
+
+	return &Controllers.WaitingListController{}
+}
