@@ -6,7 +6,7 @@ import (
 )
 
 func Init(c *gin.Engine, db *gorm.DB) {
-	
+
 	apiPrefix := c.Group("/api/v1/")
 
 	// Initialize routes
@@ -16,4 +16,5 @@ func Init(c *gin.Engine, db *gorm.DB) {
 	InvoiceRoute(apiPrefix, db)
 	CategoryRoute(apiPrefix, db)
 	PaymentMethodRoute(apiPrefix, db)
+	WaitingListRoute(apiPrefix, db)
 }
