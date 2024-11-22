@@ -4,13 +4,14 @@ import (
 	"2024_akutansi_project/Routes/Di"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-func Unit(c *gin.RouterGroup, db *gorm.DB) {
-	route := c.Group("/unit")
+func Unit(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
+	route := c.Group("/units")
 
-	m := Di.DICommonMiddleware(db)
+	m := Di.DICommonMiddleware(db, redis)
 
 	// open use authenticate
 	route.Use(m.IsAuthenticate)
@@ -18,7 +19,7 @@ func Unit(c *gin.RouterGroup, db *gorm.DB) {
 	UnitController := Di.DIUnit(db)
 
 	route.POST("/", UnitController.Create)
-	// route.GET("/", UnitController.GetAllUnit)
-	route.PATCH("/", UnitController.Update)
-	route.DELETE("/", UnitController.Delete)
+	route.GET("/", UnitController.FindAll)
+	route.PATCH("/:id", UnitController.Update)
+	route.DELETE("/:id", UnitController.Delete)
 }

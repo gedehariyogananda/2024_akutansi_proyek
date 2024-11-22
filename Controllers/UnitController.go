@@ -2,9 +2,12 @@ package Controllers
 
 import (
 	"2024_akutansi_project/Helper"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
+	"2024_akutansi_project/Utils"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +17,7 @@ type (
 		Create(ctx *gin.Context)
 		Update(ctx *gin.Context)
 		Delete(ctx *gin.Context)
+		FindAll(ctx *gin.Context)
 	}
 
 	UnitController struct {
@@ -71,7 +75,7 @@ func (c *UnitController) Update(ctx *gin.Context) {
 		return
 	}
 
-	res, err, statusCode := c.unitService.Update(&request, id)
+	res, statusCode, err := c.unitService.Update(&request, id)
 
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
@@ -107,6 +111,56 @@ func (c *UnitController) Delete(ctx *gin.Context) {
 		"success": true,
 		"message": "Success delete unit",
 	}, statusCode)
+
+	return
+}
+
+func (c *UnitController) FindAll(ctx *gin.Context) {
+	companyId := ctx.GetString("company_id")
+	search := ctx.Query("search")
+	status := ctx.Query("status")
+
+	limit, page := Utils.GetPaginationParams(ctx, Common.DEFAULTLIMIT, Common.DEFAULTPAGE)
+
+	var query Common.Query
+
+	if status != "" {
+		status, err := strconv.ParseBool(status)
+
+		if err != nil {
+			Helper.SetResponse(ctx, gin.H{
+				"success": false,
+				"message": "Invalid status",
+			}, http.StatusBadRequest)
+			return
+		}
+
+		query.Status = status
+	}
+
+	query.Search = &search
+	query.Limit = limit
+	query.Page = page
+	query.Limit = limit
+
+	res, meta, err := c.unitService.FindAll(companyId, &query)
+
+	if err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, http.StatusBadRequest)
+		return
+	}
+
+	meta = Common.PaginateMetadata(ctx, meta.TotalData, limit, page)
+
+	Helper.SetResponse(ctx, gin.H{
+		"success": true,
+		"message": "Success get all unit",
+		"data":    res,
+		"meta":    meta,
+	}, http.StatusOK)
 
 	return
 }

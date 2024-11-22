@@ -1,13 +1,18 @@
 package Helper
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+
+	"gorm.io/gorm"
+)
 
 func FilterSearch(query string) func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		if query == "" {
 			return db
 		}
-		return db.Where("category_name LIKE ?", "%"+query+"%")
+		fmt.Println("query", query)
+		return db.Where("name ILIKE ?", "%"+query+"%")
 	}
 }
 

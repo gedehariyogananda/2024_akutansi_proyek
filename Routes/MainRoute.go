@@ -17,4 +17,5 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	InvoiceRoute(apiPrefix, deps.DB, deps.Redis)
 	CategoryRoute(apiPrefix, deps.DB, deps.Redis)
 	PaymentMethodRoute(apiPrefix, deps.DB, deps.Redis)
+	Unit(apiPrefix, deps.DB, deps.Redis)
 }

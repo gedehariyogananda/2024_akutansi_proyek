@@ -10,7 +10,7 @@ type Unit struct {
 	CompanyID string `json:"company_id"`
 }
 
-func ToCompanyResponse(unit *Models.Unit) *Unit {
+func ToUnit(unit *Models.Unit) *Unit {
 	return &Unit{
 		ID:        unit.ID,
 		Name:      unit.Name,
@@ -20,10 +20,10 @@ func ToCompanyResponse(unit *Models.Unit) *Unit {
 	}
 }
 
-func ToCompanyResponseSlice(units []*Models.Unit) []*Unit {
+func ToUnitSlice(units []*Models.Unit) []*Unit {
 	unitResponses := []*Unit{}
 	for _, unit := range units {
-		unitResponses = append(unitResponses, ToCompanyResponse(unit))
+		unitResponses = append(unitResponses, ToUnit(unit))
 	}
 	return unitResponses
 }
