@@ -7,6 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	DEFAULTLIMIT int = 10
+	DEFAULTPAGE  int = 1
+)
+
 type Meta struct {
 	Limit           int    `json:"limit"`
 	Page            int    `json:"page"`

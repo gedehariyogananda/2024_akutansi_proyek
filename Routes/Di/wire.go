@@ -161,3 +161,18 @@ func DIWaitingList(db *gorm.DB) *Controllers.WaitingListController {
 
 	return &Controllers.WaitingListController{}
 }
+
+func DIUnit(db *gorm.DB) *Controllers.UnitController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.UnitProvider,
+		Services.UnitProvider,
+		Controllers.UnitProvider,
+
+		wire.Bind(new(Controllers.IUnitController), new(*Controllers.UnitController)),
+		wire.Bind(new(Services.IUnitService), new(*Services.UnitService)),
+		wire.Bind(new(Repositories.IUnitRepository), new(*Repositories.UnitRepository)),
+	),
+	))
+
+	return &Controllers.UnitController{}
+}

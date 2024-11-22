@@ -85,3 +85,10 @@ func DIWaitingList(db *gorm.DB) *Controllers.WaitingListController {
 	waitingListController := Controllers.WaitingListControllerProvider(waitingListService)
 	return waitingListController
 }
+
+func DIUnit(db *gorm.DB) *Controllers.UnitController {
+	unitRepository := Repositories.UnitProvider(db)
+	unitService := Services.UnitProvider(unitRepository)
+	unitController := Controllers.UnitProvider(unitService)
+	return unitController
+}
