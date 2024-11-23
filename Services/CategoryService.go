@@ -3,15 +3,20 @@ package Services
 import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
+	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
+	"errors"
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
 type (
 	ICategoryService interface {
 		FindAllCategory(company_id string) (category *[]Models.Category, err error)
-		CreateCategory(request *Dto.CreateCategoryRequestDTO, company_id string) (category *Models.Category, statusCode int, err error)
-		UpdateCategory(request *Dto.UpdateCategoryRequestDTO, id string, company_id string) (category *Models.Category, statusCode int, err error)
+		Create(Category *Dto.CreateCategory, company_id string) (res *Response.Category, statusCode int, err error)
+		Update(request *Dto.UpdateCategory, id string) (res *Response.Category, statusCode int, err error)
+		FindByID(id string) (res *Response.Category, statusCode int, err error)
 		DeleteCategory(id string) (statusCode int, err error)
 	}
 
@@ -34,30 +39,71 @@ func (s *CategoryService) FindAllCategory(company_id string) (category *[]Models
 	return category, nil
 }
 
-func (s *CategoryService) CreateCategory(request *Dto.CreateCategoryRequestDTO, company_id string) (category *Models.Category, statusCode int, err error) {
-	category, err = s.CategoryRepository.Create(request, company_id)
-
-	if err != nil {
-		return nil, http.StatusBadRequest, err
+func (s *CategoryService) Create(dto *Dto.CreateCategory, id string) (res *Response.Category, statusCode int, err error) {
+	category := &Models.Category{
+		Name:      dto.Name,
+		CompanyID: id,
+		Type:      dto.Type,
+		Status:    dto.Status,
+		Code:      dto.Code,
 	}
 
-	return category, http.StatusOK, nil
-}
-
-func (s *CategoryService) UpdateCategory(request *Dto.UpdateCategoryRequestDTO, id string, company_id string) (category *Models.Category, statusCode int, err error) {
-	category, err = s.CategoryRepository.FindById(id)
+	category, err = s.CategoryRepository.Create(category)
 
 	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	res = Response.ToCategory(category)
+
+	return res, http.StatusOK, nil
+}
+
+func (s *CategoryService) Update(request *Dto.UpdateCategory, id string) (res *Response.Category, statusCode int, err error) {
+	_, err = s.CategoryRepository.FindById(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, http.StatusNotFound, err
 	}
 
-	category, err = s.CategoryRepository.Update(request, id, company_id)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	category := &Models.Category{
+		Name:   request.Name,
+		Type:   request.Type,
+		Status: request.Status,
+		Code:   request.Code,
+	}
+	category.ID = id
+
+	category, err = s.CategoryRepository.Update(category, id)
 
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
-	return category, http.StatusOK, nil
+	res = Response.ToCategory(category)
+
+	return res, http.StatusOK, nil
+}
+
+func (s *CategoryService) FindByID(id string) (res *Response.Category, statusCode int, err error) {
+	category, err := s.CategoryRepository.FindById(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// fmt.Println(err)
+		return nil, http.StatusNotFound, err
+	}
+
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	res = Response.ToCategory(category)
+
+	return res, http.StatusOK, nil
 }
 
 func (s *CategoryService) DeleteCategory(id string) (statusCode int, err error) {

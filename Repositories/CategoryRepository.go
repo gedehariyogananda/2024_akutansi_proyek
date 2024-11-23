@@ -2,7 +2,6 @@ package Repositories
 
 import (
 	"2024_akutansi_project/Models"
-	"2024_akutansi_project/Models/Dto"
 
 	"gorm.io/gorm"
 )
@@ -11,8 +10,8 @@ type (
 	ICategoryRepository interface {
 		FindAll(company_id string) (category *[]Models.Category, err error)
 		FindByNames(category_names []string) (category []Models.Category, err error)
-		Create(request *Dto.CreateCategoryRequestDTO, company_id string) (category *Models.Category, err error)
-		Update(request *Dto.UpdateCategoryRequestDTO, id string, company_id string) (category *Models.Category, err error)
+		Create(category *Models.Category) (*Models.Category, error)
+		Update(category *Models.Category, id string) (*Models.Category, error)
 		Delete(id string) (err error)
 		FindById(id string) (category *Models.Category, err error)
 	}
@@ -42,12 +41,7 @@ func (r *CategoryRepository) FindByNames(category_names []string) (categories []
 	return categories, nil
 }
 
-func (r *CategoryRepository) Create(request *Dto.CreateCategoryRequestDTO, company_id string) (category *Models.Category, err error) {
-	category = &Models.Category{
-		CategoryName: request.CategoryName,
-		CompanyID:    company_id,
-	}
-
+func (r *CategoryRepository) Create(category *Models.Category) (*Models.Category, error) {
 	if err := r.DB.Create(category).Error; err != nil {
 		return nil, err
 	}
@@ -55,13 +49,8 @@ func (r *CategoryRepository) Create(request *Dto.CreateCategoryRequestDTO, compa
 	return category, nil
 }
 
-func (r *CategoryRepository) Update(request *Dto.UpdateCategoryRequestDTO, id string, company_id string) (category *Models.Category, err error) {
-	category = &Models.Category{
-		CategoryName: request.CategoryName,
-		CompanyID:    company_id,
-	}
-
-	if err := r.DB.Model(category).Where("id = ?", id).Updates(category).Error; err != nil {
+func (r *CategoryRepository) Update(category *Models.Category, id string) (*Models.Category, error) {
+	if err := r.DB.Where("id=?", id).Updates(category).Error; err != nil {
 		return nil, err
 	}
 

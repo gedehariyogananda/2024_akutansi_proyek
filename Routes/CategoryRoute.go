@@ -19,8 +19,9 @@ func CategoryRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	CategoryController := Di.DICategory(db)
 
 	route.GET("/", CategoryController.FindAllCategory)
+	route.GET("/:id", CategoryController.FindByID)
 
-	route.POST("/", CategoryController.CreateCategory)
-	route.PUT("/:id", CategoryController.UpdateCategory)
+	route.POST("/", CategoryController.Create)
+	route.PATCH("/:id", CategoryController.Update)
 	route.DELETE("/:id", CategoryController.DeleteCategory)
 }

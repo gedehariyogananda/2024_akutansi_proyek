@@ -4,6 +4,7 @@ import (
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,8 +13,9 @@ import (
 type (
 	ICategoryController interface {
 		FindAllCategory(ctx *gin.Context)
-		CreateCategory(ctx *gin.Context)
-		UpdateCategory(ctx *gin.Context)
+		Create(ctx *gin.Context)
+		Update(ctx *gin.Context)
+		FindById(ctx *gin.Context)
 		DeleteCategory(ctx *gin.Context)
 	}
 
@@ -47,12 +49,10 @@ func (c *CategoryController) FindAllCategory(ctx *gin.Context) {
 	}, http.StatusOK)
 }
 
-func (c *CategoryController) CreateCategory(ctx *gin.Context) {
-	companyId := ctx.GetString("company_id")
+func (c *CategoryController) Create(ctx *gin.Context) {
+	var createCategoryDto Dto.CreateCategory
 
-	var request Dto.CreateCategoryRequestDTO
-
-	if err := ctx.ShouldBindJSON(&request); err != nil {
+	if err := ctx.ShouldBindJSON(&createCategoryDto); err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
@@ -60,7 +60,10 @@ func (c *CategoryController) CreateCategory(ctx *gin.Context) {
 		return
 	}
 
-	category, statusCode, err := c.CategoryService.CreateCategory(&request, companyId)
+	companyId := ctx.GetString("company_id")
+	createCategoryDto.CompanyID = companyId
+
+	category, statusCode, err := c.CategoryService.Create(&createCategoryDto, companyId)
 
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
@@ -77,13 +80,12 @@ func (c *CategoryController) CreateCategory(ctx *gin.Context) {
 	}, http.StatusOK)
 }
 
-func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
-	paramId := ctx.Param("id")
-	companyId := ctx.GetString("company_id")
+func (c *CategoryController) Update(ctx *gin.Context) {
+	id := ctx.Param("id")
 
-	var request Dto.UpdateCategoryRequestDTO
+	var updateCategoryDto Dto.UpdateCategory
 
-	if err := ctx.ShouldBindJSON(&request); err != nil {
+	if err := ctx.ShouldBindJSON(&updateCategoryDto); err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
@@ -91,7 +93,7 @@ func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
 		return
 	}
 
-	category, statusCode, err := c.CategoryService.UpdateCategory(&request, paramId, companyId)
+	category, statusCode, err := c.CategoryService.Update(&updateCategoryDto, id)
 
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
@@ -101,13 +103,35 @@ func (c *CategoryController) UpdateCategory(ctx *gin.Context) {
 		return
 	}
 
-	category.ID = paramId
-
 	Helper.SetResponse(ctx, gin.H{
 		"success": true,
 		"message": "Success update category",
 		"data":    category,
-	}, http.StatusOK)
+	}, statusCode)
+
+	return
+}
+
+func (c *CategoryController) FindByID(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	res, statusCode, err := c.CategoryService.FindByID(id)
+	fmt.Println(err)
+
+	if err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": "Category not found",
+		}, statusCode)
+		return
+	}
+
+	Helper.SetResponse(ctx, gin.H{
+		"success": true,
+		"message": "Success get single category",
+		"data":    res,
+	}, statusCode)
+	return
 }
 
 func (c *CategoryController) DeleteCategory(ctx *gin.Context) {
