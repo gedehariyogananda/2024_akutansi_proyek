@@ -303,7 +303,7 @@ func (s *InvoiceService) GetInvoice(invoice_id string) (invoiceSet *Models.Invoi
 			ProductName:  item.SaleableProduct.ProductName,
 			QuantitySold: item.QuantitySold,
 			UnitPrice:    item.SaleableProduct.UnitPrice,
-			CategoryName: item.SaleableProduct.Category.CategoryName,
+			CategoryName: item.SaleableProduct.Category.Name,
 			TotalPrice:   item.SaleableProduct.UnitPrice * float64(item.QuantitySold),
 		}
 

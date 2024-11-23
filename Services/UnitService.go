@@ -18,6 +18,7 @@ type (
 		Update(dto *Dto.UpdateUnitDto, id string) (res *Response.Unit, statusCode int, err error)
 		Delete(id string) (err error, statusCode int)
 		FindAll(companyID string, query *Common.Query) (res []*Response.Unit, meta Common.Meta, err error)
+		FindByID(id string) (res *Response.Unit, statusCode int, err error)
 	}
 
 	UnitService struct {
@@ -27,6 +28,22 @@ type (
 
 func UnitProvider(unitRepository Repositories.IUnitRepository) *UnitService {
 	return &UnitService{unitRepository: unitRepository}
+}
+
+func (c *UnitService) FindByID(id string) (res *Response.Unit, statusCode int, err error) {
+	unit, err := c.unitRepository.FindById(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, http.StatusBadRequest, err
+	}
+
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	res = Response.ToUnit(unit)
+
+	return res, http.StatusOK, nil
 }
 
 func (s *UnitService) Create(dto *Dto.CreateUnitDto) (res *Response.Unit, err error) {
