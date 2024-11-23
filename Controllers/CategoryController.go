@@ -2,17 +2,20 @@ package Controllers
 
 import (
 	"2024_akutansi_project/Helper"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
+	"2024_akutansi_project/Utils"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type (
 	ICategoryController interface {
-		FindAllCategory(ctx *gin.Context)
+		FindAll(ctx *gin.Context)
 		Create(ctx *gin.Context)
 		Update(ctx *gin.Context)
 		FindById(ctx *gin.Context)
@@ -28,24 +31,53 @@ func CategoryControllerProvider(categoryService Services.ICategoryService) *Cate
 	return &CategoryController{CategoryService: categoryService}
 }
 
-func (c *CategoryController) FindAllCategory(ctx *gin.Context) {
+func (c *CategoryController) FindAll(ctx *gin.Context) {
 
 	companyId := ctx.GetString("company_id")
 
-	company, err := c.CategoryService.FindAllCategory(companyId)
+	var query Common.Query
+
+	limit, page := Utils.GetPaginationParams(ctx, Common.DEFAULTLIMIT, Common.DEFAULTPAGE)
+
+	search := ctx.Query("search")
+
+	query.Limit = limit
+	query.Page = page
+	query.Search = &search
+
+	status := ctx.Query("status")
+
+	if status != "" {
+		status, err := strconv.ParseBool(status)
+
+		if err != nil {
+			Helper.SetResponse(ctx, gin.H{
+				"success": false,
+				"message": "Invalid status",
+			}, http.StatusBadRequest)
+			return
+		}
+
+		query.Status = status
+	}
+
+	res, meta, err := c.CategoryService.FindAll(companyId, &query)
 
 	if err != nil {
 		Helper.SetResponse(ctx, gin.H{
 			"success": false,
 			"message": err.Error(),
-		}, http.StatusBadRequest)
+		}, http.StatusInternalServerError)
 		return
 	}
 
+	meta = Common.PaginateMetadata(ctx, meta.TotalData, limit, page)
+
 	Helper.SetResponse(ctx, gin.H{
-		"message": "Success get all category",
 		"success": true,
-		"data":    company,
+		"message": "Success get all category",
+		"data":    res,
+		"meta":    meta,
 	}, http.StatusOK)
 }
 
@@ -78,6 +110,7 @@ func (c *CategoryController) Create(ctx *gin.Context) {
 		"message": "Success create category",
 		"data":    category,
 	}, http.StatusOK)
+	return
 }
 
 func (c *CategoryController) Update(ctx *gin.Context) {

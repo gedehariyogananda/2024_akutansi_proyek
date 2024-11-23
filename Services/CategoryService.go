@@ -2,6 +2,7 @@ package Services
 
 import (
 	"2024_akutansi_project/Models"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
@@ -13,7 +14,7 @@ import (
 
 type (
 	ICategoryService interface {
-		FindAllCategory(company_id string) (category *[]Models.Category, err error)
+		FindAll(company_id string, query *Common.Query) (res []*Response.Category, meta Common.Meta, err error)
 		Create(Category *Dto.CreateCategory, company_id string) (res *Response.Category, statusCode int, err error)
 		Update(request *Dto.UpdateCategory, id string) (res *Response.Category, statusCode int, err error)
 		FindByID(id string) (res *Response.Category, statusCode int, err error)
@@ -29,14 +30,23 @@ func CategoryServiceProvider(categoryRepository Repositories.ICategoryRepository
 	return &CategoryService{CategoryRepository: categoryRepository}
 }
 
-func (s *CategoryService) FindAllCategory(company_id string) (category *[]Models.Category, err error) {
-	category, err = s.CategoryRepository.FindAll(company_id)
+func (s *CategoryService) FindAll(company_id string, query *Common.Query) (res []*Response.Category, meta Common.Meta, err error) {
+	categories, totalData, err := s.CategoryRepository.FindAll(company_id, query)
 
 	if err != nil {
-		return nil, err
+		return nil, meta, err
 	}
 
-	return category, nil
+	res = Response.ToCategorySlice(categories)
+
+	meta = Common.Meta{
+		TotalData: totalData,
+		Page:      query.Page,
+		Limit:     query.Limit,
+	}
+
+	return res, meta, nil
+
 }
 
 func (s *CategoryService) Create(dto *Dto.CreateCategory, id string) (res *Response.Category, statusCode int, err error) {
