@@ -18,6 +18,7 @@ type (
 		Update(ctx *gin.Context)
 		Delete(ctx *gin.Context)
 		FindAll(ctx *gin.Context)
+		FindByID(ctx *gin.Context)
 	}
 
 	UnitController struct {
@@ -27,6 +28,28 @@ type (
 
 func UnitProvider(unitService Services.IUnitService) *UnitController {
 	return &UnitController{unitService: unitService}
+}
+
+func (c *UnitController) FindByID(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	res, statusCode, err := c.unitService.FindByID(id)
+
+	if err != nil {
+		Helper.SetResponse(ctx, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, statusCode)
+		return
+	}
+
+	Helper.SetResponse(ctx, gin.H{
+		"success": true,
+		"message": "Success get unit",
+		"data":    res,
+	}, statusCode)
+
+	return
 }
 
 func (c *UnitController) Create(ctx *gin.Context) {

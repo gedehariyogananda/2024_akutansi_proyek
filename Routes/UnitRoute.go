@@ -20,6 +20,7 @@ func Unit(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 
 	route.POST("/", UnitController.Create)
 	route.GET("/", UnitController.FindAll)
+	route.GET("/:id", UnitController.FindByID)
 	route.PATCH("/:id", UnitController.Update)
 	route.DELETE("/:id", UnitController.Delete)
 }
