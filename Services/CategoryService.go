@@ -17,7 +17,7 @@ type (
 		Create(Category *Dto.CreateCategory, company_id string) (res *Response.Category, statusCode int, err error)
 		Update(request *Dto.UpdateCategory, id string) (res *Response.Category, statusCode int, err error)
 		FindByID(id string) (res *Response.Category, statusCode int, err error)
-		DeleteCategory(id string) (statusCode int, err error)
+		Delete(id string) (statusCode int, err error)
 	}
 
 	CategoryService struct {
@@ -106,11 +106,22 @@ func (s *CategoryService) FindByID(id string) (res *Response.Category, statusCod
 	return res, http.StatusOK, nil
 }
 
-func (s *CategoryService) DeleteCategory(id string) (statusCode int, err error) {
+func (s *CategoryService) Delete(id string) (statusCode int, err error) {
+
+	_, err = s.CategoryRepository.FindById(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return http.StatusNotFound, err
+	}
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
 	err = s.CategoryRepository.Delete(id)
 
 	if err != nil {
-		return http.StatusBadRequest, err
+		return http.StatusInternalServerError, err
 	}
 
 	return http.StatusOK, nil
