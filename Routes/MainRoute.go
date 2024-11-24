@@ -12,10 +12,7 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 
 	// Initialize routes
 	AuthRoute(apiPrefix, deps.DB, deps.Redis)
-	CompanyRoute(apiPrefix, deps.DB, deps.Redis)
-	SaleableProductRoute(apiPrefix, deps.DB, deps.Redis)
 	InvoiceRoute(apiPrefix, deps.DB, deps.Redis)
 	CategoryRoute(apiPrefix, deps.DB, deps.Redis)
-	PaymentMethodRoute(apiPrefix, deps.DB, deps.Redis)
 	Unit(apiPrefix, deps.DB, deps.Redis)
 }

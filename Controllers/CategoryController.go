@@ -18,8 +18,8 @@ type (
 		FindAll(ctx *gin.Context)
 		Create(ctx *gin.Context)
 		Update(ctx *gin.Context)
-		FindById(ctx *gin.Context)
-		Delete(ctx *gin.Context)
+		FindByID(ctx *gin.Context)
+		DeleteCategory(ctx *gin.Context)
 	}
 
 	CategoryController struct {
@@ -110,7 +110,6 @@ func (c *CategoryController) Create(ctx *gin.Context) {
 		"message": "Success create category",
 		"data":    category,
 	}, http.StatusOK)
-	return
 }
 
 func (c *CategoryController) Update(ctx *gin.Context) {
@@ -141,8 +140,6 @@ func (c *CategoryController) Update(ctx *gin.Context) {
 		"message": "Success update category",
 		"data":    category,
 	}, statusCode)
-
-	return
 }
 
 func (c *CategoryController) FindByID(ctx *gin.Context) {
@@ -164,7 +161,6 @@ func (c *CategoryController) FindByID(ctx *gin.Context) {
 		"message": "Success get single category",
 		"data":    res,
 	}, statusCode)
-	return
 }
 
 func (c *CategoryController) DeleteCategory(ctx *gin.Context) {

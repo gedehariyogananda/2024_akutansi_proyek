@@ -24,15 +24,4 @@ func InvoiceRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 
 	route.POST("/create", InvoiceController.CreateInvoicePurchased)
 
-	route.PUT("/status/:invoice_id", InvoiceController.UpdateInvoiceStatus)
-
-	route.PUT("/money-received/:invoice_id", InvoiceController.UpdateMoneyReceived)
-
-	route.GET("/history-transaction", InvoiceController.GetAllInvoices)
-	route.PATCH("/history-transaction/:invoice_id", InvoiceController.UpdateInvoiceCustomer)
-	route.GET("/history-transaction/:invoice_id", InvoiceController.GetInvoiceDetail)
-	route.DELETE("/history-transaction/:invoice_id", InvoiceController.DeleteInvoice)
-
-	route.PATCH("/history-transaction/detail-transaction/:invoice_id", InvoiceController.UpdateInvoiceDetail)
-
 }
