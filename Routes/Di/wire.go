@@ -176,3 +176,14 @@ func DIUnit(db *gorm.DB) *Controllers.UnitController {
 
 	return &Controllers.UnitController{}
 }
+
+func DIWorker(db *gorm.DB) *Services.WorkerService {
+	panic(wire.Build(wire.NewSet(
+		Services.WorkerServiceProvider,
+
+		wire.Bind(new(Services.IWorkerService), new(*Services.WorkerService)),
+	),
+	))
+
+	return &Services.WorkerService{}
+}

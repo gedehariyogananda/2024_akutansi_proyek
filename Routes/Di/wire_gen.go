@@ -92,3 +92,8 @@ func DIUnit(db *gorm.DB) *Controllers.UnitController {
 	unitController := Controllers.UnitProvider(unitService)
 	return unitController
 }
+
+func DIWorker(db *gorm.DB) *Services.WorkerService {
+	workerService := Services.WorkerServiceProvider()
+	return workerService
+}

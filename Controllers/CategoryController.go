@@ -18,8 +18,8 @@ type (
 		FindAll(ctx *gin.Context)
 		Create(ctx *gin.Context)
 		Update(ctx *gin.Context)
-		FindById(ctx *gin.Context)
-		Delete(ctx *gin.Context)
+		FindByID(ctx *gin.Context)
+		DeleteCategory(ctx *gin.Context)
 	}
 
 	CategoryController struct {
