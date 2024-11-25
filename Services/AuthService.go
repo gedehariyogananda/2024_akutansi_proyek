@@ -7,7 +7,6 @@ import (
 	"2024_akutansi_project/Utils"
 	"context"
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/redis/go-redis/v9"
@@ -41,28 +40,31 @@ func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService
 
 func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models.User, statusCode int, err error) {
 
-	company := &Models.Company{
+	checkEmail, _ := service.userRepository.FindEmail(request.Email)
+	if checkEmail != nil {
+		return nil, http.StatusConflict, errors.New("email sudah terdaftar di sistem kami!")
+	}
+
+	company, err := service.companyRepository.Create(&Models.Company{
 		Code: Utils.GenerateCodeCompany(request.CompanyName),
 		Name: request.CompanyName,
-	}
+	})
 
-	company, err = service.companyRepository.Create(company)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.New("error insert company")
+		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat company")
 	}
 
-	user = &Models.User{
+	user, err = service.userRepository.Create(&Models.User{
 		Username:  Utils.FormatUsernameClient(request.Name),
 		Email:     request.Email,
 		Phone:     request.Phone,
 		Password:  request.Password,
 		Name:      request.Name,
 		CompanyID: company.ID,
-	}
+	})
 
-	user, err = service.userRepository.Create(user)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.New("error insert user")
+		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat account")
 	}
 
 	return user, http.StatusCreated, nil
@@ -72,11 +74,11 @@ func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOw
 	ownerData, err := service.userRepository.FindEmail(request.Email)
 
 	if err != nil {
-		return "", http.StatusNotFound, errors.New("email not found")
+		return "", http.StatusNotFound, errors.New("email tidak ditemukan")
 	}
 
 	if err := Utils.ComparePassword(ownerData.Password, request.Password); err != nil {
-		return "", http.StatusUnauthorized, errors.New("password not match")
+		return "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
 	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, false, request.Me)
@@ -98,11 +100,11 @@ func (service *AuthService) LoginEmployee(ctx context.Context, request *Dto.Logi
 	employeeData, err := service.subUserRepository.FindByEmployeeKey(request.EmployeeKey)
 
 	if err != nil {
-		return "", http.StatusNotFound, errors.New("employee key not found")
+		return "", http.StatusNotFound, errors.New("karyawan tidak ditemukan!")
 	}
 
 	if err := Utils.ComparePassword(employeeData.Password, request.Password); err != nil {
-		return "", http.StatusUnauthorized, errors.New("password not match")
+		return "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
 	token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, true, request.Me)
@@ -116,13 +118,6 @@ func (service *AuthService) LoginEmployee(ctx context.Context, request *Dto.Logi
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error set redis")
 	}
-
-	parseToken, err := service.jwtService.ParseToken(token)
-	if err != nil {
-		return "", http.StatusInternalServerError, errors.New("error parse token")
-	}
-
-	log.Println("log: data token claims redis: ", parseToken)
 
 	return token, http.StatusOK, err
 }

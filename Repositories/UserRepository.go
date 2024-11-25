@@ -1,7 +1,7 @@
 package Repositories
 
 import (
-	"errors"
+	"fmt"
 
 	"2024_akutansi_project/Models"
 
@@ -11,7 +11,7 @@ import (
 type (
 	IUserRepository interface {
 		Create(userClient *Models.User) (*Models.User, error)
-		GetUser(userID string) (user *Models.User, err error)
+		FindByID(userID string) (user *Models.User, err error)
 		FindEmail(email string) (user *Models.User, err error)
 	}
 
@@ -38,19 +38,19 @@ func (h *UserRepository) FindEmail(email string) (user *Models.User, err error) 
 	if err := h.DB.
 		Where("email = ?", email).
 		First(user).Error; err != nil {
-		return nil, errors.New("user not found")
+		return nil, fmt.Errorf("account tidak ditemukan!")
 	}
 
 	return user, nil
 }
 
-func (h *UserRepository) GetUser(userID string) (user *Models.User, err error) {
+func (h *UserRepository) FindByID(userID string) (user *Models.User, err error) {
 	user = &Models.User{}
 
 	if err := h.DB.
 		Where("id = ?", userID).
 		First(user).Error; err != nil {
-		return nil, errors.New("user not found")
+		return nil, fmt.Errorf("account tidak ditemukan!")
 	}
 
 	return user, nil

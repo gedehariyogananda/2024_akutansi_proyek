@@ -9,10 +9,15 @@ import (
 type Response struct {
 	Success    bool        `json:"success"`
 	Message    string      `json:"message"`
-	StatusCode int         `json:"status_code"`
+	StatusCode int         `json:"statusCode"`
 	Payload    interface{} `json:"payload,omitempty"`
 	Error      interface{} `json:"errors,omitempty"`
 	Meta       interface{} `json:"meta,omitempty"`
+}
+
+type ErrorFieldsResponse struct {
+	FieldName string `json:"fieldName"`
+	Message   string `json:"message"`
 }
 
 func SetSuccessResponse(ctx *gin.Context, message string, payload interface{}, statusCode int) {
@@ -39,12 +44,12 @@ func SetErrorResponse(ctx *gin.Context, message string, statusCode int) {
 func SetValidationErrorResponse(ctx *gin.Context, errors interface{}) {
 	responseBody := Response{
 		Success:    false,
-		Message:    "invalid request body",
-		StatusCode: 404,
+		Message:    "E_VALIDATION_EXCEPTION",
+		StatusCode: 422,
 		Error:      errors,
 	}
 
-	ctx.JSON(404, responseBody)
+	ctx.JSON(422, responseBody)
 }
 
 func SetPaginationResponse(ctx *gin.Context, message string, payload interface{}, totalData int64, limit int, page int, statusCode int) {

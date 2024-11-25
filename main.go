@@ -24,6 +24,7 @@ import (
 func main() {
 
 	Utils.LoadEnv()
+	Utils.InitValidator()
 
 	deps := Dependencies.InitDepedencies(
 		Dependencies.WithDB(),

@@ -31,7 +31,7 @@ func CommonMiddlewareProvider(jwtService Services.IJwtService, redisClient *redi
 func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 	token := ctx.GetHeader("Authorization")
 	if token == "" {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Token Not Found"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "E_UNAUTHORIZE_ACCESS"})
 		ctx.Abort()
 		return
 	}
@@ -42,7 +42,7 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 
 	claims, err := m.jwtService.ParseToken(token)
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "E_UNAUTHORIZE_ACCESS"})
 		ctx.Abort()
 		return
 	}
@@ -53,7 +53,7 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 	isEmployee, _ := claims["is_employee"].(bool)
 
 	if !ok {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid key"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "INVALID_KEY"})
 		ctx.Abort()
 		return
 	}
@@ -61,7 +61,7 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 	checkTokenRedis, err := m.redisClient.Get(ctx, key).Result()
 
 	if err != nil || checkTokenRedis != token {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "UNAUTHORIZE: Token Mismatch"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "E_UNAUTHORIZE_ACCESS"})
 		ctx.Abort()
 		return
 	}
