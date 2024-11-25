@@ -1,18 +1,18 @@
 package Worker
 
 import (
+	Dependencies "2024_akutansi_project/Depedencies"
 	"2024_akutansi_project/Routes/Di"
 	"context"
 	"fmt"
 	"github.com/go-co-op/gocron"
-	"gorm.io/gorm"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func InitScheduler(db *gorm.DB) {
+func InitScheduler(deps *Dependencies.Dependency) {
 	// Push Notification Scheduler
 	if func() bool {
 		scheduler := os.Getenv("USE_SCHEDULER_PUSH_NOTIFICATION")
@@ -23,7 +23,7 @@ func InitScheduler(db *gorm.DB) {
 			jobHandler := func() {
 				fmt.Println("Start [JOB] :: Send Push Notification")
 
-				service := Di.DIWorker(db)
+				service := Di.DIWorker(deps.DB)
 
 				if err := service.SendPushNotification(ctx); err != nil {
 					fmt.Printf("Failed [JOB] :: Send Push Notification, got err := %v\n", err)

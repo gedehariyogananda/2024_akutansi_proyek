@@ -49,7 +49,7 @@ func main() {
 		b, _ := strconv.ParseBool(scheduler)
 		return b
 	}() {
-		Worker.InitScheduler(deps.DB)
+		Worker.InitScheduler(deps)
 	}
 
 	setup.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
