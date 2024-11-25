@@ -1,0 +1,43 @@
+package Repositories
+
+import (
+	"2024_akutansi_project/Models"
+
+	"gorm.io/gorm"
+)
+
+type (
+	ISellableStockRepository interface {
+		FindBySellableStockNotExp(sellableStockID string) (sellableStock []*Models.SellableStock, err error)
+		UpdateCurrentQty(trx *gorm.DB, sellableStockID string, qtyClient int) error
+	}
+
+	SellableStockRepository struct {
+		DB *gorm.DB
+	}
+)
+
+func SellableStockRepositoryProvider(db *gorm.DB) *SellableStockRepository {
+	return &SellableStockRepository{DB: db}
+}
+
+func (r *SellableStockRepository) FindBySellableStockNotExp(sellableStockID string) (sellableStock []*Models.SellableStock, err error) {
+	if err := r.DB.Where("sellable_product_id = ?", sellableStockID).
+		Where("expired_date > now()").
+		Order("created_at asc").
+		Find(&sellableStock).Error; err != nil {
+		return nil, err
+	}
+
+	return sellableStock, nil
+}
+
+func (r *SellableStockRepository) UpdateCurrentQty(trx *gorm.DB, sellableStockID string, qtyClient int) error {
+	if err := trx.Model(&Models.SellableStock{}).
+		Where("id = ?", sellableStockID).
+		Update("current_quantity", gorm.Expr("current_quantity - ?", qtyClient)).Error; err != nil {
+		return err
+	}
+
+	return nil
+}

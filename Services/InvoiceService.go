@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -23,17 +24,21 @@ type (
 		sellableProductRepository Repositories.ISellableProductRepository
 		receiptProductRepository  Repositories.IReceiptRepository
 		materialProductRepository Repositories.IMaterialProductRepository
+		sellableStockRepository   Repositories.ISellableStockRepository
+		materialStockRepository   Repositories.IMaterialStockRepository
 		DB                        *gorm.DB
 	}
 )
 
-func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceItemRepository Repositories.IInvoiceItemRepository, sellableProductRepository Repositories.ISellableProductRepository, receiptProductRepository Repositories.IReceiptRepository, materialProductRepository Repositories.IMaterialProductRepository, DB *gorm.DB) *InvoiceService {
+func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceItemRepository Repositories.IInvoiceItemRepository, sellableProductRepository Repositories.ISellableProductRepository, receiptProductRepository Repositories.IReceiptRepository, materialProductRepository Repositories.IMaterialProductRepository, sellableStockRepository Repositories.ISellableStockRepository, materialStockRepository Repositories.IMaterialStockRepository, DB *gorm.DB) *InvoiceService {
 	return &InvoiceService{
 		invoiceRepository:         invoiceRepository,
 		invoiceItemRepository:     invoiceItemRepository,
 		sellableProductRepository: sellableProductRepository,
 		receiptProductRepository:  receiptProductRepository,
 		materialProductRepository: materialProductRepository,
+		sellableStockRepository:   sellableStockRepository,
+		materialStockRepository:   materialStockRepository,
 		DB:                        DB,
 	}
 }
@@ -59,7 +64,7 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 
 	invoiceDataClient := &Models.Invoice{
 		CustomerName:  requestClient.CustomerName,
-		PhoneNumber:   requestClient.PhoneNumber,
+		PhoneNumber:   &requestClient.PhoneNumber,
 		Note:          requestClient.Notes,
 		TaxID:         requestClient.TaxID,
 		PaymentMethod: requestClient.PaymentMethod,
@@ -68,6 +73,8 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 		Status:        requestClient.Status,
 		Tax:           requestClient.Tax,
 		SubTotal:      requestClient.SubTotal,
+		CreatedAt:     time.Now().Format("2006-01-02 15:04:05"),
+		UpdatedAt:     time.Now().Format("2006-01-02 15:04:05"),
 	}
 
 	invoice, err = invoiceService.invoiceRepository.StoreTrx(trx, invoiceDataClient)
@@ -85,71 +92,125 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 			return nil, http.StatusNotFound, err
 		}
 
-		// update curren_quantity sellable product
+		if sellableProduct.CompanyID != companyID {
+			return nil, http.StatusForbidden, errors.New("forbidden access!")
+		}
+
+		// update current_quantity sellable product
 		if sellableProduct.CurrentQuantity < purchasedItem.Qty {
-			return nil, http.StatusBadRequest, errors.New("stock not enough")
+			return nil, http.StatusBadRequest, errors.New("stock not enough!")
 		}
 
-		err = invoiceService.sellableProductRepository.UpdateTrx(trx, purchasedItem.ID, &Models.SellableProduct{
-			CurrentQuantity: sellableProduct.CurrentQuantity - purchasedItem.Qty,
-		})
-
-		if err != nil {
-			log.Println("LOG: ROLLBACK!")
+		if err = invoiceService.sellableProductRepository.UpdateCurrentQty(trx, purchasedItem.ID, purchasedItem.Qty); err != nil {
+			trx.Rollback()
 			return nil, http.StatusInternalServerError, err
 		}
 
-		log.Println("LOG: SUCCESS UPDATED SELLABLE PRODUCT QUANTITY!")
-
-		invoiceItem := &Models.InvoiceItem{
-			InvoiceID:         invoice.ID,
-			SellableProductID: sellableProduct.ID,
-			Quantity:          purchasedItem.Qty,
-			CompanyID:         companyID,
-			Price:             purchasedItem.PriceAll,
-			PromoID:           purchasedItem.PromoID,
-			PromoAmount:       purchasedItem.PromoAmount,
-		}
-
-		_, err = invoiceService.invoiceItemRepository.StoreTrx(trx, invoiceItem)
-		if err != nil {
-			log.Println("LOG: ROLLBACK!")
+		if err = invoiceService.invoiceItemRepository.StoreTrx(trx,
+			&Models.InvoiceItem{
+				InvoiceID:         invoice.ID,
+				SellableProductID: sellableProduct.ID,
+				Quantity:          purchasedItem.Qty,
+				CompanyID:         companyID,
+				Price:             purchasedItem.PriceAll,
+				PromoID:           &purchasedItem.PromoID,
+				PromoAmount:       &purchasedItem.PromoAmount,
+			}); err != nil {
+			trx.Rollback()
 			return nil, http.StatusInternalServerError, err
 		}
-
-		log.Println("LOG: SUCCESS CREATED INVOICE ITEM!")
 
 		if sellableProduct.HasReceipt {
-
 			materialProductData, err := invoiceService.materialProductRepository.FindByStatus(companyID, true)
 			if err != nil {
+				trx.Rollback()
 				return nil, http.StatusNotFound, err
+			}
+
+			if len(materialProductData) == 0 {
+				trx.Rollback()
+				return nil, http.StatusNotFound, errors.New("material product not found")
 			}
 
 			receiptAllProduct, err := invoiceService.receiptProductRepository.FindAll(sellableProduct.ID)
 			if err != nil {
+				trx.Rollback()
 				return nil, http.StatusNotFound, err
+			}
+
+			if len(receiptAllProduct) == 0 {
+				trx.Rollback()
+				return nil, http.StatusNotFound, errors.New("receipt product not found")
 			}
 
 			for _, receiptProduct := range receiptAllProduct {
 				for _, materialProduct := range materialProductData {
 					if materialProduct.ID == receiptProduct.MaterialProductID {
-						if materialProduct.CurrentQuantity < purchasedItem.Qty*receiptProduct.Quantity {
+						countQuantity := purchasedItem.Qty * receiptProduct.Quantity
+
+						if materialProduct.CurrentQuantity < countQuantity {
 							return nil, http.StatusBadRequest, errors.New("stock not enough")
 						}
 
-						err = invoiceService.materialProductRepository.UpdateTrx(trx, materialProduct.ID,
-							&Models.MaterialProduct{
-								CurrentQuantity: materialProduct.CurrentQuantity - (purchasedItem.Qty * receiptProduct.Quantity),
-							})
-
-						log.Println("LOG: SUCCESS UPDATED MATERIAL QUANTITY!")
-
-						if err != nil {
-							log.Println("ROLLBACK!")
+						if err = invoiceService.materialProductRepository.UpdateCurrentQty(trx, materialProduct.ID, countQuantity); err != nil {
+							trx.Rollback()
 							return nil, http.StatusInternalServerError, err
 						}
+
+						materialStock, err := invoiceService.materialStockRepository.FindByMaterialNotExp(materialProduct.ID)
+						if err != nil {
+							return nil, http.StatusNotFound, err
+						}
+
+						requiredQuantity := purchasedItem.Qty * receiptProduct.Quantity
+						remainingQuantity := requiredQuantity
+
+						for _, materialStockData := range materialStock {
+
+							if materialStockData.CurrentQuantity > 0 {
+								if materialStockData.CurrentQuantity < remainingQuantity {
+									// set sisa remainingQuantity
+									remainingQuantity = remainingQuantity - materialStockData.CurrentQuantity
+									// then update current_quantity to 0 in latest fifo
+									if err = invoiceService.materialStockRepository.UpdateCurrentQty(trx, materialStockData.ID, materialStockData.CurrentQuantity); err != nil {
+										trx.Rollback()
+										return nil, http.StatusInternalServerError, err
+									}
+
+								} else {
+									if err = invoiceService.materialStockRepository.UpdateCurrentQty(trx, materialStockData.ID, remainingQuantity); err != nil {
+										trx.Rollback()
+										return nil, http.StatusInternalServerError, err
+									}
+									break
+								}
+							}
+						}
 					}
+				}
+			}
+		} else {
+			sellableStock, err := invoiceService.sellableStockRepository.FindBySellableStockNotExp(sellableProduct.ID)
+
+			if err != nil {
+				return nil, http.StatusNotFound, err
+			}
+
+			quantityClient := purchasedItem.Qty
+
+			for _, sellableStockData := range sellableStock {
+				if sellableStockData.CurrentQuantity < quantityClient {
+					quantityClient = quantityClient - sellableStockData.CurrentQuantity
+					if err = invoiceService.sellableStockRepository.UpdateCurrentQty(trx, sellableStockData.ID, sellableStockData.CurrentQuantity); err != nil {
+						trx.Rollback()
+						return nil, http.StatusInternalServerError, err
+					}
+				} else {
+					if err = invoiceService.sellableStockRepository.UpdateCurrentQty(trx, sellableStockData.ID, quantityClient); err != nil {
+						trx.Rollback()
+						return nil, http.StatusInternalServerError, err
+					}
+					break
 				}
 			}
 		}

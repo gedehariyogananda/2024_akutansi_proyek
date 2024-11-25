@@ -35,6 +35,8 @@ func (controller *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Create Transaction Purchased Success!", gin.H{
-		"invoice": invoice,
+		"invoice_number": invoice.InvoiceNumber,
+		"customer_name":  invoice.CustomerName,
+		"total_price":    invoice.SubTotal,
 	}, statusCode)
 }
