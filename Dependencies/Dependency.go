@@ -1,6 +1,7 @@
 package Dependencies
 
 import (
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 )
@@ -8,6 +9,7 @@ import (
 type Dependency struct {
 	DB    *gorm.DB
 	Mongo *mongo.Client
+	Redis *redis.Client
 }
 
 func InitDependencies(options ...Option) *Dependency {

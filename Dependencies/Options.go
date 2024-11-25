@@ -20,3 +20,9 @@ func WithMongo() Option {
 		deps.Mongo = Config.InitMongoDB()
 	}
 }
+
+func WithRedis() Option {
+	return func(deps *Dependency) {
+		deps.Redis = Config.InitRedis()
+	}
+}
