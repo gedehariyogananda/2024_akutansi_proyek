@@ -2,11 +2,10 @@ package main
 
 import (
 	"2024_akutansi_project/Config"
-	Dependencies "2024_akutansi_project/Depedencies"
+	"2024_akutansi_project/Dependencies"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Routes"
 	"2024_akutansi_project/Utils"
-
 	_ "2024_akutansi_project/docs"
 
 	"github.com/gin-gonic/gin"
@@ -22,12 +21,12 @@ import (
 // @host localhost:8899
 
 func main() {
-
 	Utils.LoadEnv()
 
-	deps := Dependencies.InitDepedencies(
+	deps := Dependencies.InitDependencies(
 		Dependencies.WithDB(),
 		Dependencies.WithRedis(),
+		Dependencies.WithMongo(),
 	)
 
 	setup := gin.Default()

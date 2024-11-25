@@ -1,8 +1,6 @@
 package Dependencies
 
-import (
-	"2024_akutansi_project/Config"
-)
+import "2024_akutansi_project/Config"
 
 type Option func(provider *Dependency)
 
@@ -14,6 +12,12 @@ func WithDB() Option {
 			panic("Failed to connect to database!")
 		}
 		deps.DB = db
+	}
+}
+
+func WithMongo() Option {
+	return func(deps *Dependency) {
+		deps.Mongo = Config.InitMongoDB()
 	}
 }
 
