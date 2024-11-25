@@ -56,7 +56,7 @@ func (s *SaleableProductService) FindAllSaleableProducts(company_id string, cate
 					ID:                    item.ID,
 					ProductName:           item.ProductName,
 					UnitPrice:             item.UnitPrice,
-					CategoryName:          item.Category.CategoryName,
+					CategoryName:          item.Category.Name,
 					SaleableProductToping: *toping,
 				}
 
@@ -109,7 +109,7 @@ func (s *SaleableProductService) FindAllSaleableProducts(company_id string, cate
 				ID:           item.ID,
 				ProductName:  item.ProductName,
 				UnitPrice:    item.UnitPrice,
-				CategoryName: item.Category.CategoryName,
+				CategoryName: item.Category.Name,
 			}
 
 			*saleableProduct = append(*saleableProduct, saleableData)

@@ -12,20 +12,23 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/google/wire"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-func DIAuth(db *gorm.DB) *Controllers.AuthController {
+func DIAuth(db *gorm.DB, redis *redis.Client) *Controllers.AuthController {
 	panic(wire.Build(wire.NewSet(
-		Repositories.AuthRepositoryProvider,
+		Repositories.UserRepositoryProvider,
 		Services.AuthServiceProvider,
 		Controllers.AuthControllerProvider,
 		Services.JwtServiceProvider,
+		Repositories.SubUserRepositoryProvider,
 		Repositories.CompanyRepositoryProvider,
 
 		wire.Bind(new(Controllers.IAuthController), new(*Controllers.AuthController)),
+		wire.Bind(new(Repositories.ISubUserRepository), new(*Repositories.SubUserRepository)),
 		wire.Bind(new(Services.IAuthService), new(*Services.AuthService)),
-		wire.Bind(new(Repositories.IAuthRepository), new(*Repositories.AuthRepository)),
+		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
 		wire.Bind(new(Services.IJwtService), new(*Services.JwtService)),
 		wire.Bind(new(Repositories.ICompanyRepository), new(*Repositories.CompanyRepository)),
 	),
@@ -34,14 +37,14 @@ func DIAuth(db *gorm.DB) *Controllers.AuthController {
 	return &Controllers.AuthController{}
 }
 
-func DICommonMiddleware(db *gorm.DB) *Middleware.CommondMiddleware {
+func DICommonMiddleware(db *gorm.DB, redis *redis.Client) *Middleware.CommondMiddleware {
 	panic(wire.Build(wire.NewSet(
 		Middleware.CommonMiddlewareProvider,
 		Services.JwtServiceProvider,
-		Repositories.AuthRepositoryProvider,
+		Repositories.UserRepositoryProvider,
 
 		wire.Bind(new(Services.IJwtService), new(*Services.JwtService)),
-		wire.Bind(new(Repositories.IAuthRepository), new(*Repositories.AuthRepository)),
+		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
 		wire.Bind(new(Middleware.ICommonMiddleware), new(*Middleware.CommondMiddleware)),
 	),
 	))
@@ -161,4 +164,34 @@ func DIProfile(db *gorm.DB, mongo *mongo.Client) *Controllers.ProfileController 
 	))
 
 	return &Controllers.ProfileController{}
+}
+
+func DIWaitingList(db *gorm.DB) *Controllers.WaitingListController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.WaitingListRepositoryProvider,
+		Services.WaitingListServiceProvider,
+		Controllers.WaitingListControllerProvider,
+
+		wire.Bind(new(Controllers.IWaitingListController), new(*Controllers.WaitingListController)),
+		wire.Bind(new(Services.IWaitingListService), new(*Services.WaitingListService)),
+		wire.Bind(new(Repositories.IWaitingListRepository), new(*Repositories.WaitingListRepository)),
+	),
+	))
+
+	return &Controllers.WaitingListController{}
+}
+
+func DIUnit(db *gorm.DB) *Controllers.UnitController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.UnitProvider,
+		Services.UnitProvider,
+		Controllers.UnitProvider,
+
+		wire.Bind(new(Controllers.IUnitController), new(*Controllers.UnitController)),
+		wire.Bind(new(Services.IUnitService), new(*Services.UnitService)),
+		wire.Bind(new(Repositories.IUnitRepository), new(*Repositories.UnitRepository)),
+	),
+	))
+
+	return &Controllers.UnitController{}
 }

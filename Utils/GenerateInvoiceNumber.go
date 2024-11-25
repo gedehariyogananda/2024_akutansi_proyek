@@ -1,7 +1,6 @@
 package Utils
 
 import (
-	"2024_akutansi_project/Models"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -34,9 +33,9 @@ func GenerateInvoiceNumber(db *gorm.DB, companyCode string, company_id string) (
 	yearMonth := time.Now().Format("200601")
 
 	var countNumberInvoice int64
-	if err := db.Model(&Models.Invoice{}).Where("company_id = ?", company_id).Count(&countNumberInvoice).Error; err != nil {
-		return "", err
-	}
+	// if err := db.Model(&Models.Invoice{}).Where("company_id = ?", company_id).Count(&countNumberInvoice).Error; err != nil {
+	// 	return "", err
+	// }
 
 	if countNumberInvoice == 0 {
 		countNumberInvoice = 1

@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -58,4 +59,20 @@ func InitMongoDB() *mongo.Client {
 	fmt.Println("Connected to MongoDB!")
 
 	return client
+}
+
+func InitRedis() *redis.Client {
+	RedisClient := redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT"),
+		Password: os.Getenv("REDIS_PASS"),
+		DB:       0,
+	})
+
+	_, err := RedisClient.Ping(context.Background()).Result()
+	if err != nil {
+		log.Fatalf("log: failed to connect to redis: %v", err)
+	}
+
+	log.Println("log: Redis connected!")
+	return RedisClient
 }

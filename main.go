@@ -2,7 +2,7 @@ package main
 
 import (
 	"2024_akutansi_project/Config"
-	"2024_akutansi_project/Dependencies"
+	Dependencies "2024_akutansi_project/Depedencies"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Routes"
 	"2024_akutansi_project/Utils"
@@ -23,9 +23,10 @@ import (
 func main() {
 	Utils.LoadEnv()
 
-	deps := Dependencies.InitDependencies(
+	deps := Dependencies.InitDepedencies(
 		Dependencies.WithDB(),
-		Dependencies.WithMongo(),
+		Dependencies.WithRedis(),
+		// Dependencies.WithMongo(),
 	)
 
 	setup := gin.Default()

@@ -2,15 +2,15 @@ package Repositories
 
 import (
 	"2024_akutansi_project/Models"
-	"2024_akutansi_project/Models/Dto"
 
 	"gorm.io/gorm"
 )
 
 type (
 	ICompanyRepository interface {
-		InsertCompany(request *Dto.MakeCompanyRequest, codeCompany string) (company *Models.Company, err error)
-		Update(request *Dto.EditCompanyRequest, company_id string) (company *Models.Company, err error)
+		// InsertCompany(request *Dto.MakeCompanyRequest, codeCompany string) (company *Models.Company, err error)
+		Create(companyClient *Models.Company) (*Models.Company, error)
+		// Update(request *Dto.EditCompanyRequest, company_id string) (company *Models.Company, err error)
 		Delete(company_id string) (err error)
 		GetCompany(company_id string) (company *Models.Company, err error)
 		FindCompany(company_id string) (company *Models.Company, err error)
@@ -25,34 +25,42 @@ func CompanyRepositoryProvider(db *gorm.DB) *CompanyRepository {
 	return &CompanyRepository{DB: db}
 }
 
-func (h *CompanyRepository) InsertCompany(request *Dto.MakeCompanyRequest, codeCompany string) (company *Models.Company, err error) {
-	company = &Models.Company{
-		Name:         request.Name,
-		Address:      request.Address,
-		ImageCompany: request.ImageCompany,
-		CodeCompany:  codeCompany,
-	}
-
-	if err := h.DB.Create(company).Error; err != nil {
+func (h *CompanyRepository) Create(companyClient *Models.Company) (*Models.Company, error) {
+	if err := h.DB.Create(companyClient).Error; err != nil {
 		return nil, err
 	}
 
-	return company, nil
+	return companyClient, nil
 }
 
-func (h *CompanyRepository) Update(request *Dto.EditCompanyRequest, company_id string) (company *Models.Company, err error) {
-	company = &Models.Company{
-		Name:         request.Name,
-		Address:      request.Address,
-		ImageCompany: request.ImageCompany,
-	}
+// func (h *CompanyRepository) InsertCompany(request *Dto.MakeCompanyRequest, codeCompany string) (company *Models.Company, err error) {
+// 	company = &Models.Company{
+// 		Name:         request.Name,
+// 		Address:      &request.Address,
+// 		ImageCompany: request.ImageCompany,
+// 		CodeCompany:  codeCompany,
+// 	}
 
-	if err := h.DB.Model(company).Where("id = ?", company_id).Updates(company).Error; err != nil {
-		return nil, err
-	}
+// 	if err := h.DB.Create(company).Error; err != nil {
+// 		return nil, err
+// 	}
 
-	return company, nil
-}
+// 	return company, nil
+// }
+
+// func (h *CompanyRepository) Update(request *Dto.EditCompanyRequest, company_id string) (company *Models.Company, err error) {
+// 	company = &Models.Company{
+// 		Name:         request.Name,
+// 		Address:      request.Address,
+// 		ImageCompany: request.ImageCompany,
+// 	}
+
+// 	if err := h.DB.Model(company).Where("id = ?", company_id).Updates(company).Error; err != nil {
+// 		return nil, err
+// 	}
+
+// 	return company, nil
+// }
 
 func (h *CompanyRepository) Delete(company_id string) (err error) {
 	userCompanyModel := &Models.UserCompany{}
