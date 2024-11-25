@@ -33,22 +33,15 @@ func DICommonMiddleware(db *gorm.DB, redis2 *redis.Client) *Middleware.CommondMi
 	return commondMiddleware
 }
 
-func DICompany(db *gorm.DB) *Controllers.CompanyController {
-	companyRepository := Repositories.CompanyRepositoryProvider(db)
-	userCompanyRepository := Repositories.UserCompanyRepositoryProvider(db)
-	paymentMethodRepository := Repositories.PaymentMethodRepositoryProvider(db)
-	companyService := Services.CompanyServiceProvider(companyRepository, userCompanyRepository, paymentMethodRepository)
-	companyController := Controllers.CompanyControllerProvider(companyService)
-	return companyController
-}
-
 func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 	invoiceRepository := Repositories.InvoiceRepositoryProvider(db)
 	invoiceItemRepository := Repositories.InvoiceItemRepositoryProvider(db)
 	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
 	receiptRepository := Repositories.ReceiptRepositoryProvider(db)
 	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
-	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, db)
+	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
+	materialStockRepository := Repositories.MaterialStockRepositoryProvider(db)
+	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, sellableStockRepository, materialStockRepository, db)
 	invoiceController := Controllers.InvoiceControllerProvider(invoiceService)
 	return invoiceController
 }

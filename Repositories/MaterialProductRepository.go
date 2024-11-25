@@ -10,8 +10,7 @@ import (
 type (
 	IMaterialProductRepository interface {
 		FindByStatus(companyID string, status bool) ([]*Models.MaterialProduct, error)
-		Update(materialProductId string, materialProduct *Models.MaterialProduct) error
-		UpdateTrx(trx *gorm.DB, materialProductId string, materialProduct *Models.MaterialProduct) error
+		UpdateCurrentQty(trx *gorm.DB, materialProductId string, qtyClient int) error
 	}
 
 	MaterialProductRepository struct {
@@ -27,27 +26,17 @@ func (r *MaterialProductRepository) FindByStatus(companyID string, status bool) 
 	var materialProduct []*Models.MaterialProduct
 
 	if err := r.DB.Where("company_id = ? AND status = ?", companyID, status).Find(&materialProduct).Error; err != nil {
-		return nil, fmt.Errorf("material product with status %w not found: %w", status, err)
+		return nil, fmt.Errorf("material product not found: %w", err)
 	}
 
 	return materialProduct, nil
 }
 
-func (r *MaterialProductRepository) Update(materialProductId string, materialProduct *Models.MaterialProduct) error {
-	if err := r.DB.Model(&Models.MaterialProduct{}).
-		Where("id = ?", materialProductId).
-		Updates(materialProduct).Error; err != nil {
-		return fmt.Errorf("material product %w not updated: %w", materialProductId, err)
-	}
-
-	return nil
-}
-
-func (r *MaterialProductRepository) UpdateTrx(trx *gorm.DB, materialProductId string, materialProduct *Models.MaterialProduct) error {
+func (r *MaterialProductRepository) UpdateCurrentQty(trx *gorm.DB, materialProductId string, qtyClient int) error {
 	if err := trx.Model(&Models.MaterialProduct{}).
 		Where("id = ?", materialProductId).
-		Updates(materialProduct).Error; err != nil {
-		return fmt.Errorf("material product %w not updated: %w", materialProductId, err)
+		Update("current_quantity", gorm.Expr("current_quantity - ?", qtyClient)).Error; err != nil {
+		return fmt.Errorf("error when updating stock: %w", err)
 	}
 
 	return nil

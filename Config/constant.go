@@ -9,3 +9,6 @@ var AllowedImageExtensions = map[string]bool{
 var MaxMultipartMemory = 10 << 20 // default is 10 MB
 var StaticFileDir = "./public/storage"
 var StaticFileRoute = "/storage"
+var DefaultString = ""
+var DefaultInt = 0
+var DefaultFloat = 0.0

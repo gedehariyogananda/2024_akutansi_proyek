@@ -9,4 +9,5 @@ type SellableStock struct {
 	Quantity          int       `json:"quantity"`
 	CurrentQuantity   int       `json:"current_quantity"`
 	ExpiredDate       time.Time `json:"expired_date"`
+	CreatedAt         time.Time `json:"created_at"`
 }
