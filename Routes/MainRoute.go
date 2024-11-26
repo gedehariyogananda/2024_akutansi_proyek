@@ -18,4 +18,5 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	PaymentMethodRoute(apiPrefix, deps.DB, deps.Redis)
 	ProfileRoute(apiPrefix, deps.DB, deps.Mongo)
 	Unit(apiPrefix, deps.DB, deps.Redis)
+	SubUserRoute(apiPrefix, deps.DB, deps.Redis)
 }

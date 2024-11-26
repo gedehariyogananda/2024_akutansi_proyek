@@ -26,7 +26,7 @@ func main() {
 	deps := Dependencies.InitDependencies(
 		Dependencies.WithDB(),
 		Dependencies.WithRedis(),
-		Dependencies.WithMongo(),
+		// Dependencies.WithMongo(),
 	)
 
 	setup := gin.Default()

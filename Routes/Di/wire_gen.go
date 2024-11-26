@@ -12,8 +12,8 @@ import (
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
-	"go.mongodb.org/mongo-driver/mongo"
 	"github.com/redis/go-redis/v9"
+	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 )
 
@@ -101,4 +101,11 @@ func DIUnit(db *gorm.DB) *Controllers.UnitController {
 	unitService := Services.UnitProvider(unitRepository)
 	unitController := Controllers.UnitProvider(unitService)
 	return unitController
+}
+
+func DISubUser(db *gorm.DB) *Controllers.SubUserController {
+	subUserRepository := Repositories.SubUserRepositoryProvider(db)
+	subUserService := Services.SubUserProvider(subUserRepository)
+	subUserController := Controllers.SubUserProvider(subUserService)
+	return subUserController
 }

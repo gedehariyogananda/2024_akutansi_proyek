@@ -9,6 +9,7 @@ import (
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
+
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/google/wire"
@@ -194,4 +195,16 @@ func DIUnit(db *gorm.DB) *Controllers.UnitController {
 	))
 
 	return &Controllers.UnitController{}
+}
+
+func DISubUser(db *gorm.DB) *Controllers.SubUserController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.SubUserRepositoryProvider,
+		Services.SubUserProvider,
+		Controllers.SubUserProvider,
+		wire.Bind(new(Controllers.ISubUserController), new(*Controllers.SubUserController)),
+		wire.Bind(new(Services.ISubUserService), new(*Services.SubUserService)),
+		wire.Bind(new(Repositories.ISubUserRepository), new(*Repositories.SubUserRepository)),
+	)))
+	return &Controllers.SubUserController{}
 }

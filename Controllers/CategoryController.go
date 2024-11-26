@@ -18,7 +18,7 @@ type (
 		FindAll(ctx *gin.Context)
 		Create(ctx *gin.Context)
 		Update(ctx *gin.Context)
-		FindById(ctx *gin.Context)
+		FindByID(ctx *gin.Context)
 		Delete(ctx *gin.Context)
 	}
 
@@ -167,7 +167,7 @@ func (c *CategoryController) FindByID(ctx *gin.Context) {
 	return
 }
 
-func (c *CategoryController) DeleteCategory(ctx *gin.Context) {
+func (c *CategoryController) Delete(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 
 	statusCode, err := c.CategoryService.Delete(paramId)
