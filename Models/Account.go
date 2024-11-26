@@ -18,12 +18,16 @@ const (
 )
 
 type Account struct {
-	ID          string      `json:"id"`
-	NameAccount string      `json:"name_account"`
-	CompanyID   string      `json:"-"`
-	TypeAccount TypeAccount `json:"type_account"`
-	CodeAccount string      `json:"code_account"`
-	DeletedAt   time.Time   `json:"deleted_at"`
+	ID        string      `json:"id"`
+	Name      string      `json:"name"`
+	Type      TypeAccount `json:"type"`
+	CompanyID string      `json:"company_id"`
+	Code      string      `json:"code"`
+	IsLocked  bool        `json:"is_locked"`
+	Status    bool        `json:"status"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
+	DeletedAt gorm.DeletedAt
 }
 
 // create uuid

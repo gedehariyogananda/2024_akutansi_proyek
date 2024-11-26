@@ -208,3 +208,15 @@ func DISubUser(db *gorm.DB) *Controllers.SubUserController {
 	)))
 	return &Controllers.SubUserController{}
 }
+
+func DIAccount(db *gorm.DB) *Controllers.AccountController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.AccountProvider,
+		Services.AccountProvider,
+		Controllers.AccountProvider,
+		wire.Bind(new(Controllers.IAccountController), new(*Controllers.AccountController)),
+		wire.Bind(new(Services.IAccountService), new(*Services.AccountService)),
+		wire.Bind(new(Repositories.IAccountRepository), new(*Repositories.AccountRepository)),
+	)))
+	return &Controllers.AccountController{}
+}

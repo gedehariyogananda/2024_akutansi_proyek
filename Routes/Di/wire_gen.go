@@ -109,3 +109,10 @@ func DISubUser(db *gorm.DB) *Controllers.SubUserController {
 	subUserController := Controllers.SubUserProvider(subUserService)
 	return subUserController
 }
+
+func DIAccount(db *gorm.DB) *Controllers.AccountController {
+	accountRepository := Repositories.AccountProvider(db)
+	accountService := Services.AccountProvider(accountRepository)
+	accountController := Controllers.AccountProvider(accountService)
+	return accountController
+}

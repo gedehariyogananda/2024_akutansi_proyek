@@ -19,4 +19,5 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	ProfileRoute(apiPrefix, deps.DB, deps.Mongo)
 	Unit(apiPrefix, deps.DB, deps.Redis)
 	SubUserRoute(apiPrefix, deps.DB, deps.Redis)
+	Account(apiPrefix, deps.DB, deps.Redis)
 }
