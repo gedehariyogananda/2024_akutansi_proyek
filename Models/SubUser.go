@@ -2,6 +2,7 @@ package Models
 
 import (
 	"2024_akutansi_project/Utils"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,7 +33,8 @@ func (subUser *SubUser) BeforeCreate(tx *gorm.DB) (err error) {
 		subUser.ID = uuid.String()
 	}
 
-	if subUser.Password != "" {
+	if subUser.Password == "" {
+		fmt.Println("password", subUser.Password)
 		hashed, err := Utils.HashPassword(subUser.Password)
 		if err != nil {
 			return err

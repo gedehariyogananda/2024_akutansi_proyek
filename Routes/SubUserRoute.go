@@ -18,4 +18,9 @@ func SubUserRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	SubUserController := Di.DISubUser(db)
 
 	route.POST("/", SubUserController.Create)
+	route.GET("/:id", SubUserController.FindByID)
+	route.GET("/", SubUserController.FindAll)
+	route.PUT("/:id", SubUserController.Update)
+	route.DELETE("/:id", SubUserController.Delete)
+
 }
