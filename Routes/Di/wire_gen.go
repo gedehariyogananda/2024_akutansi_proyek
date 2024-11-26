@@ -7,11 +7,13 @@
 package Di
 
 import (
+	"2024_akutansi_project/Connector"
 	"2024_akutansi_project/Controllers"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
 	"github.com/redis/go-redis/v9"
+	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 )
 
@@ -77,6 +79,14 @@ func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
 	paymentMethodService := Services.PaymentMethodServiceProvider(paymentMethodRepository)
 	paymentMethodController := Controllers.PaymentMethodControllerProvider(paymentMethodService)
 	return paymentMethodController
+}
+
+func DIProfile(db *gorm.DB, mongo2 *mongo.Client) *Controllers.ProfileController {
+	profileRepository := Repositories.ProfileRepositoryProvider(mongo2)
+	shopeeConnector := Connector.ShopeeConnectorProvider()
+	profileService := Services.ProfileServiceProvider(profileRepository, shopeeConnector)
+	profileController := Controllers.ProfileControllerProvider(profileService)
+	return profileController
 }
 
 func DIWaitingList(db *gorm.DB) *Controllers.WaitingListController {

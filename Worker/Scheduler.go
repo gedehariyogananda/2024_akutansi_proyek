@@ -1,7 +1,7 @@
 package Worker
 
 import (
-	Dependencies "2024_akutansi_project/Depedencies"
+	"2024_akutansi_project/Dependencies"
 	"2024_akutansi_project/Routes/Di"
 	"context"
 	"fmt"

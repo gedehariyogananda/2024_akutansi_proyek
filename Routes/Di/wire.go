@@ -4,10 +4,12 @@
 package Di
 
 import (
+	"2024_akutansi_project/Connector"
 	"2024_akutansi_project/Controllers"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/google/wire"
 	"github.com/redis/go-redis/v9"
@@ -145,6 +147,23 @@ func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
 	))
 
 	return &Controllers.PaymentMethodController{}
+}
+
+func DIProfile(db *gorm.DB, mongo *mongo.Client) *Controllers.ProfileController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.ProfileRepositoryProvider,
+		Services.ProfileServiceProvider,
+		Controllers.ProfileControllerProvider,
+		Connector.ShopeeConnectorProvider,
+
+		wire.Bind(new(Controllers.IProfileController), new(*Controllers.ProfileController)),
+		wire.Bind(new(Services.IProfileService), new(*Services.ProfileService)),
+		wire.Bind(new(Repositories.IProfileRepository), new(*Repositories.ProfileRepository)),
+		wire.Bind(new(Connector.IShopeeConnector), new(*Connector.ShopeeConnector)),
+	),
+	))
+
+	return &Controllers.ProfileController{}
 }
 
 func DIWaitingList(db *gorm.DB) *Controllers.WaitingListController {
