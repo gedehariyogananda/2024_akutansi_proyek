@@ -10,6 +10,8 @@ type (
 	IAccountRepository interface {
 		FindByID(id string) (account *Models.Account, err error)
 		Create(account *Models.Account) (*Models.Account, error)
+		Delete(id string) error
+		Update(account *Models.Account, id string) (*Models.Account, error)
 	}
 	AccountRepository struct {
 		DB *gorm.DB
@@ -36,4 +38,20 @@ func (r *AccountRepository) Create(account *Models.Account) (*Models.Account, er
 	}
 
 	return account, nil
+}
+
+func (r *AccountRepository) Update(account *Models.Account, id string) (*Models.Account, error) {
+	if err := r.DB.Model(account).Where("id = ?", id).Updates(account).Error; err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
+func (r *AccountRepository) Delete(id string) error {
+	if err := r.DB.Where("id = ?", id).Delete(&Models.Account{}).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

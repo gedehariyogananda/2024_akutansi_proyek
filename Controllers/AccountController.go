@@ -13,6 +13,8 @@ type (
 	IAccountController interface {
 		Create(c *gin.Context)
 		FindByID(c *gin.Context)
+		Update(c *gin.Context)
+		Delete(c *gin.Context)
 	}
 
 	AccountController struct {
@@ -62,5 +64,46 @@ func (controller *AccountController) FindByID(c *gin.Context) {
 		"success": true,
 		"message": "Success get account",
 		"data":    res,
+	}, http.StatusOK)
+}
+
+func (controller *AccountController) Update(c *gin.Context) {
+	id := c.Param("id")
+	var request Dto.UpdateAccountDto
+	if err := c.ShouldBindJSON(&request); err != nil {
+		Helper.SetResponse(c, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, http.StatusBadRequest)
+		return
+	}
+	res, statusCode, err := controller.accountService.Update(&request, id)
+	if err != nil {
+		Helper.SetResponse(c, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, statusCode)
+		return
+	}
+	Helper.SetResponse(c, gin.H{
+		"success": true,
+		"message": "Success update account",
+		"data":    res,
+	}, http.StatusOK)
+}
+
+func (controller *AccountController) Delete(c *gin.Context) {
+	id := c.Param("id")
+	statusCode, err := controller.accountService.Delete(id)
+	if err != nil {
+		Helper.SetResponse(c, gin.H{
+			"success": false,
+			"message": err.Error(),
+		}, statusCode)
+		return
+	}
+	Helper.SetResponse(c, gin.H{
+		"success": true,
+		"message": "Success delete account",
 	}, http.StatusOK)
 }

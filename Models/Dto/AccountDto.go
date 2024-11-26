@@ -12,10 +12,10 @@ type CreateAccountDto struct {
 }
 
 type UpdateAccountDto struct {
-	Name      string `json:"name"`
-	Type      string `json:"type"`
-	Code      string `json:"code"`
-	CompanyID string `json:"-"`
-	Status    bool   `json:"status"`
-	IsLocked  bool   `json:"is_locked"`
+	Name      string             `json:"name"`
+	Type      Models.TypeAccount `json:"type"`
+	Code      string             `json:"code"`
+	CompanyID string             `json:"-"`
+	Status    bool               `json:"status"`
+	IsLocked  bool               `json:"is_locked"`
 }

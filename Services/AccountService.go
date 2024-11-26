@@ -15,6 +15,8 @@ type (
 	IAccountService interface {
 		FindByID(id string) (res *Response.Account, statusCode int, err error)
 		Create(dto *Dto.CreateAccountDto) (res *Response.Account, err error)
+		Update(dto *Dto.UpdateAccountDto, id string) (res *Response.Account, statusCode int, err error)
+		Delete(id string) (statusCode int, err error)
 	}
 
 	AccountService struct {
@@ -58,4 +60,50 @@ func (s *AccountService) Create(dto *Dto.CreateAccountDto) (res *Response.Accoun
 	}
 
 	return Response.ToAccount(account), nil
+}
+
+func (s *AccountService) Update(dto *Dto.UpdateAccountDto, id string) (res *Response.Account, statusCode int, err error) {
+	account, err := s.AccountRepository.FindByID(id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, http.StatusNotFound, err
+	}
+
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	account = &Models.Account{
+		Name:      dto.Name,
+		Code:      dto.Code,
+		Type:      dto.Type,
+		CompanyID: dto.CompanyID,
+		IsLocked:  dto.IsLocked,
+	}
+
+	account, err = s.AccountRepository.Update(account, id)
+	account.ID = id
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	return Response.ToAccount(account), http.StatusOK, nil
+}
+
+func (s *AccountService) Delete(id string) (statusCode int, err error) {
+	_, err = s.AccountRepository.FindByID(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return http.StatusNotFound, err
+	}
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	err = s.AccountRepository.Delete(id)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
 }
