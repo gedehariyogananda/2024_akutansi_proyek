@@ -34,12 +34,12 @@ func InitScheduler(deps *Dependencies.Dependency) {
 			}
 
 			// Retrieve interval and unit from environment variables
-			intervalStr := os.Getenv("SCHEDULER_INTERVAL") // E.g., "1"
-			unit := os.Getenv("SCHEDULER_UNIT")            // E.g., "minute"
+			intervalStr := os.Getenv("PUSH_NOTIFICATION_SCHEDULER_INTERVAL") // E.g., "1"
+			unit := os.Getenv("PUSH_NOTIFICATION_SCHEDULER_UNIT")            // E.g., "minute"
 
 			interval, err := strconv.Atoi(intervalStr)
 			if err != nil || interval <= 0 {
-				fmt.Println("Invalid or missing SCHEDULER_INTERVAL, defaulting to 1 minute")
+				fmt.Println("Invalid or missing PUSH_NOTIFICATION_SCHEDULER_INTERVAL, defaulting to 1 minute")
 				interval = 1
 				unit = "minute"
 			}
@@ -58,7 +58,7 @@ func InitScheduler(deps *Dependencies.Dependency) {
 			case "day":
 				_, scheduleErr = sh.Every(interval).Day().Do(jobHandler)
 			default:
-				fmt.Println("Invalid SCHEDULER_UNIT, defaulting to minutes")
+				fmt.Println("Invalid PUSH_NOTIFICATION_SCHEDULER_UNIT, defaulting to minutes")
 				_, scheduleErr = sh.Every(interval).Minute().Do(jobHandler)
 			}
 
