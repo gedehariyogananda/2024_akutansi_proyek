@@ -103,7 +103,8 @@ func DIUnit(db *gorm.DB) *Controllers.UnitController {
 	return unitController
 }
 
-func DIWorker(db *gorm.DB) *Services.WorkerService {
-	workerService := Services.WorkerServiceProvider()
+func DIWorker(db *gorm.DB, mongo2 *mongo.Client) *Services.WorkerService {
+	deviceTokenRepository := Repositories.DeviceTokenRepositoryProvider(mongo2)
+	workerService := Services.WorkerServiceProvider(deviceTokenRepository)
 	return workerService
 }

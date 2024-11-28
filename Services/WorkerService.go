@@ -1,6 +1,7 @@
 package Services
 
 import (
+	"2024_akutansi_project/Repositories"
 	"context"
 	"fmt"
 	"time"
@@ -12,11 +13,14 @@ type (
 	}
 
 	WorkerService struct {
+		deviceTokenRepo *Repositories.DeviceTokenRepository
 	}
 )
 
-func WorkerServiceProvider() *WorkerService {
-	return &WorkerService{}
+func WorkerServiceProvider(deviceTokenRepo *Repositories.DeviceTokenRepository) *WorkerService {
+	return &WorkerService{
+		deviceTokenRepo: deviceTokenRepo,
+	}
 }
 
 func (s *WorkerService) SendPushNotification(ctx context.Context) (err error) {

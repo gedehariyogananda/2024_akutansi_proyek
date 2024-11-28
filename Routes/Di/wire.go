@@ -196,11 +196,13 @@ func DIUnit(db *gorm.DB) *Controllers.UnitController {
 	return &Controllers.UnitController{}
 }
 
-func DIWorker(db *gorm.DB) *Services.WorkerService {
+func DIWorker(db *gorm.DB, mongo *mongo.Client) *Services.WorkerService {
 	panic(wire.Build(wire.NewSet(
 		Services.WorkerServiceProvider,
+		Repositories.DeviceTokenRepositoryProvider,
 
 		wire.Bind(new(Services.IWorkerService), new(*Services.WorkerService)),
+		wire.Bind(new(Repositories.IDeviceTokenRepository), new(*Repositories.DeviceTokenRepository)),
 	),
 	))
 
