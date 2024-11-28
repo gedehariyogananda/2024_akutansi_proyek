@@ -26,3 +26,15 @@ func WithRedis() Option {
 		deps.Redis = Config.InitRedis()
 	}
 }
+
+func WithFirebase() Option {
+	return func(deps *Dependency) {
+		deps.Firebase = Config.InitFirebase()
+	}
+}
+
+func WithMessagingClient() Option {
+	return func(deps *Dependency) {
+		deps.Messaging = Config.InitMessagingClient(deps.Firebase)
+	}
+}

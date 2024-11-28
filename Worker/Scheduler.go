@@ -23,7 +23,7 @@ func InitScheduler(deps *Dependencies.Dependency) {
 			jobHandler := func() {
 				fmt.Println("Start [JOB] :: Send Push Notification")
 
-				service := Di.DIWorker(deps.DB)
+				service := Di.DIWorker(deps.DB, deps.Mongo, deps.Messaging)
 
 				if err := service.SendPushNotification(ctx); err != nil {
 					fmt.Printf("Failed [JOB] :: Send Push Notification, got err := %v\n", err)
