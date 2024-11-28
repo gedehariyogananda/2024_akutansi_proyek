@@ -9,7 +9,7 @@ import (
 
 type (
 	IMaterialProductRepository interface {
-		FindByStatus(companyID string, status bool) ([]*Models.MaterialProduct, error)
+		FindByCompany(companyID string) ([]*Models.MaterialProduct, error)
 		UpdateCurrent(trx *gorm.DB, materialProductId string, qtyClient int) error
 	}
 
@@ -22,10 +22,10 @@ func MaterialProductRepositoryProvider(db *gorm.DB) *MaterialProductRepository {
 	return &MaterialProductRepository{DB: db}
 }
 
-func (r *MaterialProductRepository) FindByStatus(companyID string, status bool) ([]*Models.MaterialProduct, error) {
+func (r *MaterialProductRepository) FindByCompany(companyID string) ([]*Models.MaterialProduct, error) {
 	var materialProduct []*Models.MaterialProduct
 
-	if err := r.DB.Where("company_id = ? AND status = ?", companyID, status).Preload("Unit").Find(&materialProduct).Error; err != nil {
+	if err := r.DB.Where("company_id = ?", companyID).Preload("Unit").Find(&materialProduct).Error; err != nil {
 		return nil, fmt.Errorf("material product not found: %w", err)
 	}
 

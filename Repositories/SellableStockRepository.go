@@ -10,6 +10,7 @@ type (
 	ISellableStockRepository interface {
 		FindBySellableStockNotExp(sellableStockID string) (sellableStock []*Models.SellableStock, err error)
 		UpdateCurrent(trx *gorm.DB, sellableStockID string, qtyClient int) error
+		SumCurrentQuantity(sellableStockID string) (total int, err error)
 	}
 
 	SellableStockRepository struct {
@@ -46,4 +47,17 @@ func (r *SellableStockRepository) UpdateCurrent(trx *gorm.DB, sellableStockID st
 	}
 
 	return nil
+}
+
+func (r *SellableStockRepository) SumCurrentQuantity(sellableStockID string) (total int, err error) {
+	if err := r.DB.Model(&Models.SellableStock{}).
+		Select("sum(current_quantity) as total").
+		Where("sellable_product_id = ?", sellableStockID).
+		Where("expired_date > now()").
+		Group("sellable_product_id").
+		Scan(&total).Error; err != nil {
+		return 0, err
+	}
+
+	return total, nil
 }

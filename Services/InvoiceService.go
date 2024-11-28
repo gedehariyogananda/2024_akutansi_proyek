@@ -142,7 +142,7 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 }
 
 func (invoiceService *InvoiceService) handleMaterialProducts(trx *gorm.DB, sellableProduct *Models.SellableProduct, qty int, expiredItemsErrors, lowStockErrors *[]string) error {
-	materialProductData, err := invoiceService.materialProductRepository.FindByStatus(sellableProduct.CompanyID, true)
+	materialProductData, err := invoiceService.materialProductRepository.FindByCompany(sellableProduct.CompanyID)
 	if err != nil || len(materialProductData) == 0 {
 		*expiredItemsErrors = append(*expiredItemsErrors, fmt.Sprintf("tidak ada bahan aktif yang ditemukan untuk produk %s", sellableProduct.Name))
 		return nil
@@ -181,9 +181,7 @@ func (invoiceService *InvoiceService) handleMaterialProducts(trx *gorm.DB, sella
 					for _, materialStockData := range materialStock {
 						if materialStockData.CurrentQuantity > 0 {
 							if materialStockData.CurrentQuantity < remainingQty {
-								log.Println("REMANING AWAL", remainingQty)
 								remainingQty -= materialStockData.CurrentQuantity
-								log.Println("REMANING AKHIR", remainingQty)
 								if err = invoiceService.materialStockRepository.UpdateCurrent(trx, materialStockData.ID, materialStockData.CurrentQuantity); err != nil {
 									trx.Rollback()
 									return err
@@ -214,8 +212,8 @@ func (invoiceService *InvoiceService) handleSellableStocks(trx *gorm.DB, sellabl
 		return nil
 	}
 
-	sellableProductInit, _ := invoiceService.sellableProductRepository.Find(sellableProduct.ID)
-	totalAvailableQty := sellableProductInit.CurrentQuantity
+	sumCurrentStock, _ := invoiceService.sellableStockRepository.SumCurrentQuantity(sellableProduct.ID)
+	totalAvailableQty := sumCurrentStock
 
 	log.Println("log: totalAvailableQty", totalAvailableQty)
 
