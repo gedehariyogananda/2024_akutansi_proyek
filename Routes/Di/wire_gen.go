@@ -12,8 +12,9 @@ import (
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
-	"go.mongodb.org/mongo-driver/mongo"
+	"firebase.google.com/go/messaging"
 	"github.com/redis/go-redis/v9"
+	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 )
 
@@ -101,4 +102,10 @@ func DIUnit(db *gorm.DB) *Controllers.UnitController {
 	unitService := Services.UnitProvider(unitRepository)
 	unitController := Controllers.UnitProvider(unitService)
 	return unitController
+}
+
+func DIWorker(db *gorm.DB, mongo2 *mongo.Client, messaging2 *messaging.Client) *Services.WorkerService {
+	deviceTokenRepository := Repositories.DeviceTokenRepositoryProvider(mongo2)
+	workerService := Services.WorkerServiceProvider(deviceTokenRepository, messaging2)
+	return workerService
 }

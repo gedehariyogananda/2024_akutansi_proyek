@@ -9,6 +9,7 @@ import (
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
+	"firebase.google.com/go/messaging"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/google/wire"
@@ -194,4 +195,17 @@ func DIUnit(db *gorm.DB) *Controllers.UnitController {
 	))
 
 	return &Controllers.UnitController{}
+}
+
+func DIWorker(db *gorm.DB, mongo *mongo.Client, messaging *messaging.Client) *Services.WorkerService {
+	panic(wire.Build(wire.NewSet(
+		Services.WorkerServiceProvider,
+		Repositories.DeviceTokenRepositoryProvider,
+
+		wire.Bind(new(Services.IWorkerService), new(*Services.WorkerService)),
+		wire.Bind(new(Repositories.IDeviceTokenRepository), new(*Repositories.DeviceTokenRepository)),
+	),
+	))
+
+	return &Services.WorkerService{}
 }
