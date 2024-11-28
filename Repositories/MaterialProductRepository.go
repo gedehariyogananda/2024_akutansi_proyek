@@ -2,13 +2,15 @@ package Repositories
 
 import (
 	"2024_akutansi_project/Models"
+	"fmt"
 
 	"gorm.io/gorm"
 )
 
 type (
 	IMaterialProductRepository interface {
-		FindByAvailableForSale(company_id string) (materialProduct *[]Models.MaterialProduct, err error)
+		FindByCompany(companyID string) ([]*Models.MaterialProduct, error)
+		UpdateCurrent(trx *gorm.DB, materialProductId string, qtyClient int) error
 	}
 
 	MaterialProductRepository struct {
@@ -20,15 +22,28 @@ func MaterialProductRepositoryProvider(db *gorm.DB) *MaterialProductRepository {
 	return &MaterialProductRepository{DB: db}
 }
 
-func (r *MaterialProductRepository) FindByAvailableForSale(company_id string) (materialProduct *[]Models.MaterialProduct, err error) {
+func (r *MaterialProductRepository) FindByCompany(companyID string) ([]*Models.MaterialProduct, error) {
+	var materialProduct []*Models.MaterialProduct
 
-	materialProduct = &[]Models.MaterialProduct{}
-
-	if err := r.DB.Where("company_id = ?", company_id).
-		Where("is_available_for_sale = ?", true).
-		Find(&materialProduct).Error; err != nil {
-		return nil, err
+	if err := r.DB.Where("company_id = ?", companyID).Preload("Unit").Find(&materialProduct).Error; err != nil {
+		return nil, fmt.Errorf("material product not found: %w", err)
 	}
 
 	return materialProduct, nil
+}
+
+func (r *MaterialProductRepository) UpdateCurrent(trx *gorm.DB, materialProductId string, qtyClient int) error {
+
+	db := trx
+	if db == nil {
+		db = r.DB
+	}
+
+	if err := db.Model(&Models.MaterialProduct{}).
+		Where("id = ?", materialProductId).
+		Update("current_quantity", gorm.Expr("current_quantity - ?", qtyClient)).Error; err != nil {
+		return fmt.Errorf("error when updating stock: %w", err)
+	}
+
+	return nil
 }

@@ -1,8 +1,6 @@
 package Models
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -17,19 +15,20 @@ const (
 )
 
 type Invoice struct {
-	ID              string        `json:"id"`
-	InvoiceCustomer string        `json:"invoice_customer"`
-	InvoiceNumber   string        `json:"invoice_number"`
-	InvoiceDate     string        `json:"invoice_date"`
-	TotalAmount     float64       `json:"total_amount"`
-	MoneyReceived   float64       `json:"money_received"`
-	StatusInvoice   StatusInvoice `json:"status_invoice"`
-	CompanyID       string        `json:"-"`
-	PaymentMethodID string        `json:"-"`
-	CreatedAt       time.Time     `json:"created_at"`
-	UpdatedAt       time.Time     `json:"updated_at"`
-	Company         Company       `gorm:"foreignKey:CompanyID" json:"-"`
-	PaymentMethod   PaymentMethod `gorm:"foreignKey:PaymentMethodID" json:"payment_method"`
+	ID            string  `json:"id"`
+	CustomerName  string  `json:"customer_name"`
+	PhoneNumber   *string `json:"phone_number"`
+	Note          string  `json:"note"`
+	TaxID         string  `json:"tax_id"`
+	PaymentMethod string  `json:"payment_method"`
+	InvoiceNumber string  `json:"invoice_number"`
+	CompanyID     string  `json:"company_id"`
+	Status        bool    `json:"status"`
+	Tax           float64 `json:"tax"`
+	SubTotal      float64 `json:"sub_total"`
+	CreatedAt     string  `json:"created_at"`
+	UpdatedAt     string  `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt
 }
 
 // create uuid setup

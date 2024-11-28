@@ -8,14 +8,14 @@ import (
 )
 
 type Unit struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	CompanyID string    `json:"company_id"`
-	Code      string    `json:"code"`
-	Status    bool      `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	DeletedAt gorm.DeletedAt
+	ID               string    `json:"id"`
+	Name             string    `json:"name"`
+	CompanyID        string    `json:"company_id"`
+	Code             string    `json:"code"`
+	Status           bool      `json:"status"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+	DeletedAt        gorm.DeletedAt
 }
 
 func (u *Unit) BeforeCreate(tx *gorm.DB) (err error) {
