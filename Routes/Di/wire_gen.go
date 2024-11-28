@@ -35,34 +35,13 @@ func DICommonMiddleware(db *gorm.DB, redis2 *redis.Client) *Middleware.CommondMi
 	return commondMiddleware
 }
 
-func DICompany(db *gorm.DB) *Controllers.CompanyController {
-	companyRepository := Repositories.CompanyRepositoryProvider(db)
-	userCompanyRepository := Repositories.UserCompanyRepositoryProvider(db)
-	paymentMethodRepository := Repositories.PaymentMethodRepositoryProvider(db)
-	companyService := Services.CompanyServiceProvider(companyRepository, userCompanyRepository, paymentMethodRepository)
-	companyController := Controllers.CompanyControllerProvider(companyService)
-	return companyController
-}
-
-func DISaleableProduct(db *gorm.DB) *Controllers.SaleableProductController {
-	saleableProductRepository := Repositories.SaleableProductRepositoryProvider(db)
-	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
-	categoryRepository := Repositories.CategoryRepositoryProvider(db)
-	saleableProductService := Services.SaleableProductServiceProvider(saleableProductRepository, materialProductRepository, categoryRepository)
-	saleableProductController := Controllers.SaleableProductControllerProvider(saleableProductService)
-	return saleableProductController
-}
-
 func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 	invoiceRepository := Repositories.InvoiceRepositoryProvider(db)
-	invoiceMaterialRepository := Repositories.InvoiceMaterialRepositoryProvider(db)
-	invoiceSaleableRepository := Repositories.InvoiceSaleableRepositoryProvider(db)
-	saleableProductRepository := Repositories.SaleableProductRepositoryProvider(db)
-	paymentMethodRepository := Repositories.PaymentMethodRepositoryProvider(db)
-	companyRepository := Repositories.CompanyRepositoryProvider(db)
-	saleableProductTopingRepository := Repositories.SaleableProductTopingRepositoryProvider(db)
-	invoiceSaleableTopingRepository := Repositories.InvoiceSaleableTopingRepositoryProvider(db)
-	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceMaterialRepository, invoiceSaleableRepository, saleableProductRepository, paymentMethodRepository, companyRepository, saleableProductTopingRepository, invoiceSaleableTopingRepository)
+	invoiceItemRepository := Repositories.InvoiceItemRepositoryProvider(db)
+	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
+	receiptRepository := Repositories.ReceiptRepositoryProvider(db)
+	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
+	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, db)
 	invoiceController := Controllers.InvoiceControllerProvider(invoiceService)
 	return invoiceController
 }
@@ -74,12 +53,6 @@ func DICategory(db *gorm.DB) *Controllers.CategoryController {
 	return categoryController
 }
 
-func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
-	paymentMethodRepository := Repositories.PaymentMethodRepositoryProvider(db)
-	paymentMethodService := Services.PaymentMethodServiceProvider(paymentMethodRepository)
-	paymentMethodController := Controllers.PaymentMethodControllerProvider(paymentMethodService)
-	return paymentMethodController
-}
 
 func DIProfile(db *gorm.DB, mongo2 *mongo.Client) *Controllers.ProfileController {
 	profileRepository := Repositories.ProfileRepositoryProvider(mongo2)
