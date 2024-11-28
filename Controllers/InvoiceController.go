@@ -4,6 +4,7 @@ import (
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
+	"2024_akutansi_project/Utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,12 +24,19 @@ func InvoiceControllerProvider(invoiceService Services.IInvoiceService) *Invoice
 }
 
 func (controller *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
-	var request Dto.InvoiceRequestDTO
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		Helper.SetValidationErrorResponse(ctx, err.Error())
+	var requestInvoiceDTO Dto.InvoiceRequestDTO
+
+	if err := ctx.ShouldBindJSON(&requestInvoiceDTO); err != nil {
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
+		return
 	}
 
-	invoice, statusCode, err := controller.InvoiceService.CreateInvoicePurchased(&request, ctx.GetString("company_id"))
+	if validationErrors := Utils.ValidateRequest(ctx, &requestInvoiceDTO); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
+		return
+	}
+
+	invoice, statusCode, err := controller.InvoiceService.CreateInvoicePurchased(&requestInvoiceDTO, ctx.GetString("company_id"))
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return

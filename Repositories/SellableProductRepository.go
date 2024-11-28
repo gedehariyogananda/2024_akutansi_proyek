@@ -27,7 +27,7 @@ func (sellableProductRepository *SellableProductRepository) Find(id string) (sel
 	sellableProduct = &Models.SellableProduct{}
 	log.Printf("Finding sellable product with ID: %s", id)
 
-	if err = sellableProductRepository.DB.Where("id = ?", id).First(sellableProduct).Error; err != nil {
+	if err = sellableProductRepository.DB.Where("id = ?", id).Preload("Unit").First(sellableProduct).Error; err != nil {
 		return nil, fmt.Errorf("sellable product not found: %w", err)
 	}
 
