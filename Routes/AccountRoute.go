@@ -22,4 +22,5 @@ func Account(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	route.GET("/:id", AccountController.FindByID)
 	route.PUT("/:id", AccountController.Update)
 	route.DELETE("/:id", AccountController.Delete)
+	route.GET("/", AccountController.FindAll)
 }

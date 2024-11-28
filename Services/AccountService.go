@@ -2,6 +2,7 @@ package Services
 
 import (
 	"2024_akutansi_project/Models"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
@@ -17,6 +18,7 @@ type (
 		Create(dto *Dto.CreateAccountDto) (res *Response.Account, err error)
 		Update(dto *Dto.UpdateAccountDto, id string) (res *Response.Account, statusCode int, err error)
 		Delete(id string) (statusCode int, err error)
+		FindAll(companyID string, dto *Common.Query) (res []*Response.Account, meta Common.Meta, err error)
 	}
 
 	AccountService struct {
@@ -106,4 +108,20 @@ func (s *AccountService) Delete(id string) (statusCode int, err error) {
 	}
 
 	return http.StatusOK, nil
+}
+
+func (s *AccountService) FindAll(companyID string, dto *Common.Query) (res []*Response.Account, meta Common.Meta, err error) {
+	accounts, totalData, err := s.AccountRepository.FindAll(companyID, dto)
+
+	if err != nil {
+		return nil, meta, err
+	}
+
+	meta = Common.Meta{
+		TotalData: totalData,
+		Page:      dto.Page,
+		Limit:     dto.Limit,
+	}
+
+	return Response.ToAccountSlice(accounts), meta, nil
 }

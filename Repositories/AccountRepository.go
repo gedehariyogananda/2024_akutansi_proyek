@@ -1,7 +1,10 @@
 package Repositories
 
 import (
+	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models"
+	"2024_akutansi_project/Models/Common"
+	"2024_akutansi_project/Utils"
 
 	"gorm.io/gorm"
 )
@@ -12,6 +15,7 @@ type (
 		Create(account *Models.Account) (*Models.Account, error)
 		Delete(id string) error
 		Update(account *Models.Account, id string) (*Models.Account, error)
+		FindAll(companyID string, qeury *Common.Query) (accounts []*Models.Account, totalData int64, err error)
 	}
 	AccountRepository struct {
 		DB *gorm.DB
@@ -54,4 +58,26 @@ func (r *AccountRepository) Delete(id string) error {
 	}
 
 	return nil
+}
+
+func (r *AccountRepository) FindAll(companyID string, query *Common.Query) (accounts []*Models.Account, totalData int64, err error) {
+	err = r.DB.Scopes(Utils.Paginate(query.Page, query.Limit),
+		Helper.FilterCompanyID(companyID),
+		Helper.FilterStatus(query.Status),
+		Helper.FilterSearch(*query.Search),
+		Helper.FilterIslock(query.IsLocked)).
+		Find(&accounts).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = r.DB.Model(&Models.Account{}).Scopes(Helper.FilterStatus(query.Status),
+		Helper.FilterCompanyID(companyID),
+		Helper.FilterSearch(*query.Search),
+		Helper.FilterIslock(query.IsLocked),
+	).
+		Count(&totalData).Error
+
+	return accounts, totalData, nil
 }
