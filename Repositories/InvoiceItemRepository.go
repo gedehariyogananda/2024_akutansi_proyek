@@ -9,8 +9,7 @@ import (
 
 type (
 	IInvoiceItemRepository interface {
-		Store(invoiceItem *Models.InvoiceItem) (*Models.InvoiceItem, error)
-		StoreTrx(trx *gorm.DB, invoiceItem *Models.InvoiceItem) error
+		Store(trx *gorm.DB, invoiceItem *Models.InvoiceItem) error
 	}
 
 	InvoiceItemRepository struct {
@@ -22,16 +21,14 @@ func InvoiceItemRepositoryProvider(db *gorm.DB) *InvoiceItemRepository {
 	return &InvoiceItemRepository{DB: db}
 }
 
-func (r *InvoiceItemRepository) Store(invoiceItem *Models.InvoiceItem) (*Models.InvoiceItem, error) {
-	if err := r.DB.Create(invoiceItem).Error; err != nil {
-		return nil, fmt.Errorf("error when storing invoice item: %w", err)
+func (r *InvoiceItemRepository) Store(trx *gorm.DB, invoiceItem *Models.InvoiceItem) error {
+
+	db := trx
+	if db == nil {
+		db = r.DB
 	}
 
-	return invoiceItem, nil
-}
-
-func (r *InvoiceItemRepository) StoreTrx(trx *gorm.DB, invoiceItem *Models.InvoiceItem) error {
-	if err := trx.Create(invoiceItem).Error; err != nil {
+	if err := db.Create(invoiceItem).Error; err != nil {
 		return fmt.Errorf("error when storing invoice item: %w", err)
 	}
 

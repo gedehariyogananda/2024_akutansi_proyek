@@ -10,7 +10,7 @@ import (
 type (
 	IMaterialProductRepository interface {
 		FindByStatus(companyID string, status bool) ([]*Models.MaterialProduct, error)
-		UpdateCurrentQty(trx *gorm.DB, materialProductId string, qtyClient int) error
+		UpdateCurrent(trx *gorm.DB, materialProductId string, qtyClient int) error
 	}
 
 	MaterialProductRepository struct {
@@ -32,8 +32,14 @@ func (r *MaterialProductRepository) FindByStatus(companyID string, status bool) 
 	return materialProduct, nil
 }
 
-func (r *MaterialProductRepository) UpdateCurrentQty(trx *gorm.DB, materialProductId string, qtyClient int) error {
-	if err := trx.Model(&Models.MaterialProduct{}).
+func (r *MaterialProductRepository) UpdateCurrent(trx *gorm.DB, materialProductId string, qtyClient int) error {
+
+	db := trx
+	if db == nil {
+		db = r.DB
+	}
+
+	if err := db.Model(&Models.MaterialProduct{}).
 		Where("id = ?", materialProductId).
 		Update("current_quantity", gorm.Expr("current_quantity - ?", qtyClient)).Error; err != nil {
 		return fmt.Errorf("error when updating stock: %w", err)

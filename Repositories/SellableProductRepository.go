@@ -11,7 +11,7 @@ import (
 type (
 	ISellableProductRepository interface {
 		Find(id string) (sellableProduct *Models.SellableProduct, err error)
-		UpdateCurrentQty(trx *gorm.DB, sellableProductID string, QtyClient int) error
+		UpdateCurrent(trx *gorm.DB, sellableProductID string, QtyClient int) error
 	}
 
 	SellableProductRepository struct {
@@ -36,8 +36,14 @@ func (sellableProductRepository *SellableProductRepository) Find(id string) (sel
 	return sellableProduct, nil
 }
 
-func (sellableProductRepository *SellableProductRepository) UpdateCurrentQty(trx *gorm.DB, sellableProductID string, qtyClient int) error {
-	if err := trx.Model(&Models.SellableProduct{}).
+func (sellableProductRepository *SellableProductRepository) UpdateCurrent(trx *gorm.DB, sellableProductID string, qtyClient int) error {
+
+	db := trx
+	if db == nil {
+		db = sellableProductRepository.DB
+	}
+
+	if err := db.Model(&Models.SellableProduct{}).
 		Where("id = ?", sellableProductID).
 		Update("current_quantity", gorm.Expr("current_quantity - ?", qtyClient)).Error; err != nil {
 		return fmt.Errorf("error when updating stock: %w", err)

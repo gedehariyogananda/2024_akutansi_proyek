@@ -9,7 +9,7 @@ import (
 type (
 	ISellableStockRepository interface {
 		FindBySellableStockNotExp(sellableStockID string) (sellableStock []*Models.SellableStock, err error)
-		UpdateCurrentQty(trx *gorm.DB, sellableStockID string, qtyClient int) error
+		UpdateCurrent(trx *gorm.DB, sellableStockID string, qtyClient int) error
 	}
 
 	SellableStockRepository struct {
@@ -32,8 +32,14 @@ func (r *SellableStockRepository) FindBySellableStockNotExp(sellableStockID stri
 	return sellableStock, nil
 }
 
-func (r *SellableStockRepository) UpdateCurrentQty(trx *gorm.DB, sellableStockID string, qtyClient int) error {
-	if err := trx.Model(&Models.SellableStock{}).
+func (r *SellableStockRepository) UpdateCurrent(trx *gorm.DB, sellableStockID string, qtyClient int) error {
+
+	db := trx
+	if db == nil {
+		db = r.DB
+	}
+
+	if err := db.Model(&Models.SellableStock{}).
 		Where("id = ?", sellableStockID).
 		Update("current_quantity", gorm.Expr("current_quantity - ?", qtyClient)).Error; err != nil {
 		return err
