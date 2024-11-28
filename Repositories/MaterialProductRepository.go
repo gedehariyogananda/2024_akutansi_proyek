@@ -25,7 +25,7 @@ func MaterialProductRepositoryProvider(db *gorm.DB) *MaterialProductRepository {
 func (r *MaterialProductRepository) FindByStatus(companyID string, status bool) ([]*Models.MaterialProduct, error) {
 	var materialProduct []*Models.MaterialProduct
 
-	if err := r.DB.Where("company_id = ? AND status = ?", companyID, status).Find(&materialProduct).Error; err != nil {
+	if err := r.DB.Where("company_id = ? AND status = ?", companyID, status).Preload("Unit").Find(&materialProduct).Error; err != nil {
 		return nil, fmt.Errorf("material product not found: %w", err)
 	}
 
