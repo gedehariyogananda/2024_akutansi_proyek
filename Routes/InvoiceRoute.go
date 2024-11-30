@@ -23,5 +23,6 @@ func InvoiceRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	})
 
 	route.POST("/create", InvoiceController.CreateInvoicePurchased)
+	route.GET("/company/all", InvoiceController.GetAllByCompany)
 
 }

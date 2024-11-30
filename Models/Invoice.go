@@ -5,30 +5,22 @@ import (
 	"gorm.io/gorm"
 )
 
-type StatusInvoice string
-
-const (
-	WAITING StatusInvoice = "WAITING"
-	PROCESS StatusInvoice = "PROCESS"
-	DONE    StatusInvoice = "DONE"
-	CANCEL  StatusInvoice = "CANCEL"
-)
-
 type Invoice struct {
-	ID            string  `json:"id"`
-	CustomerName  string  `json:"customer_name"`
-	PhoneNumber   *string `json:"phone_number"`
-	Note          string  `json:"note"`
-	TaxID         string  `json:"tax_id"`
-	PaymentMethod string  `json:"payment_method"`
-	InvoiceNumber string  `json:"invoice_number"`
-	CompanyID     string  `json:"company_id"`
-	Status        bool    `json:"status"`
-	Tax           float64 `json:"tax"`
-	SubTotal      float64 `json:"sub_total"`
-	CreatedAt     string  `json:"created_at"`
-	UpdatedAt     string  `json:"updated_at"`
-	DeletedAt     gorm.DeletedAt
+	ID            string         `json:"id"`
+	CustomerName  string         `json:"customer_name,omitempty"`
+	PhoneNumber   *string        `json:"phone_number,omitempty"`
+	Note          string         `json:"note,omitempty"`
+	TaxID         string         `json:"tax_id,omitempty"`
+	PaymentMethod string         `json:"payment_method,omitempty"`
+	InvoiceNumber string         `json:"invoice_number,omitempty"`
+	CompanyID     string         `json:"company_id,omitempty"`
+	Status        bool           `json:"status,omitempty"`
+	Tax           float64        `json:"tax,omitempty"`
+	SubTotal      float64        `json:"sub_total,omitempty"`
+	CreatedAt     string         `json:"created_at,omitempty"`
+	UpdatedAt     string         `json:"updated_at,omitempty"`
+	DeletedAt     gorm.DeletedAt `json:"deleted_at,omitempty"`
+	InvoiceItems  *[]InvoiceItem `json:"invoice_items,omitempty"`
 }
 
 // create uuid setup

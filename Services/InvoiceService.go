@@ -2,6 +2,7 @@ package Services
 
 import (
 	"2024_akutansi_project/Models"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Repositories"
 	"errors"
@@ -17,6 +18,7 @@ import (
 type (
 	IInvoiceService interface {
 		CreateInvoicePurchased(requestClient *Dto.InvoiceRequestDTO, companyID string) (invoice *Models.Invoice, statusCode int, err error)
+		GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, meta Common.Meta, statusCode int, err error)
 	}
 
 	InvoiceService struct {
@@ -246,4 +248,20 @@ func (invoiceService *InvoiceService) handleSellableStocks(trx *gorm.DB, sellabl
 	}
 
 	return nil
+}
+
+func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, meta Common.Meta, statusCode int, err error) {
+	invoices, totalData, err := invoiceService.invoiceRepository.GetAllByCompany(companyID, query)
+
+	if err != nil {
+		return nil, Common.Meta{}, http.StatusInternalServerError, err
+	}
+
+	meta = Common.Meta{
+		TotalData: totalData,
+		Limit:     query.Limit,
+		Page:      query.Page,
+	}
+
+	return invoices, meta, http.StatusOK, nil
 }

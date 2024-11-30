@@ -2,9 +2,12 @@ package Controllers
 
 import (
 	"2024_akutansi_project/Helper"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
+	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,6 +15,7 @@ import (
 type (
 	IInvoiceController interface {
 		CreateInvoicePurchased(ctx *gin.Context)
+		GetAllByCompany(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -47,4 +51,45 @@ func (controller *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 		"customer_name":  invoice.CustomerName,
 		"total_price":    invoice.SubTotal,
 	}, statusCode)
+}
+
+func (controller *InvoiceController) GetAllByCompany(ctx *gin.Context) {
+
+	search := ctx.Query("search")
+	status := ctx.Query("status")
+
+	limit, page := Utils.GetPaginationParams(ctx, Common.DEFAULTLIMIT, Common.DEFAULTPAGE)
+
+	var query Common.Query
+
+	if status != "" {
+		status, err := strconv.ParseBool(status)
+
+		if err != nil {
+			Helper.SetErrorResponse(ctx, "Invalid status", http.StatusBadRequest)
+			return
+		}
+
+		query.Status = status
+	}
+
+	query.Search = &search
+	query.Limit = limit
+	query.Page = page
+	query.Limit = limit
+
+	invoices, meta, statusCode, err := controller.InvoiceService.GetAllByCompany(ctx.GetString("company_id"), &query)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetPaginationResponse(
+		ctx,
+		"Berhasil mendapatkan data riwayat penjualan!",
+		invoices,
+		Common.PaginateMetadata(ctx, meta.TotalData, meta.Limit, meta.Page),
+		statusCode,
+	)
+
 }
