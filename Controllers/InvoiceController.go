@@ -17,6 +17,7 @@ type (
 		CreateInvoicePurchased(ctx *gin.Context)
 		GetSalesHistory(ctx *gin.Context)
 		GetSpesifySalesHistory(ctx *gin.Context)
+		UpdateRefund(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -103,4 +104,14 @@ func (controller *InvoiceController) GetSpesifySalesHistory(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data penjualan!", invoice, statusCode)
+}
+
+func (controller *InvoiceController) UpdateRefund(ctx *gin.Context) {
+	statusCode, err := controller.InvoiceService.UpdateRefund(ctx.GetString("company_id"), ctx.Param("id"))
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil melakukan pengembalian dana!", nil, statusCode)
 }

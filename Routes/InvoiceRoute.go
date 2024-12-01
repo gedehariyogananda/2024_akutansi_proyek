@@ -25,4 +25,5 @@ func InvoiceRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	route.POST("/create", InvoiceController.CreateInvoicePurchased)
 	route.GET("/sales/history", InvoiceController.GetSalesHistory)
 	route.GET("/sales/history/:invoiceID", InvoiceController.GetSpesifySalesHistory)
+	route.PATCH("/refund/:id", InvoiceController.UpdateRefund)
 }

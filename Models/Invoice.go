@@ -21,6 +21,7 @@ type Invoice struct {
 	SubTotal      float64        `json:"sub_total,omitempty"`
 	CreatedAt     time.Time      `json:"created_at,omitempty"`
 	UpdatedAt     time.Time      `json:"updated_at,omitempty"`
+	RefundAt      *time.Time     `json:"refund_at,omitempty"`
 	DeletedAt     gorm.DeletedAt `json:"deleted_at,omitempty"`
 	InvoiceItems  []InvoiceItem  `json:"invoice_items,omitempty"`
 }

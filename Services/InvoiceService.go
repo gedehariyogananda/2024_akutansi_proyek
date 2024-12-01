@@ -21,6 +21,7 @@ type (
 		CreateInvoicePurchased(requestClient *Dto.InvoiceRequestDTO, companyID string) (invoice *Models.Invoice, statusCode int, err error)
 		GetAllByCompany(companyID string, query *Common.Query) (response []Response.InvoiceResponse, meta Common.Meta, statusCode int, err error)
 		GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.InvoiceResponse, statusCode int, err error)
+		UpdateRefund(companyID string, id string) (statusCode int, err error)
 	}
 
 	InvoiceService struct {
@@ -327,4 +328,26 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 	}
 
 	return res, http.StatusOK, nil
+}
+
+func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) (statusCode int, err error) {
+	invoice, err := invoiceService.invoiceRepository.FindByID(id, companyID)
+
+	if err != nil {
+		return http.StatusNotFound, err
+	}
+	if invoice.RefundAt != nil {
+		return http.StatusBadRequest, errors.New("invoice sudah di refund")
+	}
+
+	if err = invoiceService.invoiceRepository.Update(id, &Models.Invoice{
+		RefundAt: func() *time.Time {
+			now := time.Now()
+			return &now
+		}(),
+	}); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
 }

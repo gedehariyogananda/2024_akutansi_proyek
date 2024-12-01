@@ -12,6 +12,8 @@ import (
 type (
 	IInvoiceRepository interface {
 		Store(trx *gorm.DB, invoice *Models.Invoice) (*Models.Invoice, error)
+		FindByID(id string, companyID string) (invoice *Models.Invoice, err error)
+		Update(id string, invoice *Models.Invoice) (err error)
 		GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, totalData int64, err error)
 		GetByInvoiceID(companyID string, invoiceID string) (invoice *Models.Invoice, err error)
 	}
@@ -37,6 +39,17 @@ func (r *InvoiceRepository) Store(trx *gorm.DB, invoice *Models.Invoice) (*Model
 	}
 
 	return invoice, nil
+}
+
+func (r *InvoiceRepository) Update(id string, invoice *Models.Invoice) (err error) {
+	if err := r.DB.
+		Model(&Models.Invoice{}).
+		Where("id = ?", id).
+		Updates(invoice).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, totalData int64, err error) {
@@ -71,6 +84,17 @@ func (r *InvoiceRepository) GetByInvoiceID(companyID string, invoiceID string) (
 					return spPayload.Select("id", "name", "price")
 				})
 		}).
+		First(&invoice).Error; err != nil {
+		return nil, err
+	}
+
+	return invoice, nil
+}
+
+func (r *InvoiceRepository) FindByID(id string, companyID string) (invoice *Models.Invoice, err error) {
+	if err := r.DB.
+		Where("company_id = ?", companyID).
+		Where("id = ?", id).
 		First(&invoice).Error; err != nil {
 		return nil, err
 	}
