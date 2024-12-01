@@ -13,6 +13,7 @@ type (
 	IInvoiceRepository interface {
 		Store(trx *gorm.DB, invoice *Models.Invoice) (*Models.Invoice, error)
 		GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, totalData int64, err error)
+		GetByInvoiceID(companyID string, invoiceID string) (invoice *Models.Invoice, err error)
 	}
 
 	InvoiceRepository struct {
@@ -47,7 +48,7 @@ func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Common.Quer
 		Select("id", "customer_name", "invoice_number", "status", "sub_total", "created_at").
 		Where("company_id = ?", companyID).
 		Preload("InvoiceItems", func(invItemPayload *gorm.DB) *gorm.DB {
-			return invItemPayload.Select("invoice_id", "sum(quantity) as total").Group("invoice_id")
+			return invItemPayload.Select("invoice_id", "quantity")
 		}).
 		Scopes(
 			Utils.Paginate(query.Page, query.Limit),
@@ -58,4 +59,21 @@ func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Common.Quer
 	}
 
 	return invoices, totalData, nil
+}
+
+func (r *InvoiceRepository) GetByInvoiceID(companyID string, invoiceID string) (invoice *Models.Invoice, err error) {
+	if err := r.DB.
+		Where("company_id = ?", companyID).
+		Preload("InvoiceItems", func(invItemPayload *gorm.DB) *gorm.DB {
+			return invItemPayload.Where("invoice_id = ?", invoiceID).
+				Select("invoice_id", "sellable_product_id", "quantity").
+				Preload("SellableProduct", func(spPayload *gorm.DB) *gorm.DB {
+					return spPayload.Select("id", "name", "price")
+				})
+		}).
+		First(&invoice).Error; err != nil {
+		return nil, err
+	}
+
+	return invoice, nil
 }

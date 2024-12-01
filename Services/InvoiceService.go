@@ -4,6 +4,7 @@ import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
+	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
 	"errors"
 	"fmt"
@@ -18,7 +19,8 @@ import (
 type (
 	IInvoiceService interface {
 		CreateInvoicePurchased(requestClient *Dto.InvoiceRequestDTO, companyID string) (invoice *Models.Invoice, statusCode int, err error)
-		GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, meta Common.Meta, statusCode int, err error)
+		GetAllByCompany(companyID string, query *Common.Query) (response []Response.InvoiceResponse, meta Common.Meta, statusCode int, err error)
+		GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.InvoiceResponse, statusCode int, err error)
 	}
 
 	InvoiceService struct {
@@ -74,8 +76,8 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 		Status:        requestClient.Status,
 		Tax:           requestClient.Tax,
 		SubTotal:      requestClient.SubTotal,
-		CreatedAt:     time.Now().Format("2006-01-02 15:04:05"),
-		UpdatedAt:     time.Now().Format("2006-01-02 15:04:05"),
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	invoice, err = invoiceService.invoiceRepository.Store(trx, invoiceDataClient)
@@ -250,11 +252,39 @@ func (invoiceService *InvoiceService) handleSellableStocks(trx *gorm.DB, sellabl
 	return nil
 }
 
-func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, meta Common.Meta, statusCode int, err error) {
+func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *Common.Query) (response []Response.InvoiceResponse, meta Common.Meta, statusCode int, err error) {
 	invoices, totalData, err := invoiceService.invoiceRepository.GetAllByCompany(companyID, query)
 
 	if err != nil {
 		return nil, Common.Meta{}, http.StatusInternalServerError, err
+	}
+
+	var res []Response.InvoiceResponse
+
+	for _, invoice := range invoices {
+		total := 0
+		for _, item := range invoice.InvoiceItems {
+			total += item.Quantity
+		}
+
+		status := ""
+
+		if invoice.Status {
+			status = "Lunas"
+		} else {
+			status = "Belum Lunas"
+		}
+
+		res = append(res, Response.InvoiceResponse{
+			ID:            invoice.ID,
+			CustomerName:  invoice.CustomerName,
+			InvoiceNumber: invoice.InvoiceNumber,
+			SubTotal:      invoice.SubTotal,
+			Status:        &status,
+			CreatedAt:     invoice.CreatedAt.Format("02/01/2006"),
+			CountSale:     &total,
+		})
+
 	}
 
 	meta = Common.Meta{
@@ -263,5 +293,38 @@ func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *C
 		Page:      query.Page,
 	}
 
-	return invoices, meta, http.StatusOK, nil
+	return res, meta, http.StatusOK, nil
+}
+
+func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.InvoiceResponse, statusCode int, err error) {
+	invoice, _ := invoiceService.invoiceRepository.GetByInvoiceID(companyID, invoiceID)
+
+	status := ""
+
+	if invoice.Status {
+		status = "Lunas"
+	} else {
+		status = "Belum Lunas"
+	}
+
+	total := 0
+
+	for _, item := range invoice.InvoiceItems {
+		total += item.Quantity
+	}
+
+	res := Response.InvoiceResponse{
+		ID:           invoice.ID,
+		CustomerName: invoice.CustomerName,
+		PhoneNumber:  invoice.PhoneNumber,
+		CreatedAt:    invoice.CreatedAt.Format("02/01/2006"),
+		Status:       &status,
+		Note:         &invoice.Note,
+		SubTotal:     invoice.SubTotal,
+		Tax:          &invoice.Tax,
+		CountSale:    &total,
+		InvoiceItems: &invoice.InvoiceItems,
+	}
+
+	return res, http.StatusOK, nil
 }

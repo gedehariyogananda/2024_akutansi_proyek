@@ -15,7 +15,8 @@ import (
 type (
 	IInvoiceController interface {
 		CreateInvoicePurchased(ctx *gin.Context)
-		GetAllByCompany(ctx *gin.Context)
+		GetSalesHistory(ctx *gin.Context)
+		GetSpesifySalesHistory(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -53,7 +54,7 @@ func (controller *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 	}, statusCode)
 }
 
-func (controller *InvoiceController) GetAllByCompany(ctx *gin.Context) {
+func (controller *InvoiceController) GetSalesHistory(ctx *gin.Context) {
 
 	search := ctx.Query("search")
 	status := ctx.Query("status")
@@ -92,4 +93,14 @@ func (controller *InvoiceController) GetAllByCompany(ctx *gin.Context) {
 		statusCode,
 	)
 
+}
+
+func (controller *InvoiceController) GetSpesifySalesHistory(ctx *gin.Context) {
+	invoice, statusCode, err := controller.InvoiceService.GetSpesifySalesHistory(ctx.GetString("company_id"), ctx.Param("invoiceID"))
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data penjualan!", invoice, statusCode)
 }
