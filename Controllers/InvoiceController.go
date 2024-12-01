@@ -8,6 +8,7 @@ import (
 	"2024_akutansi_project/Utils"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +19,7 @@ type (
 		GetSalesHistory(ctx *gin.Context)
 		GetSpesifySalesHistory(ctx *gin.Context)
 		UpdateRefund(ctx *gin.Context)
+		StatisticSales(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -114,4 +116,17 @@ func (controller *InvoiceController) UpdateRefund(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Berhasil melakukan pengembalian dana!", nil, statusCode)
+}
+
+func (controller *InvoiceController) StatisticSales(ctx *gin.Context) {
+	dateNow := time.Now().Format("2006-01-02")
+
+	statistic, statusCode, err := controller.InvoiceService.StatisticSales(ctx.GetString("company_id"), ctx.DefaultQuery("date", dateNow))
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data statistik penjualan!", statistic, statusCode)
+
 }

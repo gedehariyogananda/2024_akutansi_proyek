@@ -18,3 +18,13 @@ type InvoiceResponse struct {
 	CountSale     *int                  `json:"count_sale,omitempty"`
 	InvoiceItems  *[]Models.InvoiceItem `json:"invoice_items,omitempty"`
 }
+
+type InvoiceItemResponse struct {
+	SellableProductID string                  `json:"sellable_product_id"`
+	CountSale         float64                 `json:"count_sale"`
+	ProductName       string                  `json:"product_name"`
+	SellableProduct   *Models.SellableProduct `json:"sellable_product,omitempty"`
+}
+
+type StatisticResponse struct {
+}
