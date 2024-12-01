@@ -9,6 +9,7 @@ import (
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
+
 	"firebase.google.com/go/messaging"
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -153,4 +154,19 @@ func DIWorker(db *gorm.DB, mongo *mongo.Client, messaging *messaging.Client) *Se
 	))
 
 	return &Services.WorkerService{}
+}
+
+func DITax(db *gorm.DB) *Controllers.TaxController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.TaxRepositoryProvider,
+		Services.TaxServiceProvider,
+		Controllers.TaxControllerProvider,
+
+		wire.Bind(new(Controllers.ITaxController), new(*Controllers.TaxController)),
+		wire.Bind(new(Services.ITaxService), new(*Services.TaxService)),
+		wire.Bind(new(Repositories.ITaxRepository), new(*Repositories.TaxRepository)),
+	),
+	))
+
+	return &Controllers.TaxController{}
 }

@@ -15,4 +15,5 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	CategoryRoute(apiPrefix, deps.DB, deps.Redis)
 	ProfileRoute(apiPrefix, deps.DB, deps.Mongo)
 	Unit(apiPrefix, deps.DB, deps.Redis)
+	TaxRoute(apiPrefix, deps.DB, deps.Redis)
 }
