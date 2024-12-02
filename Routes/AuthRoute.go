@@ -16,5 +16,6 @@ func AuthRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	route.POST("/register", authController.Register)
 	route.POST("/login/owner", authController.LoginOwner)
 	route.POST("/login/employee", authController.LoginEmployee)
+	route.POST("/login", authController.LoginMobile)
 
 }

@@ -14,6 +14,7 @@ type (
 		Register(ctx *gin.Context)
 		LoginOwner(ctx *gin.Context)
 		LoginEmployee(ctx *gin.Context)
+		LoginMobile(ctx *gin.Context)
 	}
 
 	AuthController struct {
@@ -93,5 +94,30 @@ func (c *AuthController) LoginEmployee(ctx *gin.Context) {
 
 	Helper.SetSuccessResponse(ctx, "Login Berhasil!", gin.H{
 		"token": token,
+	}, statusCode)
+}
+
+func (c *AuthController) LoginMobile(ctx *gin.Context) {
+	var loginMobileDTO Dto.LoginMobileRequest
+
+	if err := ctx.ShouldBind(&loginMobileDTO); err != nil {
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, &loginMobileDTO); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
+		return
+	}
+
+	token, userType, statusCode, err := c.service.LoginMobile(ctx.Request.Context(), &loginMobileDTO)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Login Berhasil!", gin.H{
+		"token":     token,
+		"type_user": userType,
 	}, statusCode)
 }
