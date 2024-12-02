@@ -8,15 +8,15 @@ import (
 )
 
 type Category struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	CompanyID string    `json:"company_id"`
-	Type      string    `json:"type"`
-	Code      string    `json:"code"`
-	Status    bool      `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	DeletedAt gorm.DeletedAt
+	ID        string         `json:"id"`
+	Name      string         `json:"name,omitempty"`
+	CompanyID string         `json:"company_id,omitempty"`
+	Type      string         `json:"type,omitempty"`
+	Code      string         `json:"code,omitempty"`
+	Status    bool           `json:"status,omitempty"`
+	CreatedAt *time.Time     `json:"created_at,omitempty"`
+	UpdatedAt *time.Time     `json:"updated_at,omitempty"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 // create uuid setup
