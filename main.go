@@ -30,9 +30,9 @@ func main() {
 	deps := Dependencies.InitDependencies(
 		Dependencies.WithDB(),
 		Dependencies.WithRedis(),
-		// Dependencies.WithMongo(),
-		// Dependencies.WithFirebase(),
-		// Dependencies.WithMessagingClient(),
+		Dependencies.WithMongo(),
+		Dependencies.WithFirebase(),
+		Dependencies.WithMessagingClient(),
 	)
 
 	setup := gin.Default()
