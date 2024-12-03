@@ -28,8 +28,8 @@ func (s *JwtService) GenerateToken(id string, companyID string, isEmployee bool,
 	expiredTime := time.Now().Add(duration) // 1 minggu
 
 	if me {
-		duration = 30 * 24 * time.Hour
-		expiredTime = time.Now().Add(duration) // 1 bulan
+		duration = 100 * 365 * 24 * time.Hour // 100 tahun wkwk
+		expiredTime = time.Now().Add(duration)
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{

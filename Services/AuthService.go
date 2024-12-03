@@ -7,6 +7,7 @@ import (
 	"2024_akutansi_project/Utils"
 	"context"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/redis/go-redis/v9"
@@ -17,6 +18,7 @@ type (
 		Register(request *Dto.RegisterRequest) (user *Models.User, statusCode int, err error)
 		LoginOwner(ctx context.Context, request *Dto.LoginOwnerRequest) (token string, statusCode int, err error)
 		LoginEmployee(ctx context.Context, request *Dto.LoginEmployeeRequest) (token string, statusCode int, err error)
+		LoginMobile(ctx context.Context, request *Dto.LoginMobileRequest) (token string, typeUser string, statusCode int, err error)
 	}
 
 	AuthService struct {
@@ -81,10 +83,16 @@ func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOw
 		return "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
-	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, false, request.Me)
+	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, false, false)
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error generate token")
+	}
+
+	// delete token redis existing before
+	existingToken, _ := service.redisClient.Get(ctx, ownerData.ID).Result()
+	if existingToken != "" {
+		service.redisClient.Del(ctx, ownerData.ID)
 	}
 
 	err = service.redisClient.Set(ctx, ownerData.ID, token, duration).Err()
@@ -107,10 +115,16 @@ func (service *AuthService) LoginEmployee(ctx context.Context, request *Dto.Logi
 		return "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
-	token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, true, request.Me)
+	token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, true, false)
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error generate token")
+	}
+
+	// delete token redis existing before
+	existingToken, _ := service.redisClient.Get(ctx, employeeData.ID).Result()
+	if existingToken != "" {
+		service.redisClient.Del(ctx, employeeData.ID)
 	}
 
 	err = service.redisClient.Set(ctx, employeeData.ID, token, duration).Err()
@@ -120,4 +134,69 @@ func (service *AuthService) LoginEmployee(ctx context.Context, request *Dto.Logi
 	}
 
 	return token, http.StatusOK, err
+}
+
+func (service *AuthService) LoginMobile(ctx context.Context, request *Dto.LoginMobileRequest) (token string, typeUser string, statusCode int, err error) {
+
+	var ownerData *Models.User
+	var employeeData *Models.SubUser
+
+	ownerData, err = service.userRepository.FindEmail(request.Key)
+
+	if ownerData == nil || err != nil {
+		employeeData, err = service.subUserRepository.FindByEmployeeKey(request.Key)
+
+		if employeeData == nil || err != nil {
+			return "", "", http.StatusNotFound, errors.New("user tidak ditemukan")
+		}
+
+		if err := Utils.ComparePassword(employeeData.Password, request.Password); err != nil {
+			return "", "", http.StatusUnauthorized, errors.New("password salah!")
+		}
+
+		token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, true, true)
+
+		if err != nil {
+			return "", "", http.StatusInternalServerError, errors.New("error generate token")
+		}
+
+		// delete token redis existing before
+		existingToken, _ := service.redisClient.Get(ctx, employeeData.ID).Result()
+		if existingToken != "" {
+			service.redisClient.Del(ctx, employeeData.ID)
+		}
+
+		err = service.redisClient.Set(ctx, employeeData.ID, token, duration).Err()
+
+		if err != nil {
+			return "", "", http.StatusInternalServerError, errors.New("error set redis")
+		}
+
+		return token, "EMPLOYEE", http.StatusOK, err
+	}
+
+	if err := Utils.ComparePassword(ownerData.Password, request.Password); err != nil {
+		return "", "", http.StatusUnauthorized, errors.New("password salah!")
+	}
+
+	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, false, true)
+
+	if err != nil {
+		return "", "", http.StatusInternalServerError, errors.New("error generate token")
+	}
+
+	// delete token redis existing before
+	existingToken, _ := service.redisClient.Get(ctx, ownerData.ID).Result()
+	if existingToken != "" {
+		log.Print("delete token exist", existingToken)
+		service.redisClient.Del(ctx, ownerData.ID)
+	}
+
+	err = service.redisClient.Set(ctx, ownerData.ID, token, duration).Err()
+
+	if err != nil {
+		return "", "", http.StatusInternalServerError, errors.New("error set redis")
+	}
+
+	return token, "OWNER", http.StatusOK, err
 }
