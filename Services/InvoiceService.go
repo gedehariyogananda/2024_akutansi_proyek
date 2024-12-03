@@ -2,12 +2,16 @@ package Services
 
 import (
 	"2024_akutansi_project/Models"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
+	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
+	"2024_akutansi_project/Utils"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +21,10 @@ import (
 type (
 	IInvoiceService interface {
 		CreateInvoicePurchased(requestClient *Dto.InvoiceRequestDTO, companyID string) (invoice *Models.Invoice, statusCode int, err error)
+		GetAllByCompany(companyID string, query *Common.Query) (response []Response.InvoiceResponse, meta Common.Meta, statusCode int, err error)
+		GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.InvoiceResponse, statusCode int, err error)
+		UpdateRefund(companyID string, id string) (statusCode int, err error)
+		StatisticSales(companyID string, date string) (data interface{}, statusCode int, err error)
 	}
 
 	InvoiceService struct {
@@ -72,8 +80,8 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 		Status:        requestClient.Status,
 		Tax:           requestClient.Tax,
 		SubTotal:      requestClient.SubTotal,
-		CreatedAt:     time.Now().Format("2006-01-02 15:04:05"),
-		UpdatedAt:     time.Now().Format("2006-01-02 15:04:05"),
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	invoice, err = invoiceService.invoiceRepository.Store(trx, invoiceDataClient)
@@ -246,4 +254,151 @@ func (invoiceService *InvoiceService) handleSellableStocks(trx *gorm.DB, sellabl
 	}
 
 	return nil
+}
+
+func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *Common.Query) (response []Response.InvoiceResponse, meta Common.Meta, statusCode int, err error) {
+	invoices, totalData, err := invoiceService.invoiceRepository.GetAllByCompany(companyID, query)
+
+	if err != nil {
+		return nil, Common.Meta{}, http.StatusInternalServerError, err
+	}
+
+	var res []Response.InvoiceResponse
+
+	for _, invoice := range invoices {
+		total := 0
+		for _, item := range invoice.InvoiceItems {
+			total += item.Quantity
+		}
+
+		status := ""
+
+		if invoice.Status {
+			status = "Lunas"
+		} else {
+			status = "Belum Lunas"
+		}
+
+		res = append(res, Response.InvoiceResponse{
+			ID:            invoice.ID,
+			CustomerName:  invoice.CustomerName,
+			InvoiceNumber: invoice.InvoiceNumber,
+			SubTotal:      invoice.SubTotal,
+			Status:        &status,
+			CreatedAt:     invoice.CreatedAt.Format("02/01/2006"),
+			CountSale:     &total,
+		})
+
+	}
+
+	meta = Common.Meta{
+		TotalData: totalData,
+		Limit:     query.Limit,
+		Page:      query.Page,
+	}
+
+	return res, meta, http.StatusOK, nil
+}
+
+func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.InvoiceResponse, statusCode int, err error) {
+	invoice, _ := invoiceService.invoiceRepository.GetByInvoiceID(companyID, invoiceID)
+
+	status := ""
+
+	if invoice.Status {
+		status = "Lunas"
+	} else {
+		status = "Belum Lunas"
+	}
+
+	total := 0
+
+	for _, item := range invoice.InvoiceItems {
+		total += item.Quantity
+	}
+
+	res := Response.InvoiceResponse{
+		ID:           invoice.ID,
+		CustomerName: invoice.CustomerName,
+		PhoneNumber:  invoice.PhoneNumber,
+		CreatedAt:    invoice.CreatedAt.Format("02/01/2006"),
+		Status:       &status,
+		Note:         &invoice.Note,
+		SubTotal:     invoice.SubTotal,
+		Tax:          &invoice.Tax,
+		CountSale:    &total,
+		InvoiceItems: &invoice.InvoiceItems,
+	}
+
+	return res, http.StatusOK, nil
+}
+
+func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) (statusCode int, err error) {
+	invoice, err := invoiceService.invoiceRepository.FindByID(id, companyID)
+
+	if err != nil {
+		return http.StatusNotFound, err
+	}
+	if invoice.RefundAt != nil {
+		return http.StatusBadRequest, errors.New("invoice sudah di refund")
+	}
+
+	if err = invoiceService.invoiceRepository.Update(id, &Models.Invoice{
+		RefundAt: func() *time.Time {
+			now := time.Now()
+			return &now
+		}(),
+	}); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func (invoiceService *InvoiceService) StatisticSales(companyID string, date string) (data interface{}, statusCode int, err error) {
+
+	yearInit, _ := strconv.Atoi(strings.Split(date, "-")[0])
+	monthInit, _ := strconv.Atoi(strings.Split(date, "-")[1])
+	prevMonth := monthInit - 1
+
+	// set safety first and latest month init
+	if prevMonth < 1 {
+		prevMonth = 12
+		yearInit -= 1
+	}
+
+	currentDate, _ := time.Parse("2006-01-02", date)
+	prevDay := currentDate.AddDate(0, 0, -1).Format("2006-01-02")
+
+	sumSalesNow, _ := invoiceService.invoiceRepository.SumSalesByDate(companyID, date)
+	sumSalesPrev, _ := invoiceService.invoiceRepository.SumSalesByDate(companyID, prevDay)
+
+	sumSalesNowByMonth, _ := invoiceService.invoiceRepository.SumSalesByYearMonth(companyID, yearInit, monthInit)
+	sumSalesPrevByMonth, _ := invoiceService.invoiceRepository.SumSalesByYearMonth(companyID, yearInit, prevMonth)
+
+	// calculate peresentage kenaikan
+	salesNowPercentage := Utils.CalculatePercentageInit(sumSalesPrev, sumSalesNow)
+	salesMonthPercentage := Utils.CalculatePercentageInit(sumSalesPrevByMonth, sumSalesNowByMonth)
+
+	mostProductSold, err := invoiceService.invoiceItemRepository.GetMostProductSold(companyID, date)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	data = map[string]interface{}{
+		"sum_sales_now": map[string]interface{}{
+			"total":      sumSalesNow,
+			"percentage": salesNowPercentage,
+		},
+		"sum_sales_now_by_month": map[string]interface{}{
+			"total":      sumSalesNowByMonth,
+			"percentage": salesMonthPercentage,
+		},
+		"most_product_sold": map[string]interface{}{
+			"name":       mostProductSold.ProductName,
+			"count_sale": mostProductSold.CountSale,
+		},
+	}
+
+	return data, http.StatusOK, nil
 }

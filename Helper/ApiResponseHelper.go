@@ -1,8 +1,6 @@
 package Helper
 
 import (
-	"2024_akutansi_project/Models/Common"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -52,9 +50,7 @@ func SetValidationErrorResponse(ctx *gin.Context, errors interface{}) {
 	ctx.JSON(422, responseBody)
 }
 
-func SetPaginationResponse(ctx *gin.Context, message string, payload interface{}, totalData int64, limit int, page int, statusCode int) {
-	meta := Common.PaginateMetadata(ctx, totalData, limit, page)
-
+func SetPaginationResponse(ctx *gin.Context, message string, payload interface{}, meta interface{}, statusCode int) {
 	responseBody := Response{
 		Success:    true,
 		Message:    message,

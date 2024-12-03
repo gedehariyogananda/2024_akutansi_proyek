@@ -6,3 +6,7 @@ type Receipt struct {
 	MaterialProductID string `json:"material_product_id"`
 	Quantity          int    `json:"quantity"`
 }
+
+func (Receipt) TableName() string {
+	return "receipt"
+}

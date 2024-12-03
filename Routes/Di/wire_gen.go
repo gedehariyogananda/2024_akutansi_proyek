@@ -56,7 +56,6 @@ func DICategory(db *gorm.DB) *Controllers.CategoryController {
 	return categoryController
 }
 
-
 func DIProfile(db *gorm.DB, mongo2 *mongo.Client) *Controllers.ProfileController {
 	profileRepository := Repositories.ProfileRepositoryProvider(mongo2)
 	shopeeConnector := Connector.ShopeeConnectorProvider()
@@ -83,4 +82,11 @@ func DIWorker(db *gorm.DB, mongo2 *mongo.Client, messaging2 *messaging.Client) *
 	deviceTokenRepository := Repositories.DeviceTokenRepositoryProvider(mongo2)
 	workerService := Services.WorkerServiceProvider(deviceTokenRepository, messaging2)
 	return workerService
+}
+
+func DITax(db *gorm.DB) *Controllers.TaxController {
+	taxRepository := Repositories.TaxRepositoryProvider(db)
+	taxService := Services.TaxServiceProvider(taxRepository)
+	taxController := Controllers.TaxControllerProvider(taxService)
+	return taxController
 }

@@ -54,7 +54,6 @@ func (r *SellableStockRepository) SumCurrentQuantity(sellableStockID string) (to
 		Select("sum(current_quantity) as total").
 		Where("sellable_product_id = ?", sellableStockID).
 		Where("expired_date > now()").
-		Group("sellable_product_id").
 		Scan(&total).Error; err != nil {
 		return 0, err
 	}
