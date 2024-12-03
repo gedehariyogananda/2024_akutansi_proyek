@@ -13,6 +13,7 @@ import (
 type (
 	ISellableProductRepository interface {
 		GetAll(companyID string, status *bool, query *Common.Query) (sellableProducts []*Models.SellableProduct, totalData int64, err error)
+		Update(id string, sellableProduct *Models.SellableProduct) error
 		Find(id string) (sellableProduct *Models.SellableProduct, err error)
 		UpdateCurrent(trx *gorm.DB, sellableProductID string, QtyClient int) error
 	}
@@ -57,6 +58,16 @@ func (sellableProductRepository *SellableProductRepository) GetAll(companyID str
 	}
 
 	return sellableProducts, totalData, nil
+}
+
+func (sellableProductRepository *SellableProductRepository) Update(id string, sellableProduct *Models.SellableProduct) error {
+	if err := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
+		Where("id = ?", id).
+		Updates(sellableProduct).Error; err != nil {
+		return fmt.Errorf("error saat update sellable products: %w", err)
+	}
+
+	return nil
 }
 
 func (sellableProductRepository *SellableProductRepository) Find(id string) (sellableProduct *Models.SellableProduct, err error) {

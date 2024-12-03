@@ -1,24 +1,29 @@
 package Response
 
-type SaleableResponseDTO struct {
-	ID                    string      `json:"id"`
-	ProductName           string      `json:"product_name"`
-	UnitPrice             float64     `json:"unit_price"`
-	CategoryName          string      `json:"category_name"`
-	SaleableProductToping []TopingDTO `json:"saleable_product_toping"`
-}
+import (
+	"2024_akutansi_project/Models"
+	"time"
 
-type TopingDTO struct {
-	ID          string  `json:"id"`
-	TopingName  string  `json:"toping_name"`
-	PriceToping float64 `json:"price_toping"`
-}
+	"gorm.io/gorm"
+)
 
-type DetailSaleableResponseDTO struct {
-	ID           string  `json:"id"`
-	ProductName  string  `json:"product_name"`
-	UnitPrice    float64 `json:"unit_price"`
-	QuantitySold int     `json:"quantity_sold"`
-	CategoryName string  `json:"category_name"`
-	TotalPrice   float64 `json:"total_price"`
+type SellableResponse struct {
+	ID              string              `json:"id"`
+	Name            string              `json:"name"`
+	CompanyID       string              `json:"company_id"`
+	SmallestUnitID  string              `json:"smallest_unit_id"`
+	CategoryID      string              `json:"category_id"`
+	Image           string              `json:"image"`
+	Description     string              `json:"description"`
+	Status          bool                `json:"status"`
+	StatusDisplay   string              `json:"status_display"`
+	HasReceipt      bool                `json:"has_receipt"`
+	CurrentQuantity int                 `json:"current_quantity"`
+	Price           float64             `json:"price"`
+	CreatedAt       time.Time           `json:"created_at"`
+	UpdatedAt       time.Time           `json:"updated_at"`
+	DeletedAt       gorm.DeletedAt      `json:"deleted_at,omitempty"`
+	Unit            *Models.Unit        `json:"unit,omitempty" gorm:"foreignKey:SmallestUnitID"`
+	Category        *Models.Category    `json:"category,omitempty"`
+	PromoItems      []*Models.PromoItem `json:"promo_items,omitempty"`
 }

@@ -13,9 +13,9 @@ type SellableProduct struct {
 	CompanyID       string         `json:"company_id"`
 	SmallestUnitID  string         `json:"smallest_unit_id"`
 	CategoryID      string         `json:"category_id"`
-	image           string         `json:"image"`
-	Desctiption     string         `json:"description"`
-	Status          bool           `json:"status"`
+	Image           string         `json:"image"`
+	Description     string         `json:"description"`
+	Status          *bool          `json:"status"`
 	HasReceipt      bool           `json:"has_receipt"`
 	CurrentQuantity int            `json:"current_quantity"`
 	Price           float64        `json:"price"`

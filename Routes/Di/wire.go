@@ -198,9 +198,11 @@ func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
 		Repositories.SellableProductRepositoryProvider,
 		Services.SellableProductServiceProvider,
 		Controllers.SellableProductControllerProvider,
+		Repositories.PromoItemRepositoryProvider,
 
 		wire.Bind(new(Controllers.ISellableProductController), new(*Controllers.SellableProductController)),
 		wire.Bind(new(Services.ISellableProductService), new(*Services.SellableProductService)),
+		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
 		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
 	),
 	))

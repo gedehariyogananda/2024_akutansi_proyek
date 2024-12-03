@@ -3,6 +3,7 @@ package Controllers
 import (
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models/Common"
+	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
 
@@ -12,6 +13,7 @@ import (
 type (
 	ISellableProductController interface {
 		GetAllSellableProduct(ctx *gin.Context)
+		UpdateSellableProduct(ctx *gin.Context)
 	}
 
 	SellableProductController struct {
@@ -48,4 +50,27 @@ func (controller *SellableProductController) GetAllSellableProduct(ctx *gin.Cont
 		sellableProducts,
 		Common.PaginateMetadata(ctx, meta.TotalData, meta.Limit, meta.Page),
 		statusCode)
+}
+
+func (controller *SellableProductController) UpdateSellableProduct(ctx *gin.Context) {
+	var updateSellableDTO Dto.SellableProductDTO
+
+	if err := ctx.ShouldBindJSON(&updateSellableDTO); err != nil {
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, &updateSellableDTO); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
+		return
+	}
+
+	statusCode, err := controller.SellableProductService.UpdateStock(ctx.Param("id"), &updateSellableDTO)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mengupdate stock sellable product", nil, statusCode)
+
 }
