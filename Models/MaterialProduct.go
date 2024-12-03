@@ -9,16 +9,16 @@ import (
 
 type MaterialProduct struct {
 	ID                  string    `json:"id"`
-	MaterialProductName string    `json:"material_product_name"`
-	StockTypeID         string    `json:"stock_type_id"`
-	IsAvailableForSale  bool      `json:"is_available_for_sale"`
+	Name                string    `json:"material_product_name"`
+	SmallestUnitID      string    `json:"smallest_unit_id"`
 	UnitPriceForSelling float64   `json:"unit_price_for_selling"`
-	TotalStock          int       `json:"total_stock"`
+	CurrentQuantity     int       `json:"current_quantity"`
+	Sku                 string    `json:"sku"`
 	CompanyID           string    `json:"company_id"`
+	CategoryID          string    `json:"category_id"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
-	Company             Company   `gorm:"foreignKey:CompanyID" json:"company"`
-	StockType           StockType `gorm:"foreignKey:StockTypeID" json:"stock_type"`
+	DeletedAt           gorm.DeletedAt
 }
 
 // create uuid setup

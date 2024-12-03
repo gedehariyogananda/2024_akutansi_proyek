@@ -6,7 +6,6 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -34,84 +33,52 @@ func AccountProvider(accountService Services.IAccountService) *AccountController
 func (controller *AccountController) Create(c *gin.Context) {
 	var request Dto.CreateAccountDto
 	if err := c.ShouldBindJSON(&request); err != nil {
-		Helper.SetResponse(c, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+		Helper.SetValidationErrorResponse(c, err.Error())
 		return
 	}
 	request.CompanyID = c.GetString("company_id")
 	res, err := controller.accountService.Create(&request)
 	if err != nil {
-		Helper.SetResponse(c, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
-		return
+		Helper.SetErrorResponse(c, err.Error(), http.StatusBadRequest)
 	}
-	Helper.SetResponse(c, gin.H{
-		"success": true,
-		"message": "Success create account",
-		"data":    res,
-	}, http.StatusOK)
+	Helper.SetSuccessResponse(c, "Success create account", res, http.StatusCreated)
 }
 
 func (controller *AccountController) FindByID(c *gin.Context) {
 	id := c.Param("id")
 	res, statusCode, err := controller.accountService.FindByID(id)
 	if err != nil {
-		Helper.SetResponse(c, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(c, err.Error(), statusCode)
 		return
 	}
-	Helper.SetResponse(c, gin.H{
-		"success": true,
-		"message": "Success get account",
-		"data":    res,
-	}, http.StatusOK)
+	Helper.SetSuccessResponse(c, "Success get account", res, http.StatusOK)
 }
 
 func (controller *AccountController) Update(c *gin.Context) {
 	id := c.Param("id")
 	var request Dto.UpdateAccountDto
 	if err := c.ShouldBindJSON(&request); err != nil {
-		Helper.SetResponse(c, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+		Helper.SetValidationErrorResponse(c, err.Error())
 		return
 	}
 	res, statusCode, err := controller.accountService.Update(&request, id)
 	if err != nil {
-		Helper.SetResponse(c, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(c, err.Error(), statusCode)
 		return
 	}
-	Helper.SetResponse(c, gin.H{
-		"success": true,
-		"message": "Success update account",
-		"data":    res,
-	}, http.StatusOK)
+	Helper.SetSuccessResponse(c, "Success update account", res, http.StatusOK)
+	return
 }
 
 func (controller *AccountController) Delete(c *gin.Context) {
 	id := c.Param("id")
 	statusCode, err := controller.accountService.Delete(id)
 	if err != nil {
-		Helper.SetResponse(c, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(c, err.Error(), statusCode)
 		return
 	}
-	Helper.SetResponse(c, gin.H{
-		"success": true,
-		"message": "Success delete account",
-	}, http.StatusOK)
+	Helper.SetSuccessResponse(c, "Success delete account", nil, http.StatusOK)
+	return
 }
 
 func (cotroller *AccountController) FindAll(c *gin.Context) {
@@ -129,15 +96,10 @@ func (cotroller *AccountController) FindAll(c *gin.Context) {
 
 	status := c.Query("status")
 
-	fmt.Println(status)
-
 	if status != "" {
 		statusBool, err := strconv.ParseBool(status)
 		if err != nil {
-			Helper.SetResponse(c, gin.H{
-				"success": false,
-				"message": err.Error(),
-			}, http.StatusBadRequest)
+			Helper.SetErrorResponse(c, "Failed to parse status", http.StatusBadRequest)
 			return
 		}
 
@@ -149,28 +111,19 @@ func (cotroller *AccountController) FindAll(c *gin.Context) {
 	if isLocked != "" {
 		isLockedBool, err := strconv.ParseBool(isLocked)
 		if err != nil {
-			Helper.SetResponse(c, gin.H{
-				"success": false,
-				"message": err.Error(),
-			}, http.StatusBadRequest)
+			Helper.SetErrorResponse(c, "Failed to parse is_locked", http.StatusBadRequest)
 			return
 		}
 
 		query.IsLocked = isLockedBool
 	}
 
-	res, totalData, err := cotroller.accountService.FindAll(companyId, &query)
+	res, meta, err := cotroller.accountService.FindAll(companyId, &query)
 	if err != nil {
-		Helper.SetResponse(c, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+		Helper.SetErrorResponse(c, err.Error(), http.StatusBadRequest)
 		return
 	}
-	Helper.SetResponse(c, gin.H{
-		"success":   true,
-		"message":   "Success get all account",
-		"data":      res,
-		"totalData": totalData,
-	}, http.StatusOK)
+
+	Helper.SetPaginationResponse(c, "Success get accounts", res, meta.TotalData, limit, page, http.StatusOK)
+	return
 }

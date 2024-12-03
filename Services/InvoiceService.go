@@ -313,7 +313,7 @@ func (s *InvoiceService) GetInvoice(invoice_id string) (invoiceSet *Models.Invoi
 	for _, item := range *invoiceMaterial {
 		invoiceDetail := Response.DetailSaleableResponseDTO{
 			ID:           item.MaterialProduct.ID,
-			ProductName:  item.MaterialProduct.MaterialProductName,
+			ProductName:  item.MaterialProduct.Name,
 			QuantitySold: item.QuantitySold,
 			UnitPrice:    item.MaterialProduct.UnitPriceForSelling,
 			CategoryName: "",

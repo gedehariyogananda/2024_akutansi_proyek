@@ -73,7 +73,7 @@ func (s *SaleableProductService) FindAllSaleableProducts(company_id string, cate
 			for _, item := range *materialProductInit {
 				materialData := Response.SaleableResponseDTO{
 					ID:           item.ID,
-					ProductName:  item.MaterialProductName,
+					ProductName:  item.Name,
 					UnitPrice:    item.UnitPriceForSelling,
 					CategoryName: "",
 				}
