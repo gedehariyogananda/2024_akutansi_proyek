@@ -4,6 +4,7 @@ import (
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
+	"2024_akutansi_project/Utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +14,7 @@ type (
 		Register(ctx *gin.Context)
 		LoginOwner(ctx *gin.Context)
 		LoginEmployee(ctx *gin.Context)
+		LoginMobile(ctx *gin.Context)
 	}
 
 	AuthController struct {
@@ -25,20 +27,25 @@ func AuthControllerProvider(service Services.IAuthService) *AuthController {
 }
 
 func (c *AuthController) Register(ctx *gin.Context) {
-	var registerRequest Dto.RegisterRequest
+	var registerDTO Dto.RegisterRequest
 
-	if err := ctx.ShouldBind(&registerRequest); err != nil {
-		Helper.SetValidationErrorResponse(ctx, err.Error())
+	if err := ctx.ShouldBind(&registerDTO); err != nil {
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
 		return
 	}
 
-	user, statusCode, err := c.service.Register(&registerRequest)
+	if validationErrors := Utils.ValidateRequest(ctx, &registerDTO); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
+		return
+	}
+
+	user, statusCode, err := c.service.Register(&registerDTO)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetSuccessResponse(ctx, "Register Successful", gin.H{
+	Helper.SetSuccessResponse(ctx, "Register berhasil!", gin.H{
 		"user": user,
 	}, statusCode)
 }
@@ -46,7 +53,12 @@ func (c *AuthController) LoginOwner(ctx *gin.Context) {
 	var loginOwnerDTO Dto.LoginOwnerRequest
 
 	if err := ctx.ShouldBind(&loginOwnerDTO); err != nil {
-		Helper.SetValidationErrorResponse(ctx, err.Error())
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, &loginOwnerDTO); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
 
@@ -56,7 +68,7 @@ func (c *AuthController) LoginOwner(ctx *gin.Context) {
 		return
 	}
 
-	Helper.SetSuccessResponse(ctx, "Login Owner Successful", gin.H{
+	Helper.SetSuccessResponse(ctx, "Login Berhasil!", gin.H{
 		"token": token,
 	}, statusCode)
 }
@@ -65,7 +77,12 @@ func (c *AuthController) LoginEmployee(ctx *gin.Context) {
 	var loginEmployeeDTO Dto.LoginEmployeeRequest
 
 	if err := ctx.ShouldBind(&loginEmployeeDTO); err != nil {
-		Helper.SetValidationErrorResponse(ctx, err.Error())
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, &loginEmployeeDTO); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
 
@@ -75,7 +92,32 @@ func (c *AuthController) LoginEmployee(ctx *gin.Context) {
 		return
 	}
 
-	Helper.SetSuccessResponse(ctx, "Login Employee Successful", gin.H{
+	Helper.SetSuccessResponse(ctx, "Login Berhasil!", gin.H{
 		"token": token,
+	}, statusCode)
+}
+
+func (c *AuthController) LoginMobile(ctx *gin.Context) {
+	var loginMobileDTO Dto.LoginMobileRequest
+
+	if err := ctx.ShouldBind(&loginMobileDTO); err != nil {
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, &loginMobileDTO); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
+		return
+	}
+
+	token, userType, statusCode, err := c.service.LoginMobile(ctx.Request.Context(), &loginMobileDTO)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Login Berhasil!", gin.H{
+		"token":     token,
+		"type_user": userType,
 	}, statusCode)
 }

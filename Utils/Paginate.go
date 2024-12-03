@@ -15,10 +15,10 @@ func Paginate(page int, perPage int) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
-func GetPaginationParams(ctx *gin.Context, defaultPerPage, defaultPage int) (int, int) {
-	perPage, err := strconv.Atoi(ctx.DefaultQuery("perPage", strconv.Itoa(defaultPerPage)))
+func GetPaginationParams(ctx *gin.Context, defaultLimit, defaultPage int) (int, int) {
+	perPage, err := strconv.Atoi(ctx.DefaultQuery("limit", strconv.Itoa(defaultLimit)))
 	if err != nil || perPage < 1 {
-		perPage = defaultPerPage
+		perPage = defaultLimit
 	}
 
 	page, err := strconv.Atoi(ctx.DefaultQuery("page", strconv.Itoa(defaultPage)))

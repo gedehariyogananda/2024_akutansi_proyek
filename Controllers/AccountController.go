@@ -124,6 +124,6 @@ func (cotroller *AccountController) FindAll(c *gin.Context) {
 		return
 	}
 
-	Helper.SetPaginationResponse(c, "Success get accounts", res, meta.TotalData, limit, page, http.StatusOK)
+	Helper.SetPaginationResponse(c, "Success get accounts", res, meta, http.StatusOK)
 	return
 }

@@ -17,7 +17,6 @@ func ToMaterialResponse(materialProduct *Models.MaterialProduct) *MaterialProduc
 		ID:              materialProduct.ID,
 		Name:            materialProduct.Name,
 		SmallestUnitID:  materialProduct.SmallestUnitID,
-		Sku:             materialProduct.Sku,
 		CategoryID:      materialProduct.CategoryID,
 		CompanyID:       materialProduct.CompanyID,
 		CurrentQuantity: materialProduct.CurrentQuantity,

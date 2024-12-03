@@ -1,7 +1,6 @@
 package Common
 
 import (
-	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -13,8 +12,8 @@ const (
 )
 
 type Meta struct {
-	Limit           int    `json:"limit"`
 	Page            int    `json:"page"`
+	Limit           int    `json:"limit"`
 	TotalData       int64  `json:"total_data"`
 	TotalPage       int64  `json:"total_page"`
 	PreviousPageURL string `json:"previous_page"`
@@ -46,5 +45,5 @@ func getPageURL(page int, limit int, totalPage int64, path string) string {
 	if page < 1 || page > int(totalPage) {
 		return "-"
 	}
-	return os.Getenv("API_URL_V1") + path + "?limit=" + strconv.Itoa(limit) + "&page=" + strconv.Itoa(page)
+	return path + "?limit=" + strconv.Itoa(limit) + "&page=" + strconv.Itoa(page)
 }

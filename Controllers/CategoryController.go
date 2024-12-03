@@ -110,7 +110,6 @@ func (c *CategoryController) Create(ctx *gin.Context) {
 		"message": "Success create category",
 		"data":    category,
 	}, http.StatusOK)
-	return
 }
 
 func (c *CategoryController) Update(ctx *gin.Context) {
@@ -141,8 +140,6 @@ func (c *CategoryController) Update(ctx *gin.Context) {
 		"message": "Success update category",
 		"data":    category,
 	}, statusCode)
-
-	return
 }
 
 func (c *CategoryController) FindByID(ctx *gin.Context) {
@@ -164,7 +161,6 @@ func (c *CategoryController) FindByID(ctx *gin.Context) {
 		"message": "Success get single category",
 		"data":    res,
 	}, statusCode)
-	return
 }
 
 func (c *CategoryController) Delete(ctx *gin.Context) {

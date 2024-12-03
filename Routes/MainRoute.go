@@ -11,13 +11,9 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	apiPrefix := c.Group("/api/v1/")
 
 	AuthRoute(apiPrefix, deps.DB, deps.Redis)
-	CompanyRoute(apiPrefix, deps.DB, deps.Redis)
-	SaleableProductRoute(apiPrefix, deps.DB, deps.Redis)
 	InvoiceRoute(apiPrefix, deps.DB, deps.Redis)
 	CategoryRoute(apiPrefix, deps.DB, deps.Redis)
-	PaymentMethodRoute(apiPrefix, deps.DB, deps.Redis)
 	ProfileRoute(apiPrefix, deps.DB, deps.Mongo)
 	Unit(apiPrefix, deps.DB, deps.Redis)
-	SubUserRoute(apiPrefix, deps.DB, deps.Redis)
-	Account(apiPrefix, deps.DB, deps.Redis)
+	TaxRoute(apiPrefix, deps.DB, deps.Redis)
 }

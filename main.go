@@ -6,7 +6,10 @@ import (
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Routes"
 	"2024_akutansi_project/Utils"
+	"2024_akutansi_project/Worker"
 	_ "2024_akutansi_project/docs"
+	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -22,11 +25,14 @@ import (
 
 func main() {
 	Utils.LoadEnv()
+	Utils.InitValidator()
 
 	deps := Dependencies.InitDependencies(
 		Dependencies.WithDB(),
 		Dependencies.WithRedis(),
-		// Dependencies.WithMongo(),
+		Dependencies.WithMongo(),
+		Dependencies.WithFirebase(),
+		Dependencies.WithMessagingClient(),
 	)
 
 	setup := gin.Default()
@@ -40,6 +46,14 @@ func main() {
 	setup.Use(Middleware.SetupCORS())
 
 	Routes.Init(setup, deps)
+
+	if func() bool {
+		scheduler := os.Getenv("USE_SCHEDULER")
+		b, _ := strconv.ParseBool(scheduler)
+		return b
+	}() {
+		Worker.InitScheduler(deps)
+	}
 
 	setup.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
