@@ -27,8 +27,8 @@ func SellableProductServiceProvider(sellableProductRepository Repositories.ISell
 		PromoItemRepository:       promoItemRepository,
 	}
 }
-func (service *SellableProductService) GetAll(companyID string, query *Common.Query) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
 
+func (service *SellableProductService) GetAll(companyID string, query *Common.Query) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
 	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, nil, query)
 	if err != nil {
 		return nil, Common.Meta{}, http.StatusInternalServerError, err
