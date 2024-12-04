@@ -90,3 +90,17 @@ func DITax(db *gorm.DB) *Controllers.TaxController {
 	taxController := Controllers.TaxControllerProvider(taxService)
 	return taxController
 }
+
+func DISubUser(db *gorm.DB) *Controllers.SubUserController {
+	subUserRepository := Repositories.SubUserRepositoryProvider(db)
+	subUserService := Services.SubUserProvider(subUserRepository)
+	subUserController := Controllers.SubUserProvider(subUserService)
+	return subUserController
+}
+
+func DIAccount(db *gorm.DB) *Controllers.AccountController {
+	accountRepository := Repositories.AccountProvider(db)
+	accountService := Services.AccountProvider(accountRepository)
+	accountController := Controllers.AccountProvider(accountService)
+	return accountController
+}

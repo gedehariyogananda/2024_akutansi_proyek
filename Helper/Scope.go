@@ -31,6 +31,12 @@ func FilterStatus(status bool) func(*gorm.DB) *gorm.DB {
 	}
 }
 
+func FilterIslock(isLock bool) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("is_locked = ?", isLock)
+	}
+}
+
 func FilterSearchRiwayatTransaction(query string) func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		if query == "" {

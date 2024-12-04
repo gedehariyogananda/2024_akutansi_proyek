@@ -2,21 +2,23 @@ package Models
 
 import (
 	"2024_akutansi_project/Utils"
+	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type SubUser struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	EmployeeKey string `json:"employee_key"`
-	Password    string `json:"password"`
-	Status      bool   `json:"status"`
-	CompanyID   string `json:"company_id"`
-	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
-	DeletedAt   string `json:"deleted_at"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	EmployeeKey string    `json:"employee_key"`
+	Password    string    `json:"password"`
+	Status      bool      `json:"status"`
+	CompanyID   string    `json:"company_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	// UpdatedAt   time.Time `json:"updated_at"`
+	DeletedAt gorm.DeletedAt
 }
 
 // create uuid
@@ -31,7 +33,8 @@ func (subUser *SubUser) BeforeCreate(tx *gorm.DB) (err error) {
 		subUser.ID = uuid.String()
 	}
 
-	if subUser.Password != "" {
+	if subUser.Password == "" {
+		fmt.Println("password", subUser.Password)
 		hashed, err := Utils.HashPassword(subUser.Password)
 		if err != nil {
 			return err

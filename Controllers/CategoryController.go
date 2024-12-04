@@ -19,7 +19,7 @@ type (
 		Create(ctx *gin.Context)
 		Update(ctx *gin.Context)
 		FindByID(ctx *gin.Context)
-		DeleteCategory(ctx *gin.Context)
+		Delete(ctx *gin.Context)
 	}
 
 	CategoryController struct {
@@ -163,7 +163,7 @@ func (c *CategoryController) FindByID(ctx *gin.Context) {
 	}, statusCode)
 }
 
-func (c *CategoryController) DeleteCategory(ctx *gin.Context) {
+func (c *CategoryController) Delete(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 
 	statusCode, err := c.CategoryService.Delete(paramId)
