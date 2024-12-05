@@ -5,9 +5,10 @@ import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Repositories"
 	"context"
-	"errors"
+	"encoding/json"
 	"firebase.google.com/go/messaging"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"time"
 )
 
@@ -17,17 +18,29 @@ type (
 	}
 
 	WorkerService struct {
-		deviceTokenRepo  *Repositories.DeviceTokenRepository
-		messagingClient  *messaging.Client
-		notificationRepo *Repositories.NotificationRepository
+		deviceTokenRepo     *Repositories.DeviceTokenRepository
+		messagingClient     *messaging.Client
+		notificationRepo    *Repositories.NotificationRepository
+		materialStockRepo   *Repositories.MaterialStockRepository
+		sellableProductRepo *Repositories.SellableProductRepository
+		sellableStockRepo   *Repositories.SellableStockRepository
 	}
 )
 
-func WorkerServiceProvider(deviceTokenRepo *Repositories.DeviceTokenRepository, messagingClient *messaging.Client, notificationRepo *Repositories.NotificationRepository) *WorkerService {
+func WorkerServiceProvider(deviceTokenRepo *Repositories.DeviceTokenRepository,
+	messagingClient *messaging.Client,
+	notificationRepo *Repositories.NotificationRepository,
+	materialStockRepo *Repositories.MaterialStockRepository,
+	sellableProductRepo *Repositories.SellableProductRepository,
+	sellableStockRepo *Repositories.SellableStockRepository,
+) *WorkerService {
 	return &WorkerService{
-		deviceTokenRepo:  deviceTokenRepo,
-		messagingClient:  messagingClient,
-		notificationRepo: notificationRepo,
+		deviceTokenRepo:     deviceTokenRepo,
+		messagingClient:     messagingClient,
+		notificationRepo:    notificationRepo,
+		materialStockRepo:   materialStockRepo,
+		sellableProductRepo: sellableProductRepo,
+		sellableStockRepo:   sellableStockRepo,
 	}
 }
 
@@ -77,5 +90,44 @@ func (s *WorkerService) sendPushNotification(ctx context.Context, data Models.No
 }
 
 func (s *WorkerService) QueuePushNotification(ctx context.Context) error {
-	return fmt.Errorf("error : %v", errors.New("no data to be queued"))
+
+	wg, ctxg := errgroup.WithContext(ctx)
+	wg.SetLimit(3)
+
+	// Material Stock
+	func(ctxWG context.Context, eg *errgroup.Group) {
+		wg.Go(func() error {
+			materialStock := s.materialStockRepo.FetchMaterialStockToPushNotification(ctx)
+			for _, ms := range materialStock {
+				// todo :: adjust business logic
+				if err := s.notificationRepo.StoreNotification(ctx, Models.Notification{
+					Scheme: Consts.Pending,
+					UserID: "",
+					Status: "",
+					AdditionalData: func() json.RawMessage {
+						byteData, _ := json.Marshal(ms)
+						return byteData
+					}(),
+					QueuedAt:    time.Time{},
+					ScheduledAt: time.Time{},
+					SentAt:      nil,
+				}); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+	}(ctxg, wg)
+
+	// Sellable Product
+
+	// Sellable Stock
+
+	// Transaction
+
+	if err := wg.Wait(); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -12,14 +12,27 @@ const (
 type PushNotificationScheme string
 
 // Scheme
-const ()
+const (
+	SchemeMaterialStock   = "material-stock"
+	SchemeSellableProduct = "sellable-product"
+	SellableStock         = "sellable-stock"
+)
 
 func (i PushNotificationScheme) DefinePushNotificationMessages() *messaging.Notification {
 	switch i {
-	// todo :: add more scheme
-	case "":
+	case SchemeMaterialStock:
 		return &messaging.Notification{
-			Title: "",
+			Title: "Stok Material Menipis",
+			Body:  "",
+		}
+	case SchemeSellableProduct:
+		return &messaging.Notification{
+			Title: "Produk yang bisa dijual mau habis",
+			Body:  "",
+		}
+	case SellableStock:
+		return &messaging.Notification{
+			Title: "Stok barang hampir habis",
 			Body:  "",
 		}
 	default:
