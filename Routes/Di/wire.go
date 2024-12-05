@@ -209,3 +209,18 @@ func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
 
 	return &Controllers.SellableProductController{}
 }
+
+func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.StockOpnameRepositoryProvider,
+		Services.StockOpnameServiceProvider,
+		Controllers.StockOpnameControllerProvider,
+
+		wire.Bind(new(Controllers.IStockOpnameController), new(*Controllers.StockOpnameController)),
+		wire.Bind(new(Services.IStockOpnameService), new(*Services.StockOpnameService)),
+		wire.Bind(new(Repositories.IStockOpnameRepository), new(*Repositories.StockOpnameRepository)),
+	),
+	))
+
+	return &Controllers.StockOpnameController{}
+}
