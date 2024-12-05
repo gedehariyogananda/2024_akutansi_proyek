@@ -172,7 +172,6 @@ func DITax(db *gorm.DB) *Controllers.TaxController {
 
 	return &Controllers.TaxController{}
 }
-
 func DISubUser(db *gorm.DB) *Controllers.SubUserController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.SubUserRepositoryProvider,
@@ -195,4 +194,20 @@ func DIAccount(db *gorm.DB) *Controllers.AccountController {
 		wire.Bind(new(Repositories.IAccountRepository), new(*Repositories.AccountRepository)),
 	)))
 	return &Controllers.AccountController{}
+}
+func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.SellableProductRepositoryProvider,
+		Services.SellableProductServiceProvider,
+		Controllers.SellableProductControllerProvider,
+		Repositories.PromoItemRepositoryProvider,
+
+		wire.Bind(new(Controllers.ISellableProductController), new(*Controllers.SellableProductController)),
+		wire.Bind(new(Services.ISellableProductService), new(*Services.SellableProductService)),
+		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
+		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
+	),
+	))
+
+	return &Controllers.SellableProductController{}
 }
