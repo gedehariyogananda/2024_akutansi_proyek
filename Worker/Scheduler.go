@@ -21,6 +21,14 @@ func InitScheduler(deps *Dependencies.Dependency) {
 	}() {
 		go func(ctx context.Context) {
 			jobHandler := func() {
+				now := time.Now()
+				startTime := time.Date(now.Year(), now.Month(), now.Day(), 9, 0, 0, 0, now.Location())
+				endTime := time.Date(now.Year(), now.Month(), now.Day(), 13, 0, 0, 0, now.Location())
+
+				if now.Before(startTime) || now.After(endTime) {
+					return
+				}
+
 				fmt.Println("Start [JOB] :: Send Push Notification")
 
 				service := Di.DIWorker(deps.DB, deps.Mongo, deps.Messaging)
