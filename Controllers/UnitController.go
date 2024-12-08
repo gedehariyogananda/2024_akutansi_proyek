@@ -48,8 +48,6 @@ func (c *UnitController) FindByID(ctx *gin.Context) {
 		"message": "Success get unit",
 		"data":    res,
 	}, statusCode)
-
-	return
 }
 
 func (c *UnitController) Create(ctx *gin.Context) {
@@ -113,8 +111,6 @@ func (c *UnitController) Update(ctx *gin.Context) {
 		"message": "Success update unit",
 		"data":    res,
 	}, statusCode)
-
-	return
 }
 
 func (c *UnitController) Delete(ctx *gin.Context) {
@@ -134,8 +130,6 @@ func (c *UnitController) Delete(ctx *gin.Context) {
 		"success": true,
 		"message": "Success delete unit",
 	}, statusCode)
-
-	return
 }
 
 func (c *UnitController) FindAll(ctx *gin.Context) {
@@ -184,6 +178,4 @@ func (c *UnitController) FindAll(ctx *gin.Context) {
 		"data":    res,
 		"meta":    meta,
 	}, http.StatusOK)
-
-	return
 }

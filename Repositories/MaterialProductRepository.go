@@ -9,6 +9,7 @@ import (
 
 type (
 	IMaterialProductRepository interface {
+		Create(materialProduct *Models.MaterialProduct) (*Models.MaterialProduct, error)
 		FindByCompany(companyID string) ([]*Models.MaterialProduct, error)
 		UpdateCurrent(trx *gorm.DB, materialProductId string, qtyClient int) error
 	}
@@ -20,6 +21,14 @@ type (
 
 func MaterialProductRepositoryProvider(db *gorm.DB) *MaterialProductRepository {
 	return &MaterialProductRepository{DB: db}
+}
+
+func (r *MaterialProductRepository) Create(materialProduct *Models.MaterialProduct) (*Models.MaterialProduct, error) {
+	if err := r.DB.Create(materialProduct).Error; err != nil {
+		return nil, fmt.Errorf("error when creating material product: %w", err)
+	}
+
+	return materialProduct, nil
 }
 
 func (r *MaterialProductRepository) FindByCompany(companyID string) ([]*Models.MaterialProduct, error) {
