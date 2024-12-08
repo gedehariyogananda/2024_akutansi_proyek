@@ -67,7 +67,6 @@ func (controller *AccountController) Update(c *gin.Context) {
 		return
 	}
 	Helper.SetSuccessResponse(c, "Success update account", res, http.StatusOK)
-	return
 }
 
 func (controller *AccountController) Delete(c *gin.Context) {
@@ -78,7 +77,6 @@ func (controller *AccountController) Delete(c *gin.Context) {
 		return
 	}
 	Helper.SetSuccessResponse(c, "Success delete account", nil, http.StatusOK)
-	return
 }
 
 func (cotroller *AccountController) FindAll(c *gin.Context) {
@@ -125,5 +123,4 @@ func (cotroller *AccountController) FindAll(c *gin.Context) {
 	}
 
 	Helper.SetPaginationResponse(c, "Success get accounts", res, meta, http.StatusOK)
-	return
 }

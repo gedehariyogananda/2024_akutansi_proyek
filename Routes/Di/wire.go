@@ -212,6 +212,23 @@ func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
 	return &Controllers.SellableProductController{}
 }
 
+func DIMaterialProduct(db *gorm.DB) *Controllers.MaterialProductController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.MaterialProductRepositoryProvider,
+		Services.MaterialProductServiceProvider,
+		Controllers.MaterialProductControllerProvider,
+		Repositories.MaterialConversionRepositoryProvider,
+
+		wire.Bind(new(Controllers.IMaterialProductController), new(*Controllers.MaterialProductController)),
+		wire.Bind(new(Services.IMaterialProductService), new(*Services.MaterialProductService)),
+		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
+		wire.Bind(new(Repositories.IMaterialConversionRepository), new(*Repositories.MaterialConversionRepository)),
+	),
+	))
+
+	return &Controllers.MaterialProductController{}
+}
+
 func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.StockOpnameRepositoryProvider,

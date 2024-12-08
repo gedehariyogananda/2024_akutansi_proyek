@@ -1,7 +1,10 @@
 package Repositories
 
 import (
+	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models"
+	"2024_akutansi_project/Models/Common"
+	"2024_akutansi_project/Utils"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -9,8 +12,13 @@ import (
 
 type (
 	IMaterialProductRepository interface {
+		Create(materialProduct *Models.MaterialProduct) (*Models.MaterialProduct, error)
 		FindByCompany(companyID string) ([]*Models.MaterialProduct, error)
 		UpdateCurrent(trx *gorm.DB, materialProductId string, qtyClient int) error
+		FindByID(id string) (*Models.MaterialProduct, error)
+		Delete(id string) error
+		Update(materialProduct *Models.MaterialProduct, id string) (*Models.MaterialProduct, error)
+		FindAll(companyID string, query *Common.Query) ([]Models.MaterialProduct, int64, error)
 	}
 
 	MaterialProductRepository struct {
@@ -20,6 +28,14 @@ type (
 
 func MaterialProductRepositoryProvider(db *gorm.DB) *MaterialProductRepository {
 	return &MaterialProductRepository{DB: db}
+}
+
+func (r *MaterialProductRepository) Create(materialProduct *Models.MaterialProduct) (*Models.MaterialProduct, error) {
+	if err := r.DB.Create(materialProduct).Error; err != nil {
+		return nil, fmt.Errorf("error when creating material product: %w", err)
+	}
+
+	return materialProduct, nil
 }
 
 func (r *MaterialProductRepository) FindByCompany(companyID string) ([]*Models.MaterialProduct, error) {
@@ -46,4 +62,57 @@ func (r *MaterialProductRepository) UpdateCurrent(trx *gorm.DB, materialProductI
 	}
 
 	return nil
+}
+
+func (r *MaterialProductRepository) FindByID(id string) (*Models.MaterialProduct, error) {
+	var materialProduct Models.MaterialProduct
+
+	if err := r.DB.Where("id = ?", id).Preload("Unit").Preload("MaterialConversions.Unit").First(&materialProduct).Error; err != nil {
+		return nil, fmt.Errorf("material product not found: %w", err)
+	}
+
+	fmt.Println(materialProduct.MaterialConversions)
+	return &materialProduct, nil
+}
+
+func (r *MaterialProductRepository) Delete(id string) error {
+	if err := r.DB.Where("id = ?", id).Delete(&Models.MaterialProduct{}).Error; err != nil {
+		return fmt.Errorf("error when deleting material product: %w", err)
+	}
+
+	return nil
+}
+
+func (r *MaterialProductRepository) Update(materialProduct *Models.MaterialProduct, id string) (*Models.MaterialProduct, error) {
+	if err := r.DB.Where("id = ?", id).Updates(materialProduct).Error; err != nil {
+		return nil, fmt.Errorf("error when updating material product: %w", err)
+	}
+
+	return materialProduct, nil
+}
+
+func (r *MaterialProductRepository) FindAll(companyID string, query *Common.Query) ([]Models.MaterialProduct, int64, error) {
+	var materialProducts []Models.MaterialProduct
+	var total int64
+
+	err := r.DB.Preload("Unit").Preload("MaterialConversions.Unit").Scopes(Utils.Paginate(query.Page, query.Limit),
+		Helper.FilterCompanyID(companyID),
+		Helper.FilterStatus(query.Status),
+		Helper.FilterSearch(*query.Search),
+	).Find(&materialProducts).Error
+
+	if err != nil {
+		return nil, 0, fmt.Errorf("error when finding all material product: %w", err)
+	}
+
+	err = r.DB.Model(&Models.MaterialProduct{}).Scopes(Helper.FilterCompanyID(companyID),
+		Helper.FilterStatus(query.Status),
+		Helper.FilterSearch(*query.Search),
+	).Count(&total).Error
+
+	if err != nil {
+		return nil, 0, fmt.Errorf("error when finding all material product: %w", err)
+	}
+
+	return materialProducts, total, nil
 }
