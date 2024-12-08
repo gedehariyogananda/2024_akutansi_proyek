@@ -2,6 +2,7 @@ package Services
 
 import (
 	"2024_akutansi_project/Models"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
@@ -17,6 +18,7 @@ type (
 		FindById(id string) (*Response.MaterialProduckResponse, int, error)
 		Delete(id string) (statusCode int, err error)
 		Update(dto *Dto.UpdateMaterialProductDto, id string) (*Response.MaterialProduckResponse, int, error)
+		FindAll(companyID string, query *Common.Query) (res []Response.MaterialProduckResponse, meta Common.Meta, err error)
 	}
 	MaterialProductService struct {
 		materialProductRepository    Repositories.IMaterialProductRepository
@@ -148,4 +150,18 @@ func (s *MaterialProductService) Update(dto *Dto.UpdateMaterialProductDto, id st
 	res.ID = id
 
 	return &res, http.StatusOK, nil
+}
+
+func (s *MaterialProductService) FindAll(companyID string, query *Common.Query) (res []Response.MaterialProduckResponse, meta Common.Meta, err error) {
+	materialProducts, total, err := s.materialProductRepository.FindAll(companyID, query)
+
+	if err != nil {
+		return
+	}
+
+	meta.TotalData = total
+
+	res = Response.ToMaterialProduckResponseSlice(materialProducts)
+
+	return res, meta, nil
 }

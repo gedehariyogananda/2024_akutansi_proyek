@@ -79,5 +79,9 @@ func (r *AccountRepository) FindAll(companyID string, query *Common.Query) (acco
 	).
 		Count(&totalData).Error
 
+	if err != nil {
+		return nil, 0, err
+	}
+
 	return accounts, totalData, nil
 }

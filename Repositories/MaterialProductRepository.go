@@ -1,7 +1,10 @@
 package Repositories
 
 import (
+	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models"
+	"2024_akutansi_project/Models/Common"
+	"2024_akutansi_project/Utils"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -15,6 +18,7 @@ type (
 		FindByID(id string) (*Models.MaterialProduct, error)
 		Delete(id string) error
 		Update(materialProduct *Models.MaterialProduct, id string) (*Models.MaterialProduct, error)
+		FindAll(companyID string, query *Common.Query) ([]Models.MaterialProduct, int64, error)
 	}
 
 	MaterialProductRepository struct {
@@ -85,4 +89,30 @@ func (r *MaterialProductRepository) Update(materialProduct *Models.MaterialProdu
 	}
 
 	return materialProduct, nil
+}
+
+func (r *MaterialProductRepository) FindAll(companyID string, query *Common.Query) ([]Models.MaterialProduct, int64, error) {
+	var materialProducts []Models.MaterialProduct
+	var total int64
+
+	err := r.DB.Preload("Unit").Preload("MaterialConversions.Unit").Scopes(Utils.Paginate(query.Page, query.Limit),
+		Helper.FilterCompanyID(companyID),
+		Helper.FilterStatus(query.Status),
+		Helper.FilterSearch(*query.Search),
+	).Find(&materialProducts).Error
+
+	if err != nil {
+		return nil, 0, fmt.Errorf("error when finding all material product: %w", err)
+	}
+
+	err = r.DB.Model(&Models.MaterialProduct{}).Scopes(Helper.FilterCompanyID(companyID),
+		Helper.FilterStatus(query.Status),
+		Helper.FilterSearch(*query.Search),
+	).Count(&total).Error
+
+	if err != nil {
+		return nil, 0, fmt.Errorf("error when finding all material product: %w", err)
+	}
+
+	return materialProducts, total, nil
 }
