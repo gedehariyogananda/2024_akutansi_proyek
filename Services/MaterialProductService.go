@@ -5,11 +5,16 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
+	"errors"
+	"net/http"
+
+	"gorm.io/gorm"
 )
 
 type (
 	IMaterialProductService interface {
 		Create(dto *Dto.CreateMaterialProductDto) (*Response.MaterialProduckResponse, error)
+		FindById(id string) (*Response.MaterialProduckResponse, int, error)
 	}
 	MaterialProductService struct {
 		materialProductRepository    Repositories.IMaterialProductRepository
@@ -52,4 +57,20 @@ func (s *MaterialProductService) Create(dto *Dto.CreateMaterialProductDto) (*Res
 	res := Response.ToMaterialProduckResponse(*materialProduct)
 
 	return &res, nil
+}
+
+func (s *MaterialProductService) FindById(id string) (*Response.MaterialProduckResponse, int, error) {
+	materialProduct, err := s.materialProductRepository.FindByID(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, http.StatusNotFound, err
+	}
+
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	res := Response.ToMaterialProduckResponse(*materialProduct)
+
+	return &res, http.StatusOK, nil
 }

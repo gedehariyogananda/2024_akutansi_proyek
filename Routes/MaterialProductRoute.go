@@ -19,4 +19,5 @@ func MaterialProduct(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	MaterialProductController := Di.DIMaterialProduct(db)
 
 	route.POST("/", MaterialProductController.Create)
+	route.GET("/:id", MaterialProductController.FindByID)
 }

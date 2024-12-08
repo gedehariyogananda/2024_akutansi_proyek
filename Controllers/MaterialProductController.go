@@ -11,6 +11,7 @@ import (
 type (
 	IMaterialProductController interface {
 		Create(ctx *gin.Context)
+		FindByID(ctx *gin.Context)
 	}
 	MaterialProductController struct {
 		MaterialProductService Services.IMaterialProductService
@@ -39,4 +40,15 @@ func (controller *MaterialProductController) Create(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Success create material product", res, 201)
+}
+
+func (controller *MaterialProductController) FindByID(ctx *gin.Context) {
+	id := ctx.Param("id")
+	res, statusCode, err := controller.MaterialProductService.FindById(id)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Success get material product", res, 200)
 }

@@ -12,6 +12,7 @@ type (
 		Create(materialProduct *Models.MaterialProduct) (*Models.MaterialProduct, error)
 		FindByCompany(companyID string) ([]*Models.MaterialProduct, error)
 		UpdateCurrent(trx *gorm.DB, materialProductId string, qtyClient int) error
+		FindByID(id string) (*Models.MaterialProduct, error)
 	}
 
 	MaterialProductRepository struct {
@@ -55,4 +56,15 @@ func (r *MaterialProductRepository) UpdateCurrent(trx *gorm.DB, materialProductI
 	}
 
 	return nil
+}
+
+func (r *MaterialProductRepository) FindByID(id string) (*Models.MaterialProduct, error) {
+	var materialProduct Models.MaterialProduct
+
+	if err := r.DB.Where("id = ?", id).Preload("Unit").Preload("MaterialConversions.Unit").First(&materialProduct).Error; err != nil {
+		return nil, fmt.Errorf("material product not found: %w", err)
+	}
+
+	fmt.Println(materialProduct.MaterialConversions)
+	return &materialProduct, nil
 }
