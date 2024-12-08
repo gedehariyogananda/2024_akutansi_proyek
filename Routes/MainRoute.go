@@ -27,4 +27,5 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	StorageRoute(apiPrefix, deps.DB, deps.Redis, deps.Minio)
 	UserRoute(apiPrefix, deps.DB, deps.Redis, deps.Minio)
 	Promo(apiPrefix, deps.DB, deps.Redis)
+
 }

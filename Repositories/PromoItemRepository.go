@@ -12,6 +12,7 @@ type (
 		UpdateOrCreate(promoItem *Models.PromoItem) (*Models.PromoItem, *gorm.DB, error)
 		DeleteBySellableProductID(sellableProductID string) (*gorm.DB, error)
 		Create(promoItem *Models.PromoItem) (*Models.PromoItem, error)
+		DeleteByPromoID(promoID string) error
 	}
 
 	PromoItemRepository struct {
@@ -67,4 +68,13 @@ func (promoItemRepository *PromoItemRepository) Create(promoItem *Models.PromoIt
 	}
 
 	return promoItem, nil
+}
+
+func (promoItemRepository *PromoItemRepository) DeleteByPromoID(promoID string) error {
+	if err := promoItemRepository.DB.Where("promo_id = ?", promoID).Delete(&Models.PromoItem{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+
 }

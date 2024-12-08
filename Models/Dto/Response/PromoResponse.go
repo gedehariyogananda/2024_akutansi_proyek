@@ -2,7 +2,6 @@ package Response
 
 import (
 	"2024_akutansi_project/Models"
-	"fmt"
 )
 
 type productPromoResponse struct {
@@ -20,7 +19,6 @@ func toProductPromoResponse(product *Models.SellableProduct) productPromoRespons
 }
 
 func toProductPromoResponseSlice(products []*Models.SellableProduct) []productPromoResponse {
-	fmt.Println(products[0].Category.Name)
 	productPromoResponses := []productPromoResponse{}
 	for _, product := range products {
 		productPromoResponses = append(productPromoResponses, toProductPromoResponse(product))
@@ -43,8 +41,22 @@ type PromoResponse struct {
 func ToPromoResponse(productPromo Models.Promo) PromoResponse {
 	var selabelProducts []*Models.SellableProduct
 
-	for _, promoItem := range productPromo.PromoItems {
-		selabelProducts = append(selabelProducts, promoItem.SellableProduct)
+	if productPromo.PromoItems != nil {
+
+		for _, promoItem := range productPromo.PromoItems {
+			selabelProducts = append(selabelProducts, promoItem.SellableProduct)
+		}
+		return PromoResponse{
+			ID:        productPromo.ID,
+			Name:      productPromo.Name,
+			Quantity:  productPromo.Quantity,
+			Ammount:   productPromo.Amount,
+			StartDate: productPromo.StartDate,
+			EndDate:   productPromo.EndDate,
+			IsAll:     productPromo.IsAll,
+			CompanyID: productPromo.CompanyID,
+			Products:  toProductPromoResponseSlice(selabelProducts),
+		}
 	}
 
 	return PromoResponse{
@@ -56,6 +68,6 @@ func ToPromoResponse(productPromo Models.Promo) PromoResponse {
 		EndDate:   productPromo.EndDate,
 		IsAll:     productPromo.IsAll,
 		CompanyID: productPromo.CompanyID,
-		Products:  toProductPromoResponseSlice(selabelProducts),
 	}
+
 }

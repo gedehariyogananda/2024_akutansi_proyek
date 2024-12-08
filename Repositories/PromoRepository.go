@@ -10,6 +10,8 @@ type (
 	IPromoRepository interface {
 		Create(promo *Models.Promo) (*Models.Promo, error)
 		FindById(id string) (*Models.Promo, error)
+		Delete(id string) error
+		Update(promo *Models.Promo, id string) (*Models.Promo, error)
 	}
 
 	PromoRepository struct {
@@ -37,4 +39,20 @@ func (r *PromoRepository) FindById(id string) (*Models.Promo, error) {
 	}
 
 	return &promo, nil
+}
+
+func (r *PromoRepository) Delete(id string) error {
+	if err := r.DB.Where("id = ?", id).Delete(&Models.Promo{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *PromoRepository) Update(promo *Models.Promo, id string) (*Models.Promo, error) {
+	if err := r.DB.Where("id = ?", id).Updates(promo).Error; err != nil {
+		return nil, err
+	}
+
+	return promo, nil
 }
