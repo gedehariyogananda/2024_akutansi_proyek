@@ -14,6 +14,7 @@ type (
 		UpdateCurrent(trx *gorm.DB, materialProductId string, qtyClient int) error
 		FindByID(id string) (*Models.MaterialProduct, error)
 		Delete(id string) error
+		Update(materialProduct *Models.MaterialProduct, id string) (*Models.MaterialProduct, error)
 	}
 
 	MaterialProductRepository struct {
@@ -76,4 +77,12 @@ func (r *MaterialProductRepository) Delete(id string) error {
 	}
 
 	return nil
+}
+
+func (r *MaterialProductRepository) Update(materialProduct *Models.MaterialProduct, id string) (*Models.MaterialProduct, error) {
+	if err := r.DB.Where("id = ?", id).Updates(materialProduct).Error; err != nil {
+		return nil, fmt.Errorf("error when updating material product: %w", err)
+	}
+
+	return materialProduct, nil
 }

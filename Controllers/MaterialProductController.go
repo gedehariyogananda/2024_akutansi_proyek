@@ -13,6 +13,7 @@ type (
 		Create(ctx *gin.Context)
 		FindByID(ctx *gin.Context)
 		Delete(ctx *gin.Context)
+		Update(ctx *gin.Context)
 	}
 	MaterialProductController struct {
 		MaterialProductService Services.IMaterialProductService
@@ -63,4 +64,22 @@ func (controller *MaterialProductController) Delete(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Success delete material product", nil, 200)
+}
+
+func (controller *MaterialProductController) Update(ctx *gin.Context) {
+	id := ctx.Param("id")
+	var request Dto.UpdateMaterialProductDto
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		Helper.SetValidationErrorResponse(ctx, err.Error())
+		return
+	}
+
+	res, statusCode, err := controller.MaterialProductService.Update(&request, id)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Success update material product", res, 200)
 }

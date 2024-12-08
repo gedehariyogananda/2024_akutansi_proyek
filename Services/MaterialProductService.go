@@ -16,6 +16,7 @@ type (
 		Create(dto *Dto.CreateMaterialProductDto) (*Response.MaterialProduckResponse, error)
 		FindById(id string) (*Response.MaterialProduckResponse, int, error)
 		Delete(id string) (statusCode int, err error)
+		Update(dto *Dto.UpdateMaterialProductDto, id string) (*Response.MaterialProduckResponse, int, error)
 	}
 	MaterialProductService struct {
 		materialProductRepository    Repositories.IMaterialProductRepository
@@ -99,4 +100,52 @@ func (s *MaterialProductService) Delete(id string) (statusCode int, err error) {
 	}
 
 	return http.StatusOK, nil
+}
+
+func (s *MaterialProductService) Update(dto *Dto.UpdateMaterialProductDto, id string) (*Response.MaterialProduckResponse, int, error) {
+	_, err := s.materialProductRepository.FindByID(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, http.StatusBadRequest, err
+	}
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	materialProduct := &Models.MaterialProduct{
+		Name:           dto.Name,
+		CompanyID:      dto.CompanyID,
+		Status:         dto.Status,
+		Sku:            dto.Sku,
+		SmallestUnitID: dto.SmallestUnitID,
+		CategoryID:     dto.CategoryID,
+	}
+
+	materialProduct, err = s.materialProductRepository.Update(materialProduct, id)
+
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	err = s.materialConversionRepository.DeleteMany(id)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	for _, conversion := range dto.MaterialConversions {
+		modelConversion := &Models.MaterialConversion{
+			MaterialProductID: id,
+			UnitID:            conversion.UniID,
+			Quantity:          conversion.Quantity,
+		}
+		_, err := s.materialConversionRepository.Create(modelConversion)
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+	}
+
+	res := Response.ToMaterialProduckResponse(*materialProduct)
+	res.ID = id
+
+	return &res, http.StatusOK, nil
 }
