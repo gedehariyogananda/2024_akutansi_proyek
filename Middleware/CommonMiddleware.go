@@ -50,6 +50,7 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 	// all claims
 	key, ok := claims["id"].(string)
 	companyId, _ := claims["company_id"].(string)
+	name, _ := claims["name"].(string)
 	isEmployee, _ := claims["is_employee"].(bool)
 
 	if !ok {
@@ -70,6 +71,7 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 	ctx.Set("id", key)
 	ctx.Set("company_id", companyId)
 	ctx.Set("is_employee", isEmployee)
+	ctx.Set("name", name)
 
 	ctx.Next()
 }

@@ -26,7 +26,11 @@ func PaginateMetadata(ctx *gin.Context, totalData int64, limit int, page int) Me
 		totalPage = (totalData + int64(limit) - 1) / int64(limit)
 	}
 
-	path := ctx.Request.URL.Path
+	path := ""
+
+	if ctx != nil {
+		path = ctx.Request.URL.Path
+	}
 
 	meta := Meta{
 		Limit:     limit,

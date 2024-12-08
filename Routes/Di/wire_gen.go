@@ -80,7 +80,8 @@ func DIUnit(db *gorm.DB) *Controllers.UnitController {
 
 func DIWorker(db *gorm.DB, mongo2 *mongo.Client, messaging2 *messaging.Client) *Services.WorkerService {
 	deviceTokenRepository := Repositories.DeviceTokenRepositoryProvider(mongo2)
-	workerService := Services.WorkerServiceProvider(deviceTokenRepository, messaging2)
+	notificationRepository := Repositories.NotificationRepositoryProvider(db)
+	workerService := Services.WorkerServiceProvider(deviceTokenRepository, messaging2, notificationRepository)
 	return workerService
 }
 
@@ -113,10 +114,20 @@ func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
 	return sellableProductController
 }
 
+
 func DIMaterialProduct(db *gorm.DB) *Controllers.MaterialProductController {
 	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
 	materialConversionRepository := Repositories.MaterialConversionRepositoryProvider(db)
 	materialProductService := Services.MaterialProductServiceProvider(materialProductRepository, materialConversionRepository)
 	materialProductController := Controllers.MaterialProductControllerProvider(materialProductService)
 	return materialProductController
+}
+
+func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
+	stockOpnameRepository := Repositories.StockOpnameRepositoryProvider(db)
+	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
+	materialStockRepository := Repositories.MaterialStockRepositoryProvider(db)
+	stockOpnameService := Services.StockOpnameServiceProvider(stockOpnameRepository, sellableStockRepository, materialStockRepository, db)
+	stockOpnameController := Controllers.StockOpnameControllerProvider(stockOpnameService)
+	return stockOpnameController
 }

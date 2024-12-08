@@ -147,9 +147,11 @@ func DIWorker(db *gorm.DB, mongo *mongo.Client, messaging *messaging.Client) *Se
 	panic(wire.Build(wire.NewSet(
 		Services.WorkerServiceProvider,
 		Repositories.DeviceTokenRepositoryProvider,
+		Repositories.NotificationRepositoryProvider,
 
 		wire.Bind(new(Services.IWorkerService), new(*Services.WorkerService)),
 		wire.Bind(new(Repositories.IDeviceTokenRepository), new(*Repositories.DeviceTokenRepository)),
+		wire.Bind(new(Repositories.INotificationRepository), new(*Repositories.NotificationRepository)),
 	),
 	))
 
@@ -225,4 +227,23 @@ func DIMaterialProduct(db *gorm.DB) *Controllers.MaterialProductController {
 	))
 
 	return &Controllers.MaterialProductController{}
+}
+
+func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.StockOpnameRepositoryProvider,
+		Repositories.SellableStockRepositoryProvider,
+		Repositories.MaterialStockRepositoryProvider,
+		Services.StockOpnameServiceProvider,
+		Controllers.StockOpnameControllerProvider,
+
+		wire.Bind(new(Controllers.IStockOpnameController), new(*Controllers.StockOpnameController)),
+		wire.Bind(new(Services.IStockOpnameService), new(*Services.StockOpnameService)),
+		wire.Bind(new(Repositories.IStockOpnameRepository), new(*Repositories.StockOpnameRepository)),
+		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
+		wire.Bind(new(Repositories.IMaterialStockRepository), new(*Repositories.MaterialStockRepository)),
+	),
+	))
+
+	return &Controllers.StockOpnameController{}
 }

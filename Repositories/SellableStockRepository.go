@@ -11,6 +11,7 @@ type (
 		FindBySellableStockNotExp(sellableStockID string) (sellableStock []*Models.SellableStock, err error)
 		UpdateCurrent(trx *gorm.DB, sellableStockID string, qtyClient int) error
 		SumCurrentQuantity(sellableStockID string) (total int, err error)
+		GetAvailableStock(companyId string) (sellableStock []*Models.SellableStock, err error)
 	}
 
 	SellableStockRepository struct {
@@ -59,4 +60,18 @@ func (r *SellableStockRepository) SumCurrentQuantity(sellableStockID string) (to
 	}
 
 	return total, nil
+}
+
+func (r *SellableStockRepository) GetAvailableStock(companyId string) (sellableStock []*Models.SellableStock, err error) {
+	if err := r.DB.
+		Debug().
+		Preload("SellableProduct").
+		Where("company_id = ?", companyId).
+		Where("expired_date > now()").
+		Where("current_quantity > 0").
+		Find(&sellableStock).Error; err != nil {
+		return nil, err
+	}
+
+	return sellableStock, nil
 }
