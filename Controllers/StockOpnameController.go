@@ -13,6 +13,7 @@ type (
 	IStockOpnameController interface {
 		GetAll(ctx *gin.Context)
 		Create(ctx *gin.Context)
+		GetAvailableStock(ctx *gin.Context)
 	}
 
 	StockOpnameController struct {
@@ -66,4 +67,17 @@ func (controller *StockOpnameController) Create(ctx *gin.Context) {
 		"Berhasil membuat stock opname",
 		nil,
 		http.StatusCreated)
+}
+
+func (controller *StockOpnameController) GetAvailableStock(ctx *gin.Context) {
+	companyID := ctx.GetString("company_id")
+
+	data, err := controller.StockOpnameService.GetAvailableStock(companyID)
+	if err != nil {
+		statusCode := Utils.HandleStatusCode(err)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data stock opname", data, http.StatusOK)
 }

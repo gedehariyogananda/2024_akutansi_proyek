@@ -214,6 +214,7 @@ func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.StockOpnameRepositoryProvider,
 		Repositories.SellableStockRepositoryProvider,
+		Repositories.MaterialStockRepositoryProvider,
 		Services.StockOpnameServiceProvider,
 		Controllers.StockOpnameControllerProvider,
 
@@ -221,6 +222,7 @@ func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
 		wire.Bind(new(Services.IStockOpnameService), new(*Services.StockOpnameService)),
 		wire.Bind(new(Repositories.IStockOpnameRepository), new(*Repositories.StockOpnameRepository)),
 		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
+		wire.Bind(new(Repositories.IMaterialStockRepository), new(*Repositories.MaterialStockRepository)),
 	),
 	))
 

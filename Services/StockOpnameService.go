@@ -4,32 +4,38 @@ import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
+	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
 	"fmt"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"sync"
 )
 
 type (
 	IStockOpnameService interface {
 		GetAll(query *Common.Query) (data []*Models.StockOpname, meta Common.Meta, err error)
 		Create(data *Dto.CreateStockOpnameDto) (err error)
+		GetAvailableStock(companyID string) (data []*Response.AvailableStockResponse, err error)
 	}
 
 	StockOpnameService struct {
 		StockOpnameRepository   Repositories.IStockOpnameRepository
 		DB                      *gorm.DB
 		SellableStockRepository Repositories.ISellableStockRepository
+		MaterialStockRepository Repositories.IMaterialStockRepository
 	}
 )
 
 func StockOpnameServiceProvider(
 	stockOpnameRepository Repositories.IStockOpnameRepository,
 	sellableStockRepository Repositories.ISellableStockRepository,
+	MaterialstockRepository Repositories.IMaterialStockRepository,
 	DB *gorm.DB) *StockOpnameService {
 	return &StockOpnameService{
 		StockOpnameRepository:   stockOpnameRepository,
 		SellableStockRepository: sellableStockRepository,
+		MaterialStockRepository: MaterialstockRepository,
 		DB:                      DB}
 }
 
@@ -96,4 +102,36 @@ func (s *StockOpnameService) Create(data *Dto.CreateStockOpnameDto) (err error) 
 	}
 
 	return nil
+}
+
+func (s *StockOpnameService) GetAvailableStock(companyID string) (data []*Response.AvailableStockResponse, err error) {
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		stock, err := s.SellableStockRepository.GetAvailableStock(companyID)
+		if err != nil {
+			return
+		}
+		data = append(data, Response.ToSellStockSlice(stock)...)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		materialStock, err := s.MaterialStockRepository.GetAvailableStock(companyID)
+		if err != nil {
+			return
+		}
+		data = append(data, Response.ToMaterialStockSlice(materialStock)...)
+	}()
+
+	wg.Wait()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }

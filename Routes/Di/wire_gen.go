@@ -116,7 +116,8 @@ func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
 func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
 	stockOpnameRepository := Repositories.StockOpnameRepositoryProvider(db)
 	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
-	stockOpnameService := Services.StockOpnameServiceProvider(stockOpnameRepository, sellableStockRepository, db)
+	materialStockRepository := Repositories.MaterialStockRepositoryProvider(db)
+	stockOpnameService := Services.StockOpnameServiceProvider(stockOpnameRepository, sellableStockRepository, materialStockRepository, db)
 	stockOpnameController := Controllers.StockOpnameControllerProvider(stockOpnameService)
 	return stockOpnameController
 }

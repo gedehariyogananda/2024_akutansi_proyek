@@ -18,4 +18,5 @@ func StockOpnameRoutes(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 
 	route.GET("/", controller.GetAll)
 	route.POST("/", controller.Create)
+	route.GET("/available-stock", controller.GetAvailableStock)
 }
