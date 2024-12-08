@@ -12,6 +12,7 @@ type (
 	IMaterialProductController interface {
 		Create(ctx *gin.Context)
 		FindByID(ctx *gin.Context)
+		Delete(ctx *gin.Context)
 	}
 	MaterialProductController struct {
 		MaterialProductService Services.IMaterialProductService
@@ -51,4 +52,15 @@ func (controller *MaterialProductController) FindByID(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Success get material product", res, 200)
+}
+
+func (controller *MaterialProductController) Delete(ctx *gin.Context) {
+	id := ctx.Param("id")
+	statusCode, err := controller.MaterialProductService.Delete(id)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Success delete material product", nil, 200)
 }

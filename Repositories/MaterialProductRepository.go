@@ -13,6 +13,7 @@ type (
 		FindByCompany(companyID string) ([]*Models.MaterialProduct, error)
 		UpdateCurrent(trx *gorm.DB, materialProductId string, qtyClient int) error
 		FindByID(id string) (*Models.MaterialProduct, error)
+		Delete(id string) error
 	}
 
 	MaterialProductRepository struct {
@@ -67,4 +68,12 @@ func (r *MaterialProductRepository) FindByID(id string) (*Models.MaterialProduct
 
 	fmt.Println(materialProduct.MaterialConversions)
 	return &materialProduct, nil
+}
+
+func (r *MaterialProductRepository) Delete(id string) error {
+	if err := r.DB.Where("id = ?", id).Delete(&Models.MaterialProduct{}).Error; err != nil {
+		return fmt.Errorf("error when deleting material product: %w", err)
+	}
+
+	return nil
 }

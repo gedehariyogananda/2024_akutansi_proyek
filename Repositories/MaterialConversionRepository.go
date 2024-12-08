@@ -9,6 +9,7 @@ import (
 type (
 	IMaterialConversionRepository interface {
 		Create(materialConversion *Models.MaterialConversion) (*Models.MaterialConversion, error)
+		DeleteMany(materialProductID string) error
 	}
 	MaterialConversionRepository struct {
 		DB *gorm.DB
@@ -25,4 +26,12 @@ func (r *MaterialConversionRepository) Create(materialConversion *Models.Materia
 	}
 
 	return materialConversion, nil
+}
+
+func (r *MaterialConversionRepository) DeleteMany(materialProductID string) error {
+	if err := r.DB.Where("material_product_id = ?", materialProductID).Delete(&Models.MaterialConversion{}).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

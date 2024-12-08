@@ -20,4 +20,5 @@ func MaterialProduct(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 
 	route.POST("/", MaterialProductController.Create)
 	route.GET("/:id", MaterialProductController.FindByID)
+	route.DELETE("/:id", MaterialProductController.Delete)
 }

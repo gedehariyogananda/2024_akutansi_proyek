@@ -15,6 +15,7 @@ type (
 	IMaterialProductService interface {
 		Create(dto *Dto.CreateMaterialProductDto) (*Response.MaterialProduckResponse, error)
 		FindById(id string) (*Response.MaterialProduckResponse, int, error)
+		Delete(id string) (statusCode int, err error)
 	}
 	MaterialProductService struct {
 		materialProductRepository    Repositories.IMaterialProductRepository
@@ -73,4 +74,29 @@ func (s *MaterialProductService) FindById(id string) (*Response.MaterialProduckR
 	res := Response.ToMaterialProduckResponse(*materialProduct)
 
 	return &res, http.StatusOK, nil
+}
+
+func (s *MaterialProductService) Delete(id string) (statusCode int, err error) {
+	_, err = s.materialProductRepository.FindByID(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return http.StatusBadRequest, err
+	}
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	err = s.materialProductRepository.Delete(id)
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	err = s.materialConversionRepository.DeleteMany(id)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
 }
