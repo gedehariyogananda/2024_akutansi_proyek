@@ -80,7 +80,8 @@ func DIUnit(db *gorm.DB) *Controllers.UnitController {
 
 func DIWorker(db *gorm.DB, mongo2 *mongo.Client, messaging2 *messaging.Client) *Services.WorkerService {
 	deviceTokenRepository := Repositories.DeviceTokenRepositoryProvider(mongo2)
-	workerService := Services.WorkerServiceProvider(deviceTokenRepository, messaging2)
+	notificationRepository := Repositories.NotificationRepositoryProvider(db)
+	workerService := Services.WorkerServiceProvider(deviceTokenRepository, messaging2, notificationRepository)
 	return workerService
 }
 

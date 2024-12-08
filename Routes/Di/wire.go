@@ -147,9 +147,11 @@ func DIWorker(db *gorm.DB, mongo *mongo.Client, messaging *messaging.Client) *Se
 	panic(wire.Build(wire.NewSet(
 		Services.WorkerServiceProvider,
 		Repositories.DeviceTokenRepositoryProvider,
+		Repositories.NotificationRepositoryProvider,
 
 		wire.Bind(new(Services.IWorkerService), new(*Services.WorkerService)),
 		wire.Bind(new(Repositories.IDeviceTokenRepository), new(*Repositories.DeviceTokenRepository)),
+		wire.Bind(new(Repositories.INotificationRepository), new(*Repositories.NotificationRepository)),
 	),
 	))
 

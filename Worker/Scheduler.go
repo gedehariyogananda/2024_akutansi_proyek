@@ -21,6 +21,14 @@ func InitScheduler(deps *Dependencies.Dependency) {
 	}() {
 		go func(ctx context.Context) {
 			jobHandler := func() {
+				now := time.Now()
+				startTime := time.Date(now.Year(), now.Month(), now.Day(), 9, 0, 0, 0, now.Location())
+				endTime := time.Date(now.Year(), now.Month(), now.Day(), 13, 0, 0, 0, now.Location())
+
+				if now.Before(startTime) || now.After(endTime) {
+					return
+				}
+
 				fmt.Println("Start [JOB] :: Send Push Notification")
 
 				service := Di.DIWorker(deps.DB, deps.Mongo, deps.Messaging)
@@ -63,6 +71,37 @@ func InitScheduler(deps *Dependencies.Dependency) {
 			}
 
 			if scheduleErr != nil {
+				fmt.Printf("Failed to schedule job: %v\n", scheduleErr)
+				return
+			}
+
+			sh.StartAsync()
+		}(context.Background())
+	}
+
+	// Register Push Notification Queue
+	if func() bool {
+		scheduler := os.Getenv("USE_SCHEDULER_PUSH_NOTIFICATION_QUEUE")
+		b, _ := strconv.ParseBool(scheduler)
+		return b
+	}() {
+		go func(ctx context.Context) {
+			jobHandler := func() {
+				fmt.Println("Start [JOB] :: Queue Push Notification")
+
+				service := Di.DIWorker(deps.DB, deps.Mongo, deps.Messaging)
+
+				if err := service.QueuePushNotification(ctx); err != nil {
+					fmt.Printf("Failed [JOB] :: Queue Push Notification, got err := %v\n", err)
+					return
+				}
+
+				fmt.Println("Success [JOB] :: Queue Push Notification")
+			}
+
+			sh := gocron.NewScheduler(time.Local)
+
+			if _, scheduleErr := sh.Every(1).Day().At("01:00").Do(jobHandler); scheduleErr != nil {
 				fmt.Printf("Failed to schedule job: %v\n", scheduleErr)
 				return
 			}
