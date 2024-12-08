@@ -10,8 +10,8 @@ import (
 type (
 	IStockOpnameRepository interface {
 		GetAll(query *Common.Query) (data []*Models.StockOpname, totalData int64, err error)
-		Create(data *Models.StockOpname) (err error)
-		Update(data *Models.StockOpname) (err error)
+		Create(data *Models.StockOpname, trx *gorm.DB) (err error)
+		CreateItem(data []*Models.StockOpnameItem, trx *gorm.DB) (err error)
 	}
 
 	StockOpnameRepository struct {
@@ -46,20 +46,27 @@ func (r *StockOpnameRepository) GetAll(query *Common.Query) (data []*Models.Stoc
 	return data, totalData, nil
 }
 
-func (r *StockOpnameRepository) Create(data *Models.StockOpname) (err error) {
-	if err := r.DB.Create(data).Error; err != nil {
+func (r *StockOpnameRepository) Create(data *Models.StockOpname, trx *gorm.DB) (err error) {
+	db := trx
+	if db == nil {
+		db = r.DB
+	}
+
+	if err := db.Create(data).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *StockOpnameRepository) Update(data *Models.StockOpname) (err error) {
-	if err := r.DB.
-		Model(&data).
-		Where("id = ?", data.ID).
-		Updates(data).Error; err != nil {
-		return nil
+func (r *StockOpnameRepository) CreateItem(data []*Models.StockOpnameItem, trx *gorm.DB) (err error) {
+	db := trx
+	if db == nil {
+		db = r.DB
+	}
+
+	if err := db.Create(data).Error; err != nil {
+		return err
 	}
 
 	return nil

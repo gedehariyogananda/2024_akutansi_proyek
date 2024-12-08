@@ -7,11 +7,12 @@ import (
 )
 
 type StockOpname struct {
-	ID          string     `json:"id"`
-	Title       string     `json:"title,omitempty"`
-	CompanyID   string     `json:"company_id,omitempty"`
-	CreatedAt   *time.Time `json:"created_at,omitempty"`
-	ChangerName *string    `json:"changer_name,omitempty"`
+	ID          string            `json:"id"`
+	Title       string            `json:"title,omitempty"`
+	CompanyID   string            `json:"company_id,omitempty"`
+	CreatedAt   *time.Time        `json:"created_at,omitempty"`
+	ChangerName *string           `json:"changer_name,omitempty"`
+	Items       []StockOpnameItem `json:"items,omitempty"`
 }
 
 func (stockOpname *StockOpname) BeforeCreate(tx *gorm.DB) (err error) {

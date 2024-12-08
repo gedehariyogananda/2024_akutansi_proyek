@@ -83,7 +83,7 @@ func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOw
 		return "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
-	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, false, false)
+	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, false, false)
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error generate token")
@@ -115,7 +115,7 @@ func (service *AuthService) LoginEmployee(ctx context.Context, request *Dto.Logi
 		return "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
-	token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, true, false)
+	token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, employeeData.Name, true, false)
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error generate token")
@@ -154,7 +154,7 @@ func (service *AuthService) LoginMobile(ctx context.Context, request *Dto.LoginM
 			return "", "", http.StatusUnauthorized, errors.New("password salah!")
 		}
 
-		token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, true, true)
+		token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, employeeData.Name, true, true)
 
 		if err != nil {
 			return "", "", http.StatusInternalServerError, errors.New("error generate token")
@@ -179,7 +179,7 @@ func (service *AuthService) LoginMobile(ctx context.Context, request *Dto.LoginM
 		return "", "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
-	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, false, true)
+	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, false, true)
 
 	if err != nil {
 		return "", "", http.StatusInternalServerError, errors.New("error generate token")

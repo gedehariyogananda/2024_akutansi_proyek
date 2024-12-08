@@ -1,12 +1,14 @@
 package Dto
 
 type CreateStockOpnameDto struct {
-	Title     string `json:"judul" binding:"required"`
-	Amount    int    `json:"jumlah" binding:"required"`
-	CompanyID string `json:"-"`
+	Title       string               `json:"title" binding:"required"`
+	CompanyID   string               `json:"-"`
+	Items       []StockOpnameItemDTO `json:"items" binding:"required"`
+	ChangerName string               `json:"changer_name"`
 }
 
-type UpdateStockOpnameDto struct {
-	ID   string `json:"id" binding:"required"`
-	User string `json:"editor" binding:"required"`
+type StockOpnameItemDTO struct {
+	Quantity       int    `json:"quantity" binding:"required"`
+	StockId        string `json:"stock_id" binding:"required"`
+	SystemQuantity int    `json:"system_quantity" binding:"required"`
 }
