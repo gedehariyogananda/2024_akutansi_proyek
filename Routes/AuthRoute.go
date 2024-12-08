@@ -4,25 +4,18 @@ import (
 	"2024_akutansi_project/Routes/Di"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-func AuthRoute(c *gin.RouterGroup, db *gorm.DB) {
+func AuthRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	route := c.Group("/auth")
 
-	authController := Di.DIAuth(db)
-
-	middleware := Di.DICommonMiddleware(db)
-
-	route.GET("/checked", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{
-			"message": "checked healt",
-		})
-	})
+	authController := Di.DIAuth(db, redis)
 
 	route.POST("/register", authController.Register)
-	route.POST("/login", authController.Login)
+	route.POST("/login/owner", authController.LoginOwner)
+	route.POST("/login/employee", authController.LoginEmployee)
+	route.POST("/login", authController.LoginMobile)
 
-	// to update where user clicked spesify company
-	route.PUT("/changes-token/set", middleware.IsAuthenticate, authController.UpdateTokenCompany)
 }

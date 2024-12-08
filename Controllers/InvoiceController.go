@@ -2,9 +2,13 @@ package Controllers
 
 import (
 	"2024_akutansi_project/Helper"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
+	"2024_akutansi_project/Utils"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,13 +16,10 @@ import (
 type (
 	IInvoiceController interface {
 		CreateInvoicePurchased(ctx *gin.Context)
-		UpdateInvoiceStatus(ctx *gin.Context)
-		UpdateMoneyReceived(ctx *gin.Context)
-		GetAllInvoices(ctx *gin.Context)
-		UpdateInvoiceCustomer(ctx *gin.Context)
-		GetInvoiceDetail(ctx *gin.Context)
-		DeleteInvoice(ctx *gin.Context)
-		UpdateInvoiceDetail(ctx *gin.Context)
+		GetSalesHistory(ctx *gin.Context)
+		GetSpesifySalesHistory(ctx *gin.Context)
+		UpdateRefund(ctx *gin.Context)
+		StatisticSales(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -30,250 +31,102 @@ func InvoiceControllerProvider(invoiceService Services.IInvoiceService) *Invoice
 	return &InvoiceController{InvoiceService: invoiceService}
 }
 
-func (c *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
+func (controller *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
+	var requestInvoiceDTO Dto.InvoiceRequestDTO
 
-	companyId := ctx.GetString("company_id")
-
-	var request Dto.InvoiceRequestClient
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": "Invalid request body : " + err.Error(),
-		}, http.StatusBadRequest)
+	if err := ctx.ShouldBindJSON(&requestInvoiceDTO); err != nil {
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
 		return
 	}
 
-	invoice, err, statusCode := c.InvoiceService.CreateInvoicePurchased(&request, companyId)
+	if validationErrors := Utils.ValidateRequest(ctx, &requestInvoiceDTO); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
+		return
+	}
+
+	invoice, statusCode, err := controller.InvoiceService.CreateInvoicePurchased(&requestInvoiceDTO, ctx.GetString("company_id"))
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	if invoice.PaymentMethod.MethodName == "Cash" {
-
-		Helper.SetResponse(ctx, gin.H{
-			"success": true,
-			"message": "Success create invoice purchased",
-			"data": gin.H{
-				"invoice":     invoice,
-				"is_cashless": true,
-			},
-		}, statusCode)
-	} else {
-		Helper.SetResponse(ctx, gin.H{
-			"success": true,
-			"message": "Success create invoice purchased",
-			"data": gin.H{
-				"invoice":     invoice,
-				"is_cashless": false,
-			},
-		}, statusCode)
-	}
-}
-
-func (c *InvoiceController) UpdateInvoiceStatus(ctx *gin.Context) {
-	companyId := ctx.GetString("company_id")
-
-	invoiceParams := ctx.Param("invoice_id") // status "PROCESS", "CANCLE", "DONE" in body Request
-	var request Dto.InvoiceUpdateRequestDTO
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": "Invalid request body",
-		}, http.StatusBadRequest)
-		return
-	}
-
-	invoice, err, statusCode := c.InvoiceService.UpdateStatusInvoice(&request, invoiceParams, companyId)
-	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
-		return
-	}
-
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success update invoice status to PROCESS",
-		"data":    invoice,
-	}, statusCode)
-	return
-
-}
-
-func (c *InvoiceController) UpdateMoneyReceived(ctx *gin.Context) {
-	companyId := ctx.GetString("company_id")
-
-	invoiceParams := ctx.Param("invoice_id")
-	var request Dto.InvoiceMoneyReceivedRequestDTO
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
-		return
-	}
-
-	invoice, moneyBack, err, statusCode := c.InvoiceService.UpdateMoneyReveived(&request, invoiceParams, companyId)
-	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
-		return
-	}
-
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success update invoice money received",
-		"data": gin.H{
-			"invoice": gin.H{
-				"id":             invoice.ID,
-				"invoice_number": invoice.InvoiceNumber,
-				"total_amount":   invoice.TotalAmount,
-				"money_received": invoice.MoneyReceived,
-				"money_back":     moneyBack,
-				"status_invoice": invoice.StatusInvoice,
-			},
-		},
+	Helper.SetSuccessResponse(ctx, "Create Transaction Purchased Success!", gin.H{
+		"invoice_number": invoice.InvoiceNumber,
+		"customer_name":  invoice.CustomerName,
+		"total_price":    invoice.SubTotal,
 	}, statusCode)
 }
 
-func (c *InvoiceController) GetAllInvoices(ctx *gin.Context) {
-	filterDate := ctx.DefaultQuery("date", "")
-	formattedDateClient := Helper.FormatDateClient(filterDate)
+func (controller *InvoiceController) GetSalesHistory(ctx *gin.Context) {
 
-	companyId := ctx.GetString("company_id")
+	search := ctx.Query("search")
+	status := ctx.Query("status")
 
-	invoices, err, statusCode := c.InvoiceService.GetAllInvoices(companyId, formattedDateClient)
+	limit, page := Utils.GetPaginationParams(ctx, Common.DEFAULTLIMIT, Common.DEFAULTPAGE)
+
+	var query Common.Query
+
+	if status != "" {
+		status, err := strconv.ParseBool(status)
+
+		if err != nil {
+			Helper.SetErrorResponse(ctx, "Invalid status", http.StatusBadRequest)
+			return
+		}
+
+		query.Status = status
+	}
+
+	query.Search = &search
+	query.Limit = limit
+	query.Page = page
+	query.Limit = limit
+
+	invoices, meta, statusCode, err := controller.InvoiceService.GetAllByCompany(ctx.GetString("company_id"), &query)
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success get all invoices",
-		"data":    invoices,
-	}, statusCode)
+	Helper.SetPaginationResponse(
+		ctx,
+		"Berhasil mendapatkan data riwayat penjualan!",
+		invoices,
+		Common.PaginateMetadata(ctx, meta.TotalData, meta.Limit, meta.Page),
+		statusCode,
+	)
+
 }
 
-func (c *InvoiceController) UpdateInvoiceCustomer(ctx *gin.Context) {
-	companyId := ctx.GetString("company_id")
-
-	invoiceParams := ctx.Param("invoice_id")
-	var request Dto.InvoiceUpdateRequestDTO
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
-		return
-	}
-
-	invoice, err, statusCode := c.InvoiceService.UpdateInvoiceCustomer(companyId, invoiceParams, &request)
+func (controller *InvoiceController) GetSpesifySalesHistory(ctx *gin.Context) {
+	invoice, statusCode, err := controller.InvoiceService.GetSpesifySalesHistory(ctx.GetString("company_id"), ctx.Param("invoiceID"))
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success update invoice customer",
-		"data":    invoice,
-	}, statusCode)
+	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data penjualan!", invoice, statusCode)
 }
 
-func (c *InvoiceController) GetInvoiceDetail(ctx *gin.Context) {
-	invoiceParams := ctx.Param("invoice_id")
-
-	invoice, purchaseDetail, err, statusCode := c.InvoiceService.GetInvoice(invoiceParams)
+func (controller *InvoiceController) UpdateRefund(ctx *gin.Context) {
+	statusCode, err := controller.InvoiceService.UpdateRefund(ctx.GetString("company_id"), ctx.Param("id"))
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success get invoice detail",
-		"data": gin.H{
-			"purchase_detail": purchaseDetail,
-			"invoice":         invoice,
-		},
-	}, statusCode)
+	Helper.SetSuccessResponse(ctx, "Berhasil melakukan pengembalian dana!", nil, statusCode)
 }
 
-func (c *InvoiceController) DeleteInvoice(ctx *gin.Context) {
-	invoiceParams := ctx.Param("invoice_id")
-	companyId := ctx.GetString("company_id")
+func (controller *InvoiceController) StatisticSales(ctx *gin.Context) {
+	dateNow := time.Now().Format("2006-01-02")
 
-	statusCode, err := c.InvoiceService.DeleteInvoice(invoiceParams, companyId)
+	statistic, statusCode, err := controller.InvoiceService.StatisticSales(ctx.GetString("company_id"), ctx.DefaultQuery("date", dateNow))
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success delete invoice",
-	}, statusCode)
-}
+	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data statistik penjualan!", statistic, statusCode)
 
-func (c *InvoiceController) UpdateInvoiceDetail(ctx *gin.Context) {
-	companyId := ctx.GetString("company_id")
-
-	invoiceParams := ctx.Param("invoice_id")
-	var request Dto.InvoiceRequestClient
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
-		return
-	}
-
-	invoice, err, statusCode := c.InvoiceService.UpdateInvoiceDetail(companyId, invoiceParams, &request)
-	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
-		return
-	}
-
-	if invoice.PaymentMethod.MethodName == "Cash" {
-		Helper.SetResponse(ctx, gin.H{
-			"success": true,
-			"message": "Success update invoice detail",
-			"data": gin.H{
-				"invoice":     invoice,
-				"is_cashless": true,
-			},
-		}, statusCode)
-	} else {
-		Helper.SetResponse(ctx, gin.H{
-			"success": true,
-			"message": "Success update invoice detail",
-			"data": gin.H{
-				"invoice":     invoice,
-				"is_cashless": false,
-			},
-		}, statusCode)
-	}
 }

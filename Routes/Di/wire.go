@@ -4,26 +4,33 @@
 package Di
 
 import (
+	"2024_akutansi_project/Connector"
 	"2024_akutansi_project/Controllers"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
 
+	"firebase.google.com/go/messaging"
+	"go.mongodb.org/mongo-driver/mongo"
+
 	"github.com/google/wire"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-func DIAuth(db *gorm.DB) *Controllers.AuthController {
+func DIAuth(db *gorm.DB, redis *redis.Client) *Controllers.AuthController {
 	panic(wire.Build(wire.NewSet(
-		Repositories.AuthRepositoryProvider,
+		Repositories.UserRepositoryProvider,
 		Services.AuthServiceProvider,
 		Controllers.AuthControllerProvider,
 		Services.JwtServiceProvider,
+		Repositories.SubUserRepositoryProvider,
 		Repositories.CompanyRepositoryProvider,
 
 		wire.Bind(new(Controllers.IAuthController), new(*Controllers.AuthController)),
+		wire.Bind(new(Repositories.ISubUserRepository), new(*Repositories.SubUserRepository)),
 		wire.Bind(new(Services.IAuthService), new(*Services.AuthService)),
-		wire.Bind(new(Repositories.IAuthRepository), new(*Repositories.AuthRepository)),
+		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
 		wire.Bind(new(Services.IJwtService), new(*Services.JwtService)),
 		wire.Bind(new(Repositories.ICompanyRepository), new(*Repositories.CompanyRepository)),
 	),
@@ -32,14 +39,14 @@ func DIAuth(db *gorm.DB) *Controllers.AuthController {
 	return &Controllers.AuthController{}
 }
 
-func DICommonMiddleware(db *gorm.DB) *Middleware.CommondMiddleware {
+func DICommonMiddleware(db *gorm.DB, redis *redis.Client) *Middleware.CommondMiddleware {
 	panic(wire.Build(wire.NewSet(
 		Middleware.CommonMiddlewareProvider,
 		Services.JwtServiceProvider,
-		Repositories.AuthRepositoryProvider,
+		Repositories.UserRepositoryProvider,
 
 		wire.Bind(new(Services.IJwtService), new(*Services.JwtService)),
-		wire.Bind(new(Repositories.IAuthRepository), new(*Repositories.AuthRepository)),
+		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
 		wire.Bind(new(Middleware.ICommonMiddleware), new(*Middleware.CommondMiddleware)),
 	),
 	))
@@ -47,67 +54,27 @@ func DICommonMiddleware(db *gorm.DB) *Middleware.CommondMiddleware {
 	return &Middleware.CommondMiddleware{}
 }
 
-func DICompany(db *gorm.DB) *Controllers.CompanyController {
-	panic(wire.Build(wire.NewSet(
-		Repositories.CompanyRepositoryProvider,
-		Services.CompanyServiceProvider,
-		Controllers.CompanyControllerProvider,
-		Repositories.UserCompanyRepositoryProvider,
-		Repositories.PaymentMethodRepositoryProvider,
-
-		wire.Bind(new(Controllers.ICompanyController), new(*Controllers.CompanyController)),
-		wire.Bind(new(Services.ICompanyService), new(*Services.CompanyService)),
-		wire.Bind(new(Repositories.ICompanyRepository), new(*Repositories.CompanyRepository)),
-		wire.Bind(new(Repositories.IUserCompanyRepository), new(*Repositories.UserCompanyRepository)),
-		wire.Bind(new(Repositories.IPaymentMethodRepository), new(*Repositories.PaymentMethodRepository)),
-	),
-	))
-
-	return &Controllers.CompanyController{}
-}
-
-func DISaleableProduct(db *gorm.DB) *Controllers.SaleableProductController {
-	panic(wire.Build(wire.NewSet(
-		Repositories.SaleableProductRepositoryProvider,
-		Services.SaleableProductServiceProvider,
-		Controllers.SaleableProductControllerProvider,
-		Repositories.MaterialProductRepositoryProvider,
-		Repositories.CategoryRepositoryProvider,
-
-		wire.Bind(new(Controllers.ISaleableProductController), new(*Controllers.SaleableProductController)),
-		wire.Bind(new(Services.ISaleableProductService), new(*Services.SaleableProductService)),
-		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
-		wire.Bind(new(Repositories.ISaleableProductRepository), new(*Repositories.SaleableProductRepository)),
-		wire.Bind(new(Repositories.ICategoryRepository), new(*Repositories.CategoryRepository)),
-	),
-	))
-
-	return &Controllers.SaleableProductController{}
-}
-
 func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.InvoiceRepositoryProvider,
 		Services.InvoiceServiceProvider,
 		Controllers.InvoiceControllerProvider,
-		Repositories.InvoiceMaterialRepositoryProvider,
-		Repositories.InvoiceSaleableRepositoryProvider,
-		Repositories.SaleableProductRepositoryProvider,
-		Repositories.PaymentMethodRepositoryProvider,
-		Repositories.CompanyRepositoryProvider,
-		Repositories.SaleableProductTopingRepositoryProvider,
-		Repositories.InvoiceSaleableTopingRepositoryProvider,
+		Repositories.InvoiceItemRepositoryProvider,
+		Repositories.SellableProductRepositoryProvider,
+		Repositories.ReceiptRepositoryProvider,
+		Repositories.MaterialProductRepositoryProvider,
+		Repositories.SellableStockRepositoryProvider,
+		Repositories.MaterialStockRepositoryProvider,
 
 		wire.Bind(new(Controllers.IInvoiceController), new(*Controllers.InvoiceController)),
 		wire.Bind(new(Services.IInvoiceService), new(*Services.InvoiceService)),
 		wire.Bind(new(Repositories.IInvoiceRepository), new(*Repositories.InvoiceRepository)),
-		wire.Bind(new(Repositories.IInvoiceMaterialRepository), new(*Repositories.InvoiceMaterialRepository)),
-		wire.Bind(new(Repositories.IInvoiceSaleableRepository), new(*Repositories.InvoiceSaleableRepository)),
-		wire.Bind(new(Repositories.ISaleableProductRepository), new(*Repositories.SaleableProductRepository)),
-		wire.Bind(new(Repositories.IPaymentMethodRepository), new(*Repositories.PaymentMethodRepository)),
-		wire.Bind(new(Repositories.ICompanyRepository), new(*Repositories.CompanyRepository)),
-		wire.Bind(new(Repositories.ISaleableProductTopingRepository), new(*Repositories.SaleableProductTopingRepository)),
-		wire.Bind(new(Repositories.IInvoiceSaleableTopingRepository), new(*Repositories.InvoiceSaleableTopingRepository)),
+		wire.Bind(new(Repositories.IInvoiceItemRepository), new(*Repositories.InvoiceItemRepository)),
+		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
+		wire.Bind(new(Repositories.IReceiptRepository), new(*Repositories.ReceiptRepository)),
+		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
+		wire.Bind(new(Repositories.IMaterialStockRepository), new(*Repositories.MaterialStockRepository)),
+		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
 	),
 	))
 
@@ -129,19 +96,21 @@ func DICategory(db *gorm.DB) *Controllers.CategoryController {
 	return &Controllers.CategoryController{}
 }
 
-func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
+func DIProfile(db *gorm.DB, mongo *mongo.Client) *Controllers.ProfileController {
 	panic(wire.Build(wire.NewSet(
-		Repositories.PaymentMethodRepositoryProvider,
-		Services.PaymentMethodServiceProvider,
-		Controllers.PaymentMethodControllerProvider,
+		Repositories.ProfileRepositoryProvider,
+		Services.ProfileServiceProvider,
+		Controllers.ProfileControllerProvider,
+		Connector.ShopeeConnectorProvider,
 
-		wire.Bind(new(Controllers.IPaymentMethodController), new(*Controllers.PaymentMethodController)),
-		wire.Bind(new(Services.IPaymentMethodService), new(*Services.PaymentMethodService)),
-		wire.Bind(new(Repositories.IPaymentMethodRepository), new(*Repositories.PaymentMethodRepository)),
+		wire.Bind(new(Controllers.IProfileController), new(*Controllers.ProfileController)),
+		wire.Bind(new(Services.IProfileService), new(*Services.ProfileService)),
+		wire.Bind(new(Repositories.IProfileRepository), new(*Repositories.ProfileRepository)),
+		wire.Bind(new(Connector.IShopeeConnector), new(*Connector.ShopeeConnector)),
 	),
 	))
 
-	return &Controllers.PaymentMethodController{}
+	return &Controllers.ProfileController{}
 }
 
 func DIWaitingList(db *gorm.DB) *Controllers.WaitingListController {
@@ -157,4 +126,132 @@ func DIWaitingList(db *gorm.DB) *Controllers.WaitingListController {
 	))
 
 	return &Controllers.WaitingListController{}
+}
+
+func DIUnit(db *gorm.DB) *Controllers.UnitController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.UnitProvider,
+		Services.UnitProvider,
+		Controllers.UnitProvider,
+
+		wire.Bind(new(Controllers.IUnitController), new(*Controllers.UnitController)),
+		wire.Bind(new(Services.IUnitService), new(*Services.UnitService)),
+		wire.Bind(new(Repositories.IUnitRepository), new(*Repositories.UnitRepository)),
+	),
+	))
+
+	return &Controllers.UnitController{}
+}
+
+func DIWorker(db *gorm.DB, mongo *mongo.Client, messaging *messaging.Client) *Services.WorkerService {
+	panic(wire.Build(wire.NewSet(
+		Services.WorkerServiceProvider,
+		Repositories.DeviceTokenRepositoryProvider,
+		Repositories.NotificationRepositoryProvider,
+		Repositories.SellableStockRepositoryProvider,
+		Repositories.SellableProductRepositoryProvider,
+		Repositories.MaterialStockRepositoryProvider,
+		Repositories.MaterialProductRepositoryProvider,
+
+		wire.Bind(new(Services.IWorkerService), new(*Services.WorkerService)),
+		wire.Bind(new(Repositories.IDeviceTokenRepository), new(*Repositories.DeviceTokenRepository)),
+		wire.Bind(new(Repositories.INotificationRepository), new(*Repositories.NotificationRepository)),
+		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
+		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
+		wire.Bind(new(Repositories.IMaterialStockRepository), new(*Repositories.MaterialStockRepository)),
+		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
+	),
+	))
+
+	return &Services.WorkerService{}
+}
+
+func DITax(db *gorm.DB) *Controllers.TaxController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.TaxRepositoryProvider,
+		Services.TaxServiceProvider,
+		Controllers.TaxControllerProvider,
+
+		wire.Bind(new(Controllers.ITaxController), new(*Controllers.TaxController)),
+		wire.Bind(new(Services.ITaxService), new(*Services.TaxService)),
+		wire.Bind(new(Repositories.ITaxRepository), new(*Repositories.TaxRepository)),
+	),
+	))
+
+	return &Controllers.TaxController{}
+}
+func DISubUser(db *gorm.DB) *Controllers.SubUserController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.SubUserRepositoryProvider,
+		Services.SubUserProvider,
+		Controllers.SubUserProvider,
+		wire.Bind(new(Controllers.ISubUserController), new(*Controllers.SubUserController)),
+		wire.Bind(new(Services.ISubUserService), new(*Services.SubUserService)),
+		wire.Bind(new(Repositories.ISubUserRepository), new(*Repositories.SubUserRepository)),
+	)))
+	return &Controllers.SubUserController{}
+}
+
+func DIAccount(db *gorm.DB) *Controllers.AccountController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.AccountProvider,
+		Services.AccountProvider,
+		Controllers.AccountProvider,
+		wire.Bind(new(Controllers.IAccountController), new(*Controllers.AccountController)),
+		wire.Bind(new(Services.IAccountService), new(*Services.AccountService)),
+		wire.Bind(new(Repositories.IAccountRepository), new(*Repositories.AccountRepository)),
+	)))
+	return &Controllers.AccountController{}
+}
+func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.SellableProductRepositoryProvider,
+		Services.SellableProductServiceProvider,
+		Controllers.SellableProductControllerProvider,
+		Repositories.PromoItemRepositoryProvider,
+
+		wire.Bind(new(Controllers.ISellableProductController), new(*Controllers.SellableProductController)),
+		wire.Bind(new(Services.ISellableProductService), new(*Services.SellableProductService)),
+		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
+		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
+	),
+	))
+
+	return &Controllers.SellableProductController{}
+}
+
+func DIMaterialProduct(db *gorm.DB) *Controllers.MaterialProductController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.MaterialProductRepositoryProvider,
+		Services.MaterialProductServiceProvider,
+		Controllers.MaterialProductControllerProvider,
+		Repositories.MaterialConversionRepositoryProvider,
+
+		wire.Bind(new(Controllers.IMaterialProductController), new(*Controllers.MaterialProductController)),
+		wire.Bind(new(Services.IMaterialProductService), new(*Services.MaterialProductService)),
+		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
+		wire.Bind(new(Repositories.IMaterialConversionRepository), new(*Repositories.MaterialConversionRepository)),
+	),
+	))
+
+	return &Controllers.MaterialProductController{}
+}
+
+func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.StockOpnameRepositoryProvider,
+		Repositories.SellableStockRepositoryProvider,
+		Repositories.MaterialStockRepositoryProvider,
+		Services.StockOpnameServiceProvider,
+		Controllers.StockOpnameControllerProvider,
+
+		wire.Bind(new(Controllers.IStockOpnameController), new(*Controllers.StockOpnameController)),
+		wire.Bind(new(Services.IStockOpnameService), new(*Services.StockOpnameService)),
+		wire.Bind(new(Repositories.IStockOpnameRepository), new(*Repositories.StockOpnameRepository)),
+		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
+		wire.Bind(new(Repositories.IMaterialStockRepository), new(*Repositories.MaterialStockRepository)),
+	),
+	))
+
+	return &Controllers.StockOpnameController{}
 }

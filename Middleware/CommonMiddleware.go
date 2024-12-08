@@ -1,14 +1,13 @@
 package Middleware
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
-	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 type (
@@ -17,22 +16,22 @@ type (
 	}
 
 	CommondMiddleware struct {
-		jwtService     Services.IJwtService
-		authRepository Repositories.IAuthRepository
+		jwtService  Services.IJwtService
+		redisClient *redis.Client
 	}
 )
 
-func CommonMiddlewareProvider(jwtService Services.IJwtService, authRespository Repositories.IAuthRepository) *CommondMiddleware {
+func CommonMiddlewareProvider(jwtService Services.IJwtService, redisClient *redis.Client) *CommondMiddleware {
 	return &CommondMiddleware{
-		jwtService:     jwtService,
-		authRepository: authRespository,
+		jwtService:  jwtService,
+		redisClient: redisClient,
 	}
 }
 
 func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 	token := ctx.GetHeader("Authorization")
 	if token == "" {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Token Not Found"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "E_UNAUTHORIZE_ACCESS"})
 		ctx.Abort()
 		return
 	}
@@ -43,31 +42,36 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 
 	claims, err := m.jwtService.ParseToken(token)
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "E_UNAUTHORIZE_ACCESS"})
 		ctx.Abort()
 		return
 	}
 
-	userID, ok := claims["userId"].(string)
+	// all claims
+	key, ok := claims["id"].(string)
+	companyId, _ := claims["company_id"].(string)
+	name, _ := claims["name"].(string)
+	isEmployee, _ := claims["is_employee"].(bool)
+
 	if !ok {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid User ID"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "INVALID_KEY"})
 		ctx.Abort()
 		return
 	}
 
-	ctx.Set("user_id", userID)
+	checkTokenRedis, err := m.redisClient.Get(ctx, key).Result()
 
-	if companyID, ok := claims["companyId"].(string); ok {
-		ctx.Set("company_id", companyID)
-	} else {
-		fmt.Println("companyId not found in claims")
-	}
-
-	if err = m.authRepository.CheckToken(token, userID); err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized: Token Mismatch"})
+	if err != nil || checkTokenRedis != token {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "E_UNAUTHORIZE_ACCESS"})
 		ctx.Abort()
 		return
 	}
+
+	// set to context
+	ctx.Set("id", key)
+	ctx.Set("company_id", companyId)
+	ctx.Set("is_employee", isEmployee)
+	ctx.Set("name", name)
 
 	ctx.Next()
 }

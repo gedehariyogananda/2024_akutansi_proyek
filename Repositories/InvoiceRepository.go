@@ -1,24 +1,23 @@
 package Repositories
 
 import (
+	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models"
-	"2024_akutansi_project/Models/Dto"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Utils"
-	"fmt"
-	"time"
 
 	"gorm.io/gorm"
 )
 
 type (
 	IInvoiceRepository interface {
-		Create(request *Dto.InvoiceRequestDTO, codeCompany string, company_id string) (invoice *Models.Invoice, err error)
-		GetAll(company_id string, date string) (invoices *[]Models.Invoice, err error)
-		FindById(invoice_id string) (invoice *Models.Invoice, err error)
-		Update(invoice *Models.Invoice) (err error)
-		FindSelectRelasi(invoice_id string) (invoice *Models.Invoice, err error)
-		Delete(invoice_id string) (err error)
-		UpdateByInvoiceId(invoice_id string, company_id string, request *Dto.InvoiceRequestDTO) (err error)
+		Store(trx *gorm.DB, invoice *Models.Invoice) (*Models.Invoice, error)
+		FindByID(id string, companyID string) (invoice *Models.Invoice, err error)
+		Update(id string, invoice *Models.Invoice) (err error)
+		GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, totalData int64, err error)
+		GetByInvoiceID(companyID string, invoiceID string) (invoice *Models.Invoice, err error)
+		SumSalesByDate(companyID string, date string) (totalSales float64, err error)
+		SumSalesByYearMonth(companyID string, year int, month int) (totalSales float64, err error)
 	}
 
 	InvoiceRepository struct {
@@ -30,101 +29,105 @@ func InvoiceRepositoryProvider(db *gorm.DB) *InvoiceRepository {
 	return &InvoiceRepository{DB: db}
 }
 
-func (r *InvoiceRepository) Create(request *Dto.InvoiceRequestDTO, codeCompany string, company_id string) (invoice *Models.Invoice, err error) {
+func (r *InvoiceRepository) Store(trx *gorm.DB, invoice *Models.Invoice) (*Models.Invoice, error) {
 
-	// generate invoice number nan
-	invoiceNumber, err := Utils.GenerateInvoiceNumber(r.DB, codeCompany, company_id)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate invoice number: %w", err)
+	db := trx
+	if db == nil {
+		db = r.DB
 	}
 
-	invoice = &Models.Invoice{
-		InvoiceNumber:   invoiceNumber,
-		InvoiceCustomer: request.InvoiceCustomer,
-		CompanyID:       request.CompanyID,
-		PaymentMethodID: request.PaymentMethodId,
-		InvoiceDate:     request.InvoiceDate,
-		TotalAmount:     float64(request.TotalAmount),
-		MoneyReceived:   float64(request.MoneyReceived),
-		StatusInvoice:   Models.StatusInvoice(request.StatusInvoice),
-		CreatedAt:       time.Now(),
-	}
-
-	if err := r.DB.Create(invoice).First(invoice).Error; err != nil {
+	if err := db.Create(invoice).Error; err != nil {
 		return nil, err
 	}
 
 	return invoice, nil
 }
 
-func (r *InvoiceRepository) GetAll(company_id string, date string) (invoices *[]Models.Invoice, err error) {
-	invoices = &[]Models.Invoice{}
+func (r *InvoiceRepository) Update(id string, invoice *Models.Invoice) (err error) {
+	if err := r.DB.
+		Model(&Models.Invoice{}).
+		Where("id = ?", id).
+		Updates(invoice).Error; err != nil {
+		return err
+	}
 
-	if err := r.DB.Where("company_id = ? AND DATE(invoice_date) = ?", company_id, date).
-		Preload("PaymentMethod").
-		Preload("Company").
-		Order("created_at DESC").
-		Find(invoices).Error; err != nil {
+	return nil
+}
+
+func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, totalData int64, err error) {
+	if err := r.DB.Model(&Models.Invoice{}).Scopes(Helper.FilterSearchRiwayatTransaction(*query.Search)).Count(&totalData).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := r.DB.
+		Select("id", "customer_name", "invoice_number", "status", "sub_total", "created_at").
+		Where("company_id = ?", companyID).
+		Preload("InvoiceItems", func(invItemPayload *gorm.DB) *gorm.DB {
+			return invItemPayload.Select("invoice_id", "quantity")
+		}).
+		Scopes(
+			Utils.Paginate(query.Page, query.Limit),
+			Helper.FilterSearchRiwayatTransaction(*query.Search)).
+		Order("created_at desc").
+		Find(&invoices).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return invoices, totalData, nil
+}
+
+func (r *InvoiceRepository) GetByInvoiceID(companyID string, invoiceID string) (invoice *Models.Invoice, err error) {
+	if err := r.DB.
+		Where("company_id = ?", companyID).
+		Preload("InvoiceItems", func(invItemPayload *gorm.DB) *gorm.DB {
+			return invItemPayload.Where("invoice_id = ?", invoiceID).
+				Select("invoice_id", "sellable_product_id", "quantity").
+				Preload("SellableProduct", func(spPayload *gorm.DB) *gorm.DB {
+					return spPayload.Select("id", "name", "price")
+				})
+		}).
+		First(&invoice).Error; err != nil {
 		return nil, err
 	}
 
-	return invoices, nil
+	return invoice, nil
 }
 
-func (r *InvoiceRepository) FindById(invoice_id string) (invoice *Models.Invoice, err error) {
-	invoice = &Models.Invoice{}
-
-	if err := r.DB.First(invoice, "id = ?", invoice_id).Error; err != nil {
-		return nil, fmt.Errorf("invoice not found")
+func (r *InvoiceRepository) FindByID(id string, companyID string) (invoice *Models.Invoice, err error) {
+	if err := r.DB.
+		Where("company_id = ?", companyID).
+		Where("id = ?", id).
+		First(&invoice).Error; err != nil {
+		return nil, err
 	}
 
 	return invoice, nil
 }
 
-func (r *InvoiceRepository) Update(invoice *Models.Invoice) (err error) {
-	if err := r.DB.Save(invoice).Error; err != nil {
-		return fmt.Errorf("failed to update invoice: %w", err)
+func (r *InvoiceRepository) SumSalesByDate(companyID string, date string) (totalSales float64, err error) {
+	if err := r.DB.
+		Model(&Models.Invoice{}).
+		Where("company_id = ?", companyID).
+		Where("date(created_at) = ?", date).
+		Select("sum(sub_total)").
+		Scan(&totalSales).Error; err != nil {
+		return 0, err
 	}
 
-	return nil
+	return totalSales, nil
 }
 
-func (r *InvoiceRepository) FindSelectRelasi(invoice_id string) (invoice *Models.Invoice, err error) {
-	invoice = &Models.Invoice{}
+func (r *InvoiceRepository) SumSalesByYearMonth(companyID string, year int, month int) (totalSales float64, err error) {
 
-	if err := r.DB.Preload("PaymentMethod").First(invoice, "id = ?", invoice_id).Error; err != nil {
-		return nil, fmt.Errorf("invoice not found")
+	if err := r.DB.
+		Model(&Models.Invoice{}).
+		Where("company_id = ?", companyID).
+		Where("EXTRACT(YEAR FROM created_at) = ?", year).
+		Where("EXTRACT(MONTH FROM created_at) = ?", month).
+		Select("sum(sub_total)").
+		Scan(&totalSales).Error; err != nil {
+		return 0, err
 	}
 
-	return invoice, nil
-}
-
-func (r *InvoiceRepository) Delete(invoice_id string) (err error) {
-	if err := r.DB.Delete(&Models.Invoice{}, "id = ?", invoice_id).Error; err != nil {
-		return fmt.Errorf("failed to delete invoice: %w", err)
-	}
-
-	return nil
-}
-
-func (r *InvoiceRepository) UpdateByInvoiceId(invoice_id string, company_id string, request *Dto.InvoiceRequestDTO) (err error) {
-	var invoice Models.Invoice
-	if err := r.DB.First(&invoice, "id = ? AND company_id = ?", invoice_id, company_id).Error; err != nil {
-		return fmt.Errorf("invoice not found")
-	}
-
-	invoice.InvoiceCustomer = request.InvoiceCustomer
-	invoice.CompanyID = request.CompanyID
-	invoice.PaymentMethodID = request.PaymentMethodId
-	invoice.TotalAmount = float64(request.TotalAmount)
-	invoice.MoneyReceived = float64(request.MoneyReceived)
-	invoice.StatusInvoice = Models.StatusInvoice(request.StatusInvoice)
-	invoice.UpdatedAt = time.Now()
-
-	if err := r.DB.Save(&invoice).Error; err != nil {
-		return fmt.Errorf("failed to update invoice: %w", err)
-	}
-
-	return nil
+	return totalSales, nil
 }

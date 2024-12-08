@@ -2,11 +2,14 @@ package main
 
 import (
 	"2024_akutansi_project/Config"
+	"2024_akutansi_project/Dependencies"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Routes"
 	"2024_akutansi_project/Utils"
-
+	"2024_akutansi_project/Worker"
 	_ "2024_akutansi_project/docs"
+	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -21,14 +24,16 @@ import (
 // @host localhost:8899
 
 func main() {
-
 	Utils.LoadEnv()
+	Utils.InitValidator()
 
-	Config.Connect()
-	db := Config.DB
-	if db == nil {
-		panic("Failed to connect to database!")
-	}
+	deps := Dependencies.InitDependencies(
+		Dependencies.WithDB(),
+		Dependencies.WithRedis(),
+		// Dependencies.WithMongo(),
+		// Dependencies.WithFirebase(),
+		// Dependencies.WithMessagingClient(),
+	)
 
 	setup := gin.Default()
 	setup.RemoveExtraSlash = true
@@ -40,7 +45,15 @@ func main() {
 
 	setup.Use(Middleware.SetupCORS())
 
-	Routes.Init(setup, db)
+	Routes.Init(setup, deps)
+
+	if func() bool {
+		scheduler := os.Getenv("USE_SCHEDULER")
+		b, _ := strconv.ParseBool(scheduler)
+		return b
+	}() {
+		Worker.InitScheduler(deps)
+	}
 
 	setup.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

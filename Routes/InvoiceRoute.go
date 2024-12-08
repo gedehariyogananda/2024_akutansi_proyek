@@ -4,14 +4,14 @@ import (
 	"2024_akutansi_project/Routes/Di"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-func InvoiceRoute(c *gin.RouterGroup, db *gorm.DB) {
+func InvoiceRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	route := c.Group("/invoice")
-	m := Di.DICommonMiddleware(db)
+	m := Di.DICommonMiddleware(db, redis)
 
-	// open use authenticate
 	route.Use(m.IsAuthenticate)
 	InvoiceController := Di.DIInvoice(db)
 
@@ -22,16 +22,8 @@ func InvoiceRoute(c *gin.RouterGroup, db *gorm.DB) {
 	})
 
 	route.POST("/create", InvoiceController.CreateInvoicePurchased)
-
-	route.PUT("/status/:invoice_id", InvoiceController.UpdateInvoiceStatus)
-
-	route.PUT("/money-received/:invoice_id", InvoiceController.UpdateMoneyReceived)
-
-	route.GET("/history-transaction", InvoiceController.GetAllInvoices)
-	route.PATCH("/history-transaction/:invoice_id", InvoiceController.UpdateInvoiceCustomer)
-	route.GET("/history-transaction/:invoice_id", InvoiceController.GetInvoiceDetail)
-	route.DELETE("/history-transaction/:invoice_id", InvoiceController.DeleteInvoice)
-
-	route.PATCH("/history-transaction/detail-transaction/:invoice_id", InvoiceController.UpdateInvoiceDetail)
-
+	route.GET("/sales/history", InvoiceController.GetSalesHistory)
+	route.GET("/sales/history/:invoiceID", InvoiceController.GetSpesifySalesHistory)
+	route.PATCH("/refund/:id", InvoiceController.UpdateRefund)
+	route.GET("/statistic/sales", InvoiceController.StatisticSales)
 }

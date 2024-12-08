@@ -7,59 +7,44 @@
 package Di
 
 import (
+	"2024_akutansi_project/Connector"
 	"2024_akutansi_project/Controllers"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
+	"firebase.google.com/go/messaging"
+	"github.com/redis/go-redis/v9"
+	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 )
 
 // Injectors from wire.go:
 
-func DIAuth(db *gorm.DB) *Controllers.AuthController {
-	authRepository := Repositories.AuthRepositoryProvider(db)
+func DIAuth(db *gorm.DB, redis2 *redis.Client) *Controllers.AuthController {
+	userRepository := Repositories.UserRepositoryProvider(db)
 	jwtService := Services.JwtServiceProvider()
 	companyRepository := Repositories.CompanyRepositoryProvider(db)
-	authService := Services.AuthServiceProvider(authRepository, jwtService, companyRepository)
+	subUserRepository := Repositories.SubUserRepositoryProvider(db)
+	authService := Services.AuthServiceProvider(userRepository, jwtService, companyRepository, subUserRepository, redis2)
 	authController := Controllers.AuthControllerProvider(authService)
 	return authController
 }
 
-func DICommonMiddleware(db *gorm.DB) *Middleware.CommondMiddleware {
+func DICommonMiddleware(db *gorm.DB, redis2 *redis.Client) *Middleware.CommondMiddleware {
 	jwtService := Services.JwtServiceProvider()
-	authRepository := Repositories.AuthRepositoryProvider(db)
-	commondMiddleware := Middleware.CommonMiddlewareProvider(jwtService, authRepository)
+	commondMiddleware := Middleware.CommonMiddlewareProvider(jwtService, redis2)
 	return commondMiddleware
-}
-
-func DICompany(db *gorm.DB) *Controllers.CompanyController {
-	companyRepository := Repositories.CompanyRepositoryProvider(db)
-	userCompanyRepository := Repositories.UserCompanyRepositoryProvider(db)
-	paymentMethodRepository := Repositories.PaymentMethodRepositoryProvider(db)
-	companyService := Services.CompanyServiceProvider(companyRepository, userCompanyRepository, paymentMethodRepository)
-	companyController := Controllers.CompanyControllerProvider(companyService)
-	return companyController
-}
-
-func DISaleableProduct(db *gorm.DB) *Controllers.SaleableProductController {
-	saleableProductRepository := Repositories.SaleableProductRepositoryProvider(db)
-	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
-	categoryRepository := Repositories.CategoryRepositoryProvider(db)
-	saleableProductService := Services.SaleableProductServiceProvider(saleableProductRepository, materialProductRepository, categoryRepository)
-	saleableProductController := Controllers.SaleableProductControllerProvider(saleableProductService)
-	return saleableProductController
 }
 
 func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 	invoiceRepository := Repositories.InvoiceRepositoryProvider(db)
-	invoiceMaterialRepository := Repositories.InvoiceMaterialRepositoryProvider(db)
-	invoiceSaleableRepository := Repositories.InvoiceSaleableRepositoryProvider(db)
-	saleableProductRepository := Repositories.SaleableProductRepositoryProvider(db)
-	paymentMethodRepository := Repositories.PaymentMethodRepositoryProvider(db)
-	companyRepository := Repositories.CompanyRepositoryProvider(db)
-	saleableProductTopingRepository := Repositories.SaleableProductTopingRepositoryProvider(db)
-	invoiceSaleableTopingRepository := Repositories.InvoiceSaleableTopingRepositoryProvider(db)
-	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceMaterialRepository, invoiceSaleableRepository, saleableProductRepository, paymentMethodRepository, companyRepository, saleableProductTopingRepository, invoiceSaleableTopingRepository)
+	invoiceItemRepository := Repositories.InvoiceItemRepositoryProvider(db)
+	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
+	receiptRepository := Repositories.ReceiptRepositoryProvider(db)
+	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
+	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
+	materialStockRepository := Repositories.MaterialStockRepositoryProvider(db)
+	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, sellableStockRepository, materialStockRepository, db)
 	invoiceController := Controllers.InvoiceControllerProvider(invoiceService)
 	return invoiceController
 }
@@ -71,11 +56,12 @@ func DICategory(db *gorm.DB) *Controllers.CategoryController {
 	return categoryController
 }
 
-func DIPaymentMethod(db *gorm.DB) *Controllers.PaymentMethodController {
-	paymentMethodRepository := Repositories.PaymentMethodRepositoryProvider(db)
-	paymentMethodService := Services.PaymentMethodServiceProvider(paymentMethodRepository)
-	paymentMethodController := Controllers.PaymentMethodControllerProvider(paymentMethodService)
-	return paymentMethodController
+func DIProfile(db *gorm.DB, mongo2 *mongo.Client) *Controllers.ProfileController {
+	profileRepository := Repositories.ProfileRepositoryProvider(mongo2)
+	shopeeConnector := Connector.ShopeeConnectorProvider()
+	profileService := Services.ProfileServiceProvider(profileRepository, shopeeConnector)
+	profileController := Controllers.ProfileControllerProvider(profileService)
+	return profileController
 }
 
 func DIWaitingList(db *gorm.DB) *Controllers.WaitingListController {
@@ -83,4 +69,67 @@ func DIWaitingList(db *gorm.DB) *Controllers.WaitingListController {
 	waitingListService := Services.WaitingListServiceProvider(waitingListRepository)
 	waitingListController := Controllers.WaitingListControllerProvider(waitingListService)
 	return waitingListController
+}
+
+func DIUnit(db *gorm.DB) *Controllers.UnitController {
+	unitRepository := Repositories.UnitProvider(db)
+	unitService := Services.UnitProvider(unitRepository)
+	unitController := Controllers.UnitProvider(unitService)
+	return unitController
+}
+
+func DIWorker(db *gorm.DB, mongo2 *mongo.Client, messaging2 *messaging.Client) *Services.WorkerService {
+	deviceTokenRepository := Repositories.DeviceTokenRepositoryProvider(mongo2)
+	notificationRepository := Repositories.NotificationRepositoryProvider(db)
+	materialStockRepository := Repositories.MaterialStockRepositoryProvider(db)
+	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
+	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
+	workerService := Services.WorkerServiceProvider(deviceTokenRepository, messaging2, notificationRepository, materialStockRepository, sellableProductRepository, sellableStockRepository)
+	return workerService
+}
+
+func DITax(db *gorm.DB) *Controllers.TaxController {
+	taxRepository := Repositories.TaxRepositoryProvider(db)
+	taxService := Services.TaxServiceProvider(taxRepository)
+	taxController := Controllers.TaxControllerProvider(taxService)
+	return taxController
+}
+
+func DISubUser(db *gorm.DB) *Controllers.SubUserController {
+	subUserRepository := Repositories.SubUserRepositoryProvider(db)
+	subUserService := Services.SubUserProvider(subUserRepository)
+	subUserController := Controllers.SubUserProvider(subUserService)
+	return subUserController
+}
+
+func DIAccount(db *gorm.DB) *Controllers.AccountController {
+	accountRepository := Repositories.AccountProvider(db)
+	accountService := Services.AccountProvider(accountRepository)
+	accountController := Controllers.AccountProvider(accountService)
+	return accountController
+}
+
+func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
+	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
+	promoItemRepository := Repositories.PromoItemRepositoryProvider(db)
+	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository)
+	sellableProductController := Controllers.SellableProductControllerProvider(sellableProductService)
+	return sellableProductController
+}
+
+func DIMaterialProduct(db *gorm.DB) *Controllers.MaterialProductController {
+	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
+	materialConversionRepository := Repositories.MaterialConversionRepositoryProvider(db)
+	materialProductService := Services.MaterialProductServiceProvider(materialProductRepository, materialConversionRepository)
+	materialProductController := Controllers.MaterialProductControllerProvider(materialProductService)
+	return materialProductController
+}
+
+func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
+	stockOpnameRepository := Repositories.StockOpnameRepositoryProvider(db)
+	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
+	materialStockRepository := Repositories.MaterialStockRepositoryProvider(db)
+	stockOpnameService := Services.StockOpnameServiceProvider(stockOpnameRepository, sellableStockRepository, materialStockRepository, db)
+	stockOpnameController := Controllers.StockOpnameControllerProvider(stockOpnameService)
+	return stockOpnameController
 }

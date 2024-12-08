@@ -4,99 +4,199 @@ import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Repositories"
+	"2024_akutansi_project/Utils"
+	"context"
 	"errors"
+	"log"
 	"net/http"
 
-	"golang.org/x/crypto/bcrypt"
+	"github.com/redis/go-redis/v9"
 )
 
 type (
 	IAuthService interface {
-		Register(request *Dto.RegisterRequest) (user *Models.User, err error, statusCode int)
-
-		Login(request *Dto.LoginRequest) (user *Models.User, token string, err error, statusCode int)
-		TokenCompany(request *Dto.TokenCompanyRequest, user_id string) (token string, company *Models.Company, err error, statusCode int)
+		Register(request *Dto.RegisterRequest) (user *Models.User, statusCode int, err error)
+		LoginOwner(ctx context.Context, request *Dto.LoginOwnerRequest) (token string, statusCode int, err error)
+		LoginEmployee(ctx context.Context, request *Dto.LoginEmployeeRequest) (token string, statusCode int, err error)
+		LoginMobile(ctx context.Context, request *Dto.LoginMobileRequest) (token string, typeUser string, statusCode int, err error)
 	}
 
 	AuthService struct {
-		authRepository    Repositories.IAuthRepository
+		userRepository    Repositories.IUserRepository
+		subUserRepository Repositories.ISubUserRepository
 		companyRepository Repositories.ICompanyRepository
 		jwtService        IJwtService
+		redisClient       *redis.Client
 	}
 )
 
-func AuthServiceProvider(authRepository Repositories.IAuthRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository) *AuthService {
+func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client) *AuthService {
 	return &AuthService{
-		authRepository:    authRepository,
+		userRepository:    userRepository,
 		companyRepository: companyRepository,
 		jwtService:        jwtService,
+		subUserRepository: subUser,
+		redisClient:       redisClient,
 	}
 }
 
-func (h *AuthService) Register(request *Dto.RegisterRequest) (user *Models.User, err error, statusCode int) {
+func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models.User, statusCode int, err error) {
 
-	if err := h.authRepository.CheckUniqueField(request); err != nil {
-		return nil, errors.New("email already exist"), http.StatusConflict
+	checkEmail, _ := service.userRepository.FindEmail(request.Email)
+	if checkEmail != nil {
+		return nil, http.StatusConflict, errors.New("email sudah terdaftar di sistem kami!")
 	}
 
-	user, err = h.authRepository.InsertForRegister(request)
+	company, err := service.companyRepository.Create(&Models.Company{
+		Code: Utils.GenerateCodeCompany(request.CompanyName),
+		Name: request.CompanyName,
+	})
+
 	if err != nil {
-		return nil, errors.New("error insert user"), http.StatusInternalServerError
+		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat company")
 	}
 
-	user, err = h.authRepository.GetUser(user.ID)
+	user, err = service.userRepository.Create(&Models.User{
+		Username:  Utils.FormatUsernameClient(request.Name),
+		Email:     request.Email,
+		Phone:     request.Phone,
+		Password:  request.Password,
+		Name:      request.Name,
+		CompanyID: company.ID,
+	})
 
 	if err != nil {
-		return nil, errors.New("error get user"), http.StatusInternalServerError
+		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat account")
 	}
 
-	return user, nil, http.StatusCreated
+	return user, http.StatusCreated, nil
 }
 
-func (h *AuthService) Login(request *Dto.LoginRequest) (user *Models.User, token string, err error, statusCode int) {
-	userInit, err := h.authRepository.FindEmail(request.Email)
+func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOwnerRequest) (token string, statusCode int, err error) {
+	ownerData, err := service.userRepository.FindEmail(request.Email)
 
 	if err != nil {
-		return nil, "", errors.New("email not found"), http.StatusNotFound
+		return "", http.StatusNotFound, errors.New("email tidak ditemukan")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(userInit.Password), []byte(request.Password)); err != nil {
-		return nil, "", errors.New("password not match"), http.StatusUnauthorized
+	if err := Utils.ComparePassword(ownerData.Password, request.Password); err != nil {
+		return "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
-	token, err = h.jwtService.GenerateToken(userInit.ID, request.Me)
+	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, false, false)
 
 	if err != nil {
-		return nil, "", errors.New("error generate token"), http.StatusInternalServerError
+		return "", http.StatusInternalServerError, errors.New("error generate token")
 	}
 
-	if err := h.authRepository.UpdateToken(token, userInit.ID); err != nil {
-		return nil, "", errors.New("error update token"), http.StatusInternalServerError
+	// delete token redis existing before
+	existingToken, _ := service.redisClient.Get(ctx, ownerData.ID).Result()
+	if existingToken != "" {
+		service.redisClient.Del(ctx, ownerData.ID)
 	}
 
-	user, err = h.authRepository.GetUser(userInit.ID)
+	err = service.redisClient.Set(ctx, ownerData.ID, token, duration).Err()
 
 	if err != nil {
-		return nil, "", errors.New("error get user"), http.StatusInternalServerError
+		return "", http.StatusInternalServerError, errors.New("error set redis")
 	}
 
-	return user, token, err, http.StatusOK
+	return token, http.StatusOK, err
 }
 
-func (h *AuthService) TokenCompany(request *Dto.TokenCompanyRequest, user_id string) (token string, company *Models.Company, err error, statusCode int) {
-	token, err = h.jwtService.GenerateTokenWithCompany(user_id, request.CompanyID)
+func (service *AuthService) LoginEmployee(ctx context.Context, request *Dto.LoginEmployeeRequest) (token string, statusCode int, err error) {
+	employeeData, err := service.subUserRepository.FindByEmployeeKey(request.EmployeeKey)
+
 	if err != nil {
-		return "", nil, errors.New("error generate token"), http.StatusInternalServerError
+		return "", http.StatusNotFound, errors.New("karyawan tidak ditemukan!")
 	}
 
-	if err := h.authRepository.UpdateToken(token, user_id); err != nil {
-		return "", nil, errors.New("error update token"), http.StatusInternalServerError
+	if err := Utils.ComparePassword(employeeData.Password, request.Password); err != nil {
+		return "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
-	company, err = h.companyRepository.GetCompany(request.CompanyID)
+	token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, employeeData.Name, true, false)
+
 	if err != nil {
-		return "", nil, errors.New("error get company"), http.StatusNotFound
+		return "", http.StatusInternalServerError, errors.New("error generate token")
 	}
 
-	return token, company, nil, http.StatusOK
+	// delete token redis existing before
+	existingToken, _ := service.redisClient.Get(ctx, employeeData.ID).Result()
+	if existingToken != "" {
+		service.redisClient.Del(ctx, employeeData.ID)
+	}
+
+	err = service.redisClient.Set(ctx, employeeData.ID, token, duration).Err()
+
+	if err != nil {
+		return "", http.StatusInternalServerError, errors.New("error set redis")
+	}
+
+	return token, http.StatusOK, err
+}
+
+func (service *AuthService) LoginMobile(ctx context.Context, request *Dto.LoginMobileRequest) (token string, typeUser string, statusCode int, err error) {
+
+	var ownerData *Models.User
+	var employeeData *Models.SubUser
+
+	ownerData, err = service.userRepository.FindEmail(request.Key)
+
+	if ownerData == nil || err != nil {
+		employeeData, err = service.subUserRepository.FindByEmployeeKey(request.Key)
+
+		if employeeData == nil || err != nil {
+			return "", "", http.StatusNotFound, errors.New("user tidak ditemukan")
+		}
+
+		if err := Utils.ComparePassword(employeeData.Password, request.Password); err != nil {
+			return "", "", http.StatusUnauthorized, errors.New("password salah!")
+		}
+
+		token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, employeeData.Name, true, true)
+
+		if err != nil {
+			return "", "", http.StatusInternalServerError, errors.New("error generate token")
+		}
+
+		// delete token redis existing before
+		existingToken, _ := service.redisClient.Get(ctx, employeeData.ID).Result()
+		if existingToken != "" {
+			service.redisClient.Del(ctx, employeeData.ID)
+		}
+
+		err = service.redisClient.Set(ctx, employeeData.ID, token, duration).Err()
+
+		if err != nil {
+			return "", "", http.StatusInternalServerError, errors.New("error set redis")
+		}
+
+		return token, "EMPLOYEE", http.StatusOK, err
+	}
+
+	if err := Utils.ComparePassword(ownerData.Password, request.Password); err != nil {
+		return "", "", http.StatusUnauthorized, errors.New("password salah!")
+	}
+
+	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, false, true)
+
+	if err != nil {
+		return "", "", http.StatusInternalServerError, errors.New("error generate token")
+	}
+
+	// delete token redis existing before
+	existingToken, _ := service.redisClient.Get(ctx, ownerData.ID).Result()
+	if existingToken != "" {
+		log.Print("delete token exist", existingToken)
+		service.redisClient.Del(ctx, ownerData.ID)
+	}
+
+	err = service.redisClient.Set(ctx, ownerData.ID, token, duration).Err()
+
+	if err != nil {
+		return "", "", http.StatusInternalServerError, errors.New("error set redis")
+	}
+
+	return token, "OWNER", http.StatusOK, err
 }

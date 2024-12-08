@@ -1,20 +1,23 @@
 package Routes
 
 import (
+	"2024_akutansi_project/Dependencies"
+
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func Init(c *gin.Engine, db *gorm.DB) {
+func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 
 	apiPrefix := c.Group("/api/v1/")
 
-	// Initialize routes
-	AuthRoute(apiPrefix, db)
-	CompanyRoute(apiPrefix, db)
-	SaleableProductRoute(apiPrefix, db)
-	InvoiceRoute(apiPrefix, db)
-	CategoryRoute(apiPrefix, db)
-	PaymentMethodRoute(apiPrefix, db)
-	WaitingListRoute(apiPrefix, db)
+	AuthRoute(apiPrefix, deps.DB, deps.Redis)
+	InvoiceRoute(apiPrefix, deps.DB, deps.Redis)
+	CategoryRoute(apiPrefix, deps.DB, deps.Redis)
+	ProfileRoute(apiPrefix, deps.DB, deps.Mongo)
+	Unit(apiPrefix, deps.DB, deps.Redis)
+	TaxRoute(apiPrefix, deps.DB, deps.Redis)
+	SellableProductRoutes(apiPrefix, deps.DB, deps.Redis)
+	MaterialProduct(apiPrefix, deps.DB, deps.Redis)
+	Account(apiPrefix, deps.DB, deps.Redis)
+	StockOpnameRoutes(apiPrefix, deps.DB, deps.Redis)
 }

@@ -1,0 +1,47 @@
+package Models
+
+import (
+	"2024_akutansi_project/Utils"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+type SubUser struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	EmployeeKey string    `json:"employee_key"`
+	Password    string    `json:"password"`
+	Status      bool      `json:"status"`
+	CompanyID   string    `json:"company_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	// UpdatedAt   time.Time `json:"updated_at"`
+	DeletedAt gorm.DeletedAt
+}
+
+// create uuid
+func (subUser *SubUser) BeforeCreate(tx *gorm.DB) (err error) {
+	// uuid
+	if subUser.ID == "" {
+		uuid, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+
+		subUser.ID = uuid.String()
+	}
+
+	if subUser.Password == "" {
+		fmt.Println("password", subUser.Password)
+		hashed, err := Utils.HashPassword(subUser.Password)
+		if err != nil {
+			return err
+		}
+
+		subUser.Password = hashed
+	}
+
+	return
+}

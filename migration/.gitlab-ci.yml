@@ -1,0 +1,13 @@
+stages:
+  - migrating
+
+migrating-database:
+  stage: migrating
+  tags:
+    - be-duitku
+  only:
+    - main
+  script:
+    - echo "running migration"
+    - cp /home/duitku-env/.env-duitku-migration .env
+    - make migrate-fresh
