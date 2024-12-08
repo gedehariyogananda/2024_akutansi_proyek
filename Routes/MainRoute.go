@@ -18,4 +18,5 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	TaxRoute(apiPrefix, deps.DB, deps.Redis)
 	SellableProductRoutes(apiPrefix, deps.DB, deps.Redis)
 	MaterialProduct(apiPrefix, deps.DB, deps.Redis)
+	Account(apiPrefix, deps.DB, deps.Redis)
 }
