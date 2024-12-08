@@ -14,6 +14,7 @@ type (
 		GetAll(ctx *gin.Context)
 		Create(ctx *gin.Context)
 		GetAvailableStock(ctx *gin.Context)
+		GetById(ctx *gin.Context)
 	}
 
 	StockOpnameController struct {
@@ -73,6 +74,19 @@ func (controller *StockOpnameController) GetAvailableStock(ctx *gin.Context) {
 	companyID := ctx.GetString("company_id")
 
 	data, err := controller.StockOpnameService.GetAvailableStock(companyID)
+	if err != nil {
+		statusCode := Utils.HandleStatusCode(err)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data stock opname", data, http.StatusOK)
+}
+
+func (controller *StockOpnameController) GetById(ctx *gin.Context) {
+	stockOpnameID := ctx.Param("id")
+
+	data, err := controller.StockOpnameService.GetById(stockOpnameID)
 	if err != nil {
 		statusCode := Utils.HandleStatusCode(err)
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)

@@ -12,6 +12,7 @@ type (
 		GetAll(query *Common.Query) (data []*Models.StockOpname, totalData int64, err error)
 		Create(data *Models.StockOpname, trx *gorm.DB) (err error)
 		CreateItem(data []*Models.StockOpnameItem, trx *gorm.DB) (err error)
+		GetById(stockOpnameID string) (data *Models.StockOpname, err error)
 	}
 
 	StockOpnameRepository struct {
@@ -70,4 +71,17 @@ func (r *StockOpnameRepository) CreateItem(data []*Models.StockOpnameItem, trx *
 	}
 
 	return nil
+}
+
+func (r *StockOpnameRepository) GetById(stockOpnameID string) (data *Models.StockOpname, err error) {
+	var stockOpname Models.StockOpname
+
+	if err := r.DB.
+		Preload("Items").
+		Where("id = ?", stockOpnameID).
+		First(&stockOpname).Error; err != nil {
+		return nil, err
+	}
+
+	return &stockOpname, nil
 }

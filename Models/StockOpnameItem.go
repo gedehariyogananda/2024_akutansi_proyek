@@ -12,6 +12,7 @@ type StockOpnameItem struct {
 	StockID            string       `json:"stock_id,omitempty"`
 	ProductType        string       `json:"product_type,omitempty"`
 	DifferenceQuantity int          `json:"difference_quantity,omitempty"`
+	Name               string       `json:"name,omitempty"`
 	StockOpname        *StockOpname `json:"stock_opname,omitempty"`
 }
 

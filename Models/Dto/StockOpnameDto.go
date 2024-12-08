@@ -11,4 +11,6 @@ type StockOpnameItemDTO struct {
 	Quantity       int    `json:"quantity" binding:"required"`
 	StockId        string `json:"stock_id" binding:"required"`
 	SystemQuantity int    `json:"system_quantity" binding:"required"`
+	Name           string `json:"name" binding:"required"`
+	Type           string `json:"type" binding:"required"`
 }

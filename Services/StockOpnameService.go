@@ -17,6 +17,7 @@ type (
 		GetAll(query *Common.Query) (data []*Models.StockOpname, meta Common.Meta, err error)
 		Create(data *Dto.CreateStockOpnameDto) (err error)
 		GetAvailableStock(companyID string) (data []*Response.AvailableStockResponse, err error)
+		GetById(stockOpnameID string) (data *Models.StockOpname, err error)
 	}
 
 	StockOpnameService struct {
@@ -88,12 +89,21 @@ func (s *StockOpnameService) Create(data *Dto.CreateStockOpnameDto) (err error) 
 			Quantity:           item.Quantity,
 			StockID:            item.StockId,
 			DifferenceQuantity: item.Quantity - item.SystemQuantity,
-			ProductType:        "-",
+			ProductType:        item.Type,
+			Name:               item.Name,
 		}
 
 		items = append(items, stockOpnameItem)
 
-		err = s.SellableStockRepository.UpdateCurrent(trx, item.StockId, item.SystemQuantity-item.Quantity)
+		if item.Type == "material" {
+			err = s.MaterialStockRepository.UpdateCurrent(trx, item.StockId, item.SystemQuantity-item.Quantity)
+		} else {
+			err = s.SellableStockRepository.UpdateCurrent(trx, item.StockId, item.SystemQuantity-item.Quantity)
+		}
+
+		if err != nil {
+			return err
+		}
 	}
 
 	err = s.StockOpnameRepository.CreateItem(items, trx)
@@ -129,6 +139,15 @@ func (s *StockOpnameService) GetAvailableStock(companyID string) (data []*Respon
 
 	wg.Wait()
 
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (s *StockOpnameService) GetById(stockOpnameID string) (data *Models.StockOpname, err error) {
+	data, err = s.StockOpnameRepository.GetById(stockOpnameID)
 	if err != nil {
 		return nil, err
 	}
