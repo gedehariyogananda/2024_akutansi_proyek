@@ -90,6 +90,7 @@ func DITax(db *gorm.DB) *Controllers.TaxController {
 	taxController := Controllers.TaxControllerProvider(taxService)
 	return taxController
 }
+
 func DISubUser(db *gorm.DB) *Controllers.SubUserController {
 	subUserRepository := Repositories.SubUserRepositoryProvider(db)
 	subUserService := Services.SubUserProvider(subUserRepository)
@@ -110,4 +111,13 @@ func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
 	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository)
 	sellableProductController := Controllers.SellableProductControllerProvider(sellableProductService)
 	return sellableProductController
+}
+
+func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
+	stockOpnameRepository := Repositories.StockOpnameRepositoryProvider(db)
+	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
+	materialStockRepository := Repositories.MaterialStockRepositoryProvider(db)
+	stockOpnameService := Services.StockOpnameServiceProvider(stockOpnameRepository, sellableStockRepository, materialStockRepository, db)
+	stockOpnameController := Controllers.StockOpnameControllerProvider(stockOpnameService)
+	return stockOpnameController
 }

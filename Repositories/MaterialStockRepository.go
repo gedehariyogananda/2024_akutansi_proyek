@@ -11,6 +11,7 @@ type (
 	IMaterialStockRepository interface {
 		FindByMaterialNotExp(materialStockID string) ([]*Models.MaterialStock, error)
 		UpdateCurrent(trx *gorm.DB, materialStockID string, qtyClient int) error
+		GetAvailableStock(companyId string) (materialStock []*Models.MaterialStock, err error)
 	}
 
 	MaterialStockRepository struct {
@@ -49,4 +50,15 @@ func (r *MaterialStockRepository) UpdateCurrent(trx *gorm.DB, materialStockID st
 	}
 
 	return nil
+}
+
+func (r *MaterialStockRepository) GetAvailableStock(companyId string) (materialStock []*Models.MaterialStock, err error) {
+	if err := r.DB.
+		Preload("MaterialProduct").
+		Where("company_id = ?", companyId).
+		Find(&materialStock).Error; err != nil {
+		return nil, fmt.Errorf("error when getting available stock: %w", err)
+	}
+
+	return materialStock, nil
 }
