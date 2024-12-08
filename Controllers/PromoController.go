@@ -13,6 +13,8 @@ type (
 	IPromoController interface {
 		Create(ctx *gin.Context)
 		FindByID(ctx *gin.Context)
+		Delete(ctx *gin.Context)
+		Update(ctx *gin.Context)
 	}
 
 	PromoController struct {
@@ -48,4 +50,31 @@ func (controller *PromoController) FindByID(ctx *gin.Context) {
 		return
 	}
 	Helper.SetSuccessResponse(ctx, "Success get promo", res, http.StatusOK)
+}
+
+func (controller *PromoController) Delete(ctx *gin.Context) {
+	id := ctx.Param("id")
+	statusCode, err := controller.PromoService.Delete(id)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+	Helper.SetSuccessResponse(ctx, "Success delete promo", nil, http.StatusOK)
+}
+
+func (controller *PromoController) Update(ctx *gin.Context) {
+	id := ctx.Param("id")
+	var request Dto.UpdatePromoDto
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		Helper.SetValidationErrorResponse(ctx, err.Error())
+		return
+	}
+	request.CompanyID = ctx.GetString("company_id")
+	res, statusCode, err := controller.PromoService.Update(&request, id)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+	Helper.SetSuccessResponse(ctx, "Success update promo", res, http.StatusOK)
 }

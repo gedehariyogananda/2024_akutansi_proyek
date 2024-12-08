@@ -15,6 +15,8 @@ type (
 	IPromoService interface {
 		Create(dto *Dto.CreatePromoDto) (res Response.PromoResponse, err error)
 		FindByID(id string) (res Response.PromoResponse, statusCode int, err error)
+		Delete(id string) (statusCode int, err error)
+		Update(dto *Dto.UpdatePromoDto, id string) (res Response.PromoResponse, statusCode int, err error)
 	}
 
 	PromoService struct {
@@ -76,4 +78,75 @@ func (s *PromoService) FindByID(id string) (res Response.PromoResponse, statusCo
 	res = Response.ToPromoResponse(*promo)
 
 	return res, http.StatusOK, nil
+}
+
+func (s *PromoService) Delete(id string) (statusCode int, err error) {
+	_, err = s.PromoRepository.FindById(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return http.StatusNotFound, err
+	}
+
+	err = s.PromoRepository.Delete(id)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	err = s.PromoItemRepository.DeleteByPromoID(id)
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func (s *PromoService) Update(dto *Dto.UpdatePromoDto, id string) (res Response.PromoResponse, statusCode int, err error) {
+	promo, err := s.PromoRepository.FindById(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return
+	}
+
+	if err != nil {
+		return
+	}
+
+	promo.Name = dto.Name
+	promo.StartDate = dto.StartDate
+	promo.EndDate = dto.EndDate
+	promo.Amount = dto.Amount
+	promo.IsAll = dto.IsAll
+	promo.Type = dto.Type
+	promo.CompanyID = dto.CompanyID
+
+	promo, err = s.PromoRepository.Update(promo, id)
+	if err != nil {
+		return
+	}
+
+	err = s.PromoItemRepository.DeleteByPromoID(id)
+	if err != nil {
+		return
+	}
+	if !dto.IsAll {
+
+		for _, item := range dto.SellableProductIDS {
+			promoItem := &Models.PromoItem{
+				PromoID:           promo.ID,
+				SellableProductID: item,
+			}
+
+			_, err = s.PromoItemRepository.Create(promoItem)
+			if err != nil {
+				return
+			}
+		}
+	}
+
+	res = Response.ToPromoResponse(*promo)
+	res.ID = id
+
+	return res, http.StatusOK, nil
+
 }
