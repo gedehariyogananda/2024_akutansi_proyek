@@ -148,10 +148,18 @@ func DIWorker(db *gorm.DB, mongo *mongo.Client, messaging *messaging.Client) *Se
 		Services.WorkerServiceProvider,
 		Repositories.DeviceTokenRepositoryProvider,
 		Repositories.NotificationRepositoryProvider,
+		Repositories.SellableStockRepositoryProvider,
+		Repositories.SellableProductRepositoryProvider,
+		Repositories.MaterialStockRepositoryProvider,
+		Repositories.MaterialProductRepositoryProvider,
 
 		wire.Bind(new(Services.IWorkerService), new(*Services.WorkerService)),
 		wire.Bind(new(Repositories.IDeviceTokenRepository), new(*Repositories.DeviceTokenRepository)),
 		wire.Bind(new(Repositories.INotificationRepository), new(*Repositories.NotificationRepository)),
+		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
+		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
+		wire.Bind(new(Repositories.IMaterialStockRepository), new(*Repositories.MaterialStockRepository)),
+		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
 	),
 	))
 

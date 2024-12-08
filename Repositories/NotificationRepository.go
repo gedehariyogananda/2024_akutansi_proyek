@@ -12,7 +12,7 @@ type (
 	INotificationRepository interface {
 		StoreNotification(ctx context.Context, payload Models.Notification) error
 		UpdateNotification(ctx context.Context, payload Models.Notification) error
-		FindNotification(ctx context.Context, payload Models.Notification) []Models.Notification
+		FindNotification(ctx context.Context, payload Models.Notification) *Models.Notifications
 	}
 
 	NotificationRepository struct {

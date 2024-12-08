@@ -10,5 +10,4 @@ migrating-database:
   script:
     - echo "running migration"
     - cp /home/duitku-env/.env-duitku-migration .env
-    - ./migrate-fresh.sh
-
+    - make migrate-fresh

@@ -81,7 +81,10 @@ func DIUnit(db *gorm.DB) *Controllers.UnitController {
 func DIWorker(db *gorm.DB, mongo2 *mongo.Client, messaging2 *messaging.Client) *Services.WorkerService {
 	deviceTokenRepository := Repositories.DeviceTokenRepositoryProvider(mongo2)
 	notificationRepository := Repositories.NotificationRepositoryProvider(db)
-	workerService := Services.WorkerServiceProvider(deviceTokenRepository, messaging2, notificationRepository)
+	materialStockRepository := Repositories.MaterialStockRepositoryProvider(db)
+	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
+	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
+	workerService := Services.WorkerServiceProvider(deviceTokenRepository, messaging2, notificationRepository, materialStockRepository, sellableProductRepository, sellableStockRepository)
 	return workerService
 }
 
@@ -113,7 +116,6 @@ func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
 	sellableProductController := Controllers.SellableProductControllerProvider(sellableProductService)
 	return sellableProductController
 }
-
 
 func DIMaterialProduct(db *gorm.DB) *Controllers.MaterialProductController {
 	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
