@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// -------------------- utils to pagination function --------------- //
 func Paginate(page int, perPage int) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		offset := (page - 1) * perPage
@@ -77,4 +76,3 @@ func CountModelRecords(db *gorm.DB, model interface{}) (int64, error) {
 	return totalData, nil
 }
 
-// --------------- end function handler pagination ----------------- //

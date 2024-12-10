@@ -25,9 +25,13 @@ type MaterialProduct struct {
 
 // create uuid setup
 func (materialProduct *MaterialProduct) BeforeCreate(tx *gorm.DB) (err error) {
-	// uuid
 	if materialProduct.ID == "" {
-		materialProduct.ID = uuid.New().String()
+		uuid, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+
+		materialProduct.ID = uuid.String()
 	}
 
 	return

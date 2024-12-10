@@ -28,9 +28,13 @@ type Invoice struct {
 
 // create uuid setup
 func (invoice *Invoice) BeforeCreate(tx *gorm.DB) (err error) {
-	// uuid
 	if invoice.ID == "" {
-		invoice.ID = uuid.New().String()
+		uuid, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+
+		invoice.ID = uuid.String()
 	}
 
 	return
