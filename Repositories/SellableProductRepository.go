@@ -28,6 +28,20 @@ func SellableProductRepositoryProvider(db *gorm.DB) *SellableProductRepository {
 }
 
 func (sellableProductRepository *SellableProductRepository) GetAll(companyID string, onlyActive bool, query *Common.Query) (sellableProducts []*Models.SellableProduct, totalData int64, err error) {
+	totalCountInit := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
+		Where("company_id = ?", companyID)
+
+	if onlyActive {
+		totalCountInit = totalCountInit.Where("status = ?", true)
+	}
+
+	if err := totalCountInit.Scopes(
+		Helper.FilterSearchProduct(query.Search),
+		Helper.FilterCategoryID(query.CategoryID)).
+		Count(&totalData).Error; err != nil {
+		return nil, 0, err
+	}
+
 	db := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
 		Where("company_id = ?", companyID)
 
@@ -47,13 +61,9 @@ func (sellableProductRepository *SellableProductRepository) GetAll(companyID str
 
 	if err := db.Scopes(
 		Utils.Paginate(query.Page, query.Limit),
-		Helper.FilterSearch(*query.Search),
+		Helper.FilterSearchProduct(query.Search),
+		Helper.FilterCategoryID(query.CategoryID),
 	).Find(&sellableProducts).Error; err != nil {
-		return nil, 0, err
-	}
-
-	totalData, err = Utils.CountModelRecords(db, &sellableProducts)
-	if err != nil {
 		return nil, 0, err
 	}
 

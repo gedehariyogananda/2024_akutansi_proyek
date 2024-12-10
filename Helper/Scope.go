@@ -37,12 +37,32 @@ func FilterIslock(isLock bool) func(*gorm.DB) *gorm.DB {
 	}
 }
 
-func FilterSearchRiwayatTransaction(query string) func(*gorm.DB) *gorm.DB {
+func FilterSearchRiwayatTransaction(query *string) func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if query == "" {
+		if query == nil {
 			return db
 		}
 
-		return db.Where("customer_name ILIKE ? OR invoice_number ILIKE ?", "%"+query+"%", "%"+query+"%")
+		return db.Where("customer_name ILIKE ? OR invoice_number ILIKE ?", "%"+*query+"%", "%"+*query+"%")
+	}
+}
+
+func FilterCategoryID(categoryID *string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if categoryID == nil {
+			return db
+		}
+
+		return db.Where("category_id = ?", categoryID)
+	}
+}
+
+func FilterSearchProduct(query *string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if query == nil {
+			return db
+		}
+
+		return db.Where("name ILIKE ?", "%"+*query+"%")
 	}
 }

@@ -29,16 +29,9 @@ func SellableProductServiceProvider(sellableProductRepository Repositories.ISell
 }
 
 func (service *SellableProductService) GetAll(companyID string, query *Common.Query, onlyActive bool) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
-
 	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, onlyActive, query)
 	if err != nil {
 		return nil, Common.Meta{}, http.StatusInternalServerError, err
-	}
-
-	meta = Common.Meta{
-		TotalData: totalData,
-		Limit:     query.Limit,
-		Page:      query.Page,
 	}
 
 	var res []*Response.SellableResponse
@@ -84,9 +77,11 @@ func (service *SellableProductService) GetAll(companyID string, query *Common.Qu
 				Category:        sellableProduct.Category,
 				PromoItems:      sellableProduct.PromoItems,
 			})
-	
-		}	
+
+		}
 	}
+
+	meta = Common.PaginateMetadata(nil, totalData, query.Limit, query.Page)
 
 	return res, meta, http.StatusOK, nil
 }
