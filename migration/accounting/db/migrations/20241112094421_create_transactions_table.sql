@@ -10,7 +10,7 @@ CREATE TABLE transactions
     date                    TIMESTAMP WITH TIME ZONE NOT NULL,
     due_date                TIMESTAMP WITH TIME ZONE,
     note                    VARCHAR(255),
-    transaction_record_code VARCHAR(255), -- A_PAT_02042004
+    transaction_record_code VARCHAR(255), -- 1_PAT_02042004
     transaction_id          VARCHAR(100),
     payment_method           VARCHAR(255)             NOT NULL,
     payment_type            VARCHAR(255)             NOT NULL,

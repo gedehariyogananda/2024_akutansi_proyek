@@ -30,7 +30,13 @@ func GenerateCodeCompany(companyName string) string {
 	return uniqueCode
 }
 
-func GenerateTransactionRecord(newPrefix string, companyCode string) string {
-	format := fmt.Sprintf("%s-%s-%s", newPrefix, companyCode, time.Now().Format("12062006"))
+func GenerateTransactionRecord(latestCount int64, companyCode string) string {
+	if latestCount == 0 {
+		latestCount = 1
+	} else {
+		latestCount += 1
+	}
+
+	format := fmt.Sprintf("%s-%s-%s", latestCount, companyCode, time.Now().Format("12062006"))
 	return format
 }
