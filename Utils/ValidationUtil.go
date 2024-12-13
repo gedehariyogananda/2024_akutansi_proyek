@@ -31,7 +31,7 @@ func ValidateRequest(ctx *gin.Context, data interface{}) []Helper.ErrorFieldsRes
 			case "required":
 				errField.FieldName = strings.ToLower(err.Field())
 				errField.Message = err.Field() + " tidak boleh kosong"
-			case "max" :
+			case "max":
 				errField.FieldName = strings.ToLower(err.Field())
 				errField.Message = err.Field() + " harus memiliki maksimal " + err.Param() + " karakter"
 			}

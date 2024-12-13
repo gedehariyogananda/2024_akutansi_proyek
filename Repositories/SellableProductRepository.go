@@ -21,6 +21,7 @@ type (
 		FindByID(id string) (*Models.SellableProduct, error)
 
 		// FindAll(companyID string, query *Common.Query) ([]*Models.SellableProduct, int64, error)
+		GetByCompanyID(companyID string) (sellableProducts []Models.SellableProduct, err error)
 	}
 
 	SellableProductRepository struct {
@@ -166,5 +167,12 @@ func (sellableProductRepository *SellableProductRepository) FindByID(id string) 
 // 		return nil, 0, err
 // 	}
 
-// 	return sellableProducts, totalData, nil
-// }
+//		return sellableProducts, totalData, nil
+//	}
+func (SellableProductRepository *SellableProductRepository) GetByCompanyID(companyID string) (sellableProducts []Models.SellableProduct, err error) {
+	if err := SellableProductRepository.DB.Where("company_id = ?", companyID).Preload("PromoItems.Promo").Find(&sellableProducts).Error; err != nil {
+		return nil, err
+	}
+
+	return sellableProducts, nil
+}

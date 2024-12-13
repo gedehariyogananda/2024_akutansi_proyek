@@ -19,6 +19,8 @@ type (
 		Delete(ctx *gin.Context)
 		Update(ctx *gin.Context)
 		FindAll(ctx *gin.Context)
+		CreatePromoOnly(ctx *gin.Context)
+		AsignPromo(ctx *gin.Context)
 	}
 
 	PromoController struct {
@@ -109,4 +111,35 @@ func (controller *PromoController) FindAll(ctx *gin.Context) {
 	meta = Common.PaginateMetadata(ctx, meta.TotalData, query.Limit, query.Page)
 
 	Helper.SetPaginationResponse(ctx, "Success get all promo", res, meta, http.StatusOK)
+}
+
+func (controller *PromoController) CreatePromoOnly(ctx *gin.Context) {
+	var request Dto.CreatePromoOnly
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		Helper.SetValidationErrorResponse(ctx, err.Error())
+		return
+	}
+	request.CompanyID = ctx.GetString("company_id")
+	res, err := controller.PromoService.CreatePromoOnly(&request)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), http.StatusBadRequest)
+		return
+	}
+	Helper.SetSuccessResponse(ctx, "Success create promo", res, http.StatusCreated)
+}
+
+func (controller *PromoController) AsignPromo(ctx *gin.Context) {
+	var request Dto.AsignPromoDto
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		Helper.SetValidationErrorResponse(ctx, err.Error())
+		return
+	}
+	res, statusCode, err := controller.PromoService.AsginPromo(&request)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+	Helper.SetSuccessResponse(ctx, "Success asign promo", res, http.StatusCreated)
 }
