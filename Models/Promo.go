@@ -8,7 +8,6 @@ import (
 type Promo struct {
 	ID         string          `json:"id"`
 	Name       string          `json:"name,omitempty"`
-	Quantity   int             `json:"quantity,omitempty"`
 	Type       string          `json:"type,omitempty"`
 	StartDate  string          `json:"start_date,omitempty"`
 	EndDate    string          `json:"end_date,omitempty"`

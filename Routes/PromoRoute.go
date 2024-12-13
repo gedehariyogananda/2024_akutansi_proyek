@@ -19,6 +19,8 @@ func Promo(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	PromoController := Di.DIPromo(db)
 
 	route.POST("/", PromoController.Create)
+	route.POST("/create-only", PromoController.CreatePromoOnly)
+	route.POST("/assign-promo", PromoController.AsignPromo)
 	route.GET("/:id", PromoController.FindByID)
 	route.DELETE("/:id", PromoController.Delete)
 	route.PUT("/:id", PromoController.Update)

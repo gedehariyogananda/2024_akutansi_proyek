@@ -8,6 +8,7 @@ import (
 	"2024_akutansi_project/Repositories"
 	"errors"
 	"net/http"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -15,15 +16,20 @@ import (
 type (
 	IPromoService interface {
 		Create(dto *Dto.CreatePromoDto) (res Response.PromoResponse, err error)
+		CreatePromoOnly(dto *Dto.CreatePromoOnly) (res Response.PromoResponse, err error)
 		FindByID(id string) (res Response.PromoResponse, statusCode int, err error)
 		Delete(id string) (statusCode int, err error)
 		Update(dto *Dto.UpdatePromoDto, id string) (res Response.PromoResponse, statusCode int, err error)
 		FindAll(companyID string, query Common.Query) (res []Response.PromoResponse, meta Common.Meta, err error)
+		AsginPromo(dto *Dto.AsignPromoDto) (res Response.PromoResponse, satusCode int, err error)
+		checkAvailableProduct(promoItems []Models.PromoItem) bool
+		asignPromoToAllProduct(companyID string, promoID string) error
 	}
 
 	PromoService struct {
-		PromoRepository     Repositories.IPromoRepository
-		PromoItemRepository Repositories.IPromoItemRepository
+		PromoRepository           Repositories.IPromoRepository
+		PromoItemRepository       Repositories.IPromoItemRepository
+		SellableProductRepository Repositories.SellableProductRepository
 	}
 )
 
@@ -47,7 +53,17 @@ func (s *PromoService) Create(dto *Dto.CreatePromoDto) (res Response.PromoRespon
 		return
 	}
 
+	promoItems, err := s.PromoItemRepository.FindByPromoID(promo.ID)
+
+	if err != nil {
+		return res, err
+	}
 	if !dto.IsAll {
+
+		if !s.checkAvailableProduct(promoItems) {
+			return res, errors.New("product is not available")
+		}
+
 		for _, item := range dto.SellableProductIDS {
 			promoItem := &Models.PromoItem{
 				PromoID:           promo.ID,
@@ -56,8 +72,13 @@ func (s *PromoService) Create(dto *Dto.CreatePromoDto) (res Response.PromoRespon
 
 			_, err = s.PromoItemRepository.Create(promoItem)
 			if err != nil {
-				return
+				return res, err
 			}
+		}
+	} else {
+		err = s.asignPromoToAllProduct(dto.CompanyID, promo.ID)
+		if err != nil {
+			return res, err
 		}
 	}
 
@@ -132,7 +153,6 @@ func (s *PromoService) Update(dto *Dto.UpdatePromoDto, id string) (res Response.
 		return
 	}
 	if !dto.IsAll {
-
 		for _, item := range dto.SellableProductIDS {
 			promoItem := &Models.PromoItem{
 				PromoID:           promo.ID,
@@ -164,4 +184,106 @@ func (s *PromoService) FindAll(companyID string, query Common.Query) (res []Resp
 	meta.TotalData = total
 
 	return res, meta, nil
+}
+
+func (s *PromoService) CreatePromoOnly(dto *Dto.CreatePromoOnly) (res Response.PromoResponse, err error) {
+	promo := &Models.Promo{
+		Name:      dto.Name,
+		StartDate: dto.StartDate,
+		EndDate:   dto.EndDate,
+		Amount:    dto.Amount,
+		CompanyID: dto.CompanyID,
+		IsAll:     false,
+		Type:      dto.Type,
+	}
+
+	promo, err = s.PromoRepository.Create(promo)
+	if err != nil {
+		return
+	}
+
+	res = Response.ToPromoResponse(*promo)
+
+	return res, nil
+}
+
+func (s *PromoService) AsginPromo(dto *Dto.AsignPromoDto) (res Response.PromoResponse, statusCode int, err error) {
+	promo, err := s.PromoRepository.FindById(dto.PromoID)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return res, http.StatusNotFound, err
+	}
+
+	if err != nil {
+		return
+	}
+
+	promoItems, err := s.PromoItemRepository.FindByPromoID(dto.PromoID)
+
+	if err != nil {
+		return
+	}
+	if !s.checkAvailableProduct(promoItems) {
+		return res, http.StatusBadRequest, errors.New("product is not available")
+	}
+
+	for _, item := range dto.SellableProductIDS {
+		promoItem := &Models.PromoItem{
+			PromoID:           promo.ID,
+			SellableProductID: item,
+		}
+
+		_, err = s.PromoItemRepository.Create(promoItem)
+		if err != nil {
+			return
+		}
+	}
+
+	res = Response.ToPromoResponse(*promo)
+
+	return res, http.StatusOK, nil
+}
+
+func (s *PromoService) checkAvailableProduct(promoItems []Models.PromoItem) bool {
+	for _, item := range promoItems {
+		endDate, err := time.Parse(Common.Layout, item.Promo.EndDate)
+
+		if err != nil {
+			return false
+		}
+
+		if endDate.Before(time.Now()) {
+			return false
+		}
+	}
+
+	return true
+
+}
+
+func (s *PromoService) asignPromoToAllProduct(companyID string, promoID string) error {
+	products, err := s.SellableProductRepository.GetByCompanyID(companyID)
+
+	if err != nil {
+		return err
+	}
+
+	for _, product := range products {
+		endDate, err := time.Parse(Common.Layout, product.PromoItems[0].Promo.EndDate)
+		if err != nil {
+			return err
+		}
+		if endDate.After(time.Now()) {
+			promoItem := &Models.PromoItem{
+				PromoID:           promoID,
+				SellableProductID: product.ID,
+			}
+
+			_, err = s.PromoItemRepository.Create(promoItem)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
