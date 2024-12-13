@@ -42,3 +42,7 @@ func (i PushNotificationScheme) DefinePushNotificationMessages() *messaging.Noti
 		}
 	}
 }
+
+const (
+	DigitCompanyCode = 3
+)

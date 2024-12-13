@@ -9,6 +9,7 @@ import (
 type (
 	ICompanyRepository interface {
 		Create(companyClient *Models.Company) (*Models.Company, error)
+		FindByID(companyID string) (company *Models.Company, err error)
 	}
 
 	CompanyRepository struct {
@@ -26,4 +27,15 @@ func (h *CompanyRepository) Create(companyClient *Models.Company) (*Models.Compa
 	}
 
 	return companyClient, nil
+}
+
+func (h *CompanyRepository) FindByID(companyID string) (company *Models.Company, err error) {
+	if err := h.DB.
+		Where("id = ?", companyID).
+		Find(&company).Error; err != nil {
+		return nil, err
+	}
+
+	return company, nil
+
 }
