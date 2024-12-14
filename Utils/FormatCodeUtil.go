@@ -37,6 +37,6 @@ func GenerateTransactionRecord(latestCount int64, companyCode string) string {
 		latestCount += 1
 	}
 
-	format := fmt.Sprintf("%s-%s-%s", latestCount, companyCode, time.Now().Format("12062006"))
+	format := fmt.Sprintf("%d-%s-%s", latestCount, companyCode, time.Now().Format("02012006"))
 	return format
 }

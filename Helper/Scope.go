@@ -66,3 +66,13 @@ func FilterSearchProduct(query *string) func(*gorm.DB) *gorm.DB {
 		return db.Where("name ILIKE ?", "%"+*query+"%")
 	}
 }
+
+func FilterTransaksiLain(query *string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if query == nil {
+			return db
+		}
+
+		return db.Where("title ILIKE ? OR payment_type ILIKE ? OR payment_method ILIKE ?", "%"+*query+"%", "%"+*query+"%", "%"+*query+"%")
+	}
+}

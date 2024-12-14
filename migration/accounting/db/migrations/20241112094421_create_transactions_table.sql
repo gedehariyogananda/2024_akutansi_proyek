@@ -7,8 +7,8 @@ CREATE TABLE transactions
     title                   VARCHAR(50)              NOT NULL,
     name                    VARCHAR(255)             NOT NULL,
     additional_data         JSONB,
-    date                    TIMESTAMP WITH TIME ZONE NOT NULL,
-    due_date                TIMESTAMP WITH TIME ZONE,
+    date                    date NOT NULL,
+    due_date                date,
     note                    VARCHAR(255),
     transaction_record_code VARCHAR(255), -- 1_PAT_02042004
     transaction_id          VARCHAR(100),
