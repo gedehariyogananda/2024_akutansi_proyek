@@ -22,6 +22,7 @@ type (
 		AssignMaterial(request *Dto.AssignMaterialDtos) (statusCode int, err error)
 		UnAssignMaterial(request *Dto.UnAssignMaterialDto) (statusCode int, err error)
 		FindById(id string) (res *Response.SellableResponse, statusCode int, err error)
+		Delete(id string) (statusCode int, err error)
 	}
 
 	SellableProductService struct {
@@ -249,4 +250,30 @@ func (s *SellableProductService) FindById(id string) (res *Response.SellableResp
 	response := Response.ToSellableResponse(sellableProduct)
 
 	return response, http.StatusOK, nil
+}
+
+func (s *SellableProductService) Delete(id string) (statusCode int, err error) {
+	_, err = s.SellableProductRepository.FindByID(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return http.StatusBadRequest, err
+	}
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	err = s.SellableProductRepository.Delete(id)
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	err = s.ReceiptRepository.DeleteByProductId(id)
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
 }

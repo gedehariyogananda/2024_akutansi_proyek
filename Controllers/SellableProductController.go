@@ -23,6 +23,7 @@ type (
 		AssignMaterial(ctx *gin.Context)
 		UnAssignMAterial(ctx *gin.Context)
 		FindById(ctx *gin.Context)
+		Delete(ctx *gin.Context)
 	}
 
 	SellableProductController struct {
@@ -207,4 +208,17 @@ func (controller *SellableProductController) FindById(ctx *gin.Context) {
 
 	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data sellable product", res, statusCode)
 
+}
+
+func (controller *SellableProductController) Delete(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	statusCode, err := controller.SellableProductService.Delete(id)
+
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil menghapus sellable product", nil, statusCode)
 }
