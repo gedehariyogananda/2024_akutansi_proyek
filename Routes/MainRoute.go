@@ -21,4 +21,5 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	Account(apiPrefix, deps.DB, deps.Redis)
 	StockOpnameRoutes(apiPrefix, deps.DB, deps.Redis)
 	TransactionRoute(apiPrefix, deps.DB, deps.Redis)
+	SubUserRoute(apiPrefix, deps.DB, deps.Redis)
 }
