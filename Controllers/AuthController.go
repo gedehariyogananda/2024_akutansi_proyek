@@ -15,6 +15,7 @@ type (
 		LoginOwner(ctx *gin.Context)
 		LoginEmployee(ctx *gin.Context)
 		LoginMobile(ctx *gin.Context)
+		Profile(ctx *gin.Context)
 	}
 
 	AuthController struct {
@@ -119,5 +120,18 @@ func (c *AuthController) LoginMobile(ctx *gin.Context) {
 	Helper.SetSuccessResponse(ctx, "Login Berhasil!", gin.H{
 		"token":     token,
 		"type_user": userType,
+	}, statusCode)
+}
+
+
+func (c *AuthController) Profile(ctx *gin.Context) {
+	profileData, statusCode, err := c.service.GetProfile(ctx.GetString("id"))
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data profile", gin.H{
+		"profile": profileData,
 	}, statusCode)
 }
