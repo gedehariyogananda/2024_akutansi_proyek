@@ -51,13 +51,12 @@ type UnAssignMaterialDto struct {
 }
 
 type UpdateSellableProductDTO struct {
-	Name           string  `form:"name" `
-	SmallestUnitID string  `form:"smallest_unit_id" `
+	Name           string  `form:"name"`
+	SmallestUnitID string  `form:"smallest_unit_id"`
 	CategoryID     string  `form:"category_id" `
-	Image          string  `form:"-"`
-	Sku            string  `form:"sku"`
-	Description    string  `form:"description"`
+	Sku            string  `form:"sku" `
+	Description    string  `form:"description" `
 	Status         *bool   `form:"status"`
-	Price          float64 `form:"price" `
-	CompanyID      string  `form:"-"`
+	Image          string  `form:"-"`
+	Price          float64 `form:"price"`
 }

@@ -1,6 +1,9 @@
 package Utils
 
 import (
+	"fmt"
+	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -19,6 +22,10 @@ func GenerateUniqueFileName(originalFileName string) string {
 func UploadFile(ctx *gin.Context, formName string, uploadPath string) (string, error) {
 	file, err := ctx.FormFile(formName)
 	if err != nil {
+		if err == http.ErrMissingFile {
+			return "", nil
+		}
+		fmt.Println("err", err)
 		return "", err
 	}
 
@@ -35,4 +42,8 @@ func UploadFile(ctx *gin.Context, formName string, uploadPath string) (string, e
 
 func deletePrefixPublic(path string) string {
 	return strings.TrimPrefix(path, "public/")
+}
+
+func DeleteFile(path string) error {
+	return os.Remove("public/" + path)
 }

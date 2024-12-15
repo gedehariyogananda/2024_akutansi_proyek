@@ -24,6 +24,7 @@ type (
 		UnAssignMAterial(ctx *gin.Context)
 		FindById(ctx *gin.Context)
 		Delete(ctx *gin.Context)
+		Update(ctx *gin.Context)
 	}
 
 	SellableProductController struct {
@@ -221,4 +222,37 @@ func (controller *SellableProductController) Delete(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Berhasil menghapus sellable product", nil, statusCode)
+}
+
+func (controller *SellableProductController) Update(ctx *gin.Context) {
+	var updateSellableProduct Dto.UpdateSellableProductDTO
+
+	if err := ctx.ShouldBind(&updateSellableProduct); err != nil {
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, &updateSellableProduct); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
+		return
+	}
+
+	id := ctx.Param("id")
+
+	image, err := Utils.UploadFile(ctx, "image", fmt.Sprintf("%s/%s", os.Getenv("UPLOAD_DIR"), "products"))
+
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	updateSellableProduct.Image = image
+
+	statusCode, err := controller.SellableProductService.Update(&updateSellableProduct, id)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mengupdate sellable product", nil, statusCode)
 }

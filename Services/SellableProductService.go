@@ -6,6 +6,7 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
+	"2024_akutansi_project/Utils"
 	"errors"
 	"fmt"
 	"net/http"
@@ -23,6 +24,7 @@ type (
 		UnAssignMaterial(request *Dto.UnAssignMaterialDto) (statusCode int, err error)
 		FindById(id string) (res *Response.SellableResponse, statusCode int, err error)
 		Delete(id string) (statusCode int, err error)
+		Update(request *Dto.UpdateSellableProductDTO, id string) (statusCode int, err error)
 	}
 
 	SellableProductService struct {
@@ -272,6 +274,50 @@ func (s *SellableProductService) Delete(id string) (statusCode int, err error) {
 	err = s.ReceiptRepository.DeleteByProductId(id)
 
 	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func (s *SellableProductService) Update(dto *Dto.UpdateSellableProductDTO, id string) (statusCode int, err error) {
+	product, err := s.SellableProductRepository.FindByID(id)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return http.StatusBadRequest, err
+	}
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	var image string
+
+	fmt.Println("test")
+	fmt.Println(dto.Image)
+
+	if dto.Image == "" {
+		image = product.Image
+	} else if dto.Image != product.Image {
+		image = dto.Image
+
+		err = Utils.DeleteFile(product.Image)
+		if err != nil {
+			return http.StatusInternalServerError, err
+		}
+	}
+
+	sellableProduct := &Models.SellableProduct{
+		Name:           dto.Name,
+		SmallestUnitID: dto.SmallestUnitID,
+		CategoryID:     dto.CategoryID,
+		Description:    dto.Description,
+		Status:         dto.Status,
+		Price:          dto.Price,
+		Sku:            dto.Sku,
+		Image:          image,
+	}
+
+	if err = s.SellableProductRepository.Update(id, sellableProduct); err != nil {
 		return http.StatusInternalServerError, err
 	}
 

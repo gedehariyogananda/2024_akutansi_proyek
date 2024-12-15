@@ -25,4 +25,5 @@ func SellableProductRoutes(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client)
 	route.PATCH("/:id", SellableController.UpdateSellableProduct)
 	route.GET("/:id", SellableController.FindById)
 	route.DELETE("/:id", SellableController.Delete)
+	route.PUT("/:id", SellableController.Update)
 }
