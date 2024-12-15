@@ -1,6 +1,7 @@
 package Services
 
 import (
+	"2024_akutansi_project/Consts"
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Repositories"
@@ -83,7 +84,15 @@ func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOw
 		return "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
-	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, false, false)
+	company, err := service.companyRepository.FindByID(ownerData.CompanyID)
+
+	if err != nil {
+		return "", http.StatusNotFound, errors.New("company tidak ditemukan")
+	}
+
+	codeCompany := Utils.SuffixDigitsToUpper(company.Name, Consts.DigitCompanyCode)
+
+	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, codeCompany, false, false)
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error generate token")
@@ -115,7 +124,15 @@ func (service *AuthService) LoginEmployee(ctx context.Context, request *Dto.Logi
 		return "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
-	token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, employeeData.Name, true, false)
+	company, err := service.companyRepository.FindByID(employeeData.CompanyID)
+
+	if err != nil {
+		return "", http.StatusNotFound, errors.New("company tidak ditemukan")
+	}
+
+	codeCompany := Utils.SuffixDigitsToUpper(company.Name, Consts.DigitCompanyCode)
+
+	token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, employeeData.Name, codeCompany, true, false)
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error generate token")
@@ -154,7 +171,15 @@ func (service *AuthService) LoginMobile(ctx context.Context, request *Dto.LoginM
 			return "", "", http.StatusUnauthorized, errors.New("password salah!")
 		}
 
-		token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, employeeData.Name, true, true)
+		company, err := service.companyRepository.FindByID(employeeData.CompanyID)
+
+		if err != nil {
+			return "", "", http.StatusNotFound, errors.New("company tidak ditemukan")
+		}
+
+		codeCompany := Utils.SuffixDigitsToUpper(company.Name, Consts.DigitCompanyCode)
+
+		token, duration, err := service.jwtService.GenerateToken(employeeData.ID, employeeData.CompanyID, employeeData.Name, codeCompany, true, true)
 
 		if err != nil {
 			return "", "", http.StatusInternalServerError, errors.New("error generate token")
@@ -179,7 +204,15 @@ func (service *AuthService) LoginMobile(ctx context.Context, request *Dto.LoginM
 		return "", "", http.StatusUnauthorized, errors.New("password salah!")
 	}
 
-	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, false, true)
+	company, err := service.companyRepository.FindByID(ownerData.CompanyID)
+
+	if err != nil {
+		return "", "", http.StatusNotFound, errors.New("company tidak ditemukan")
+	}
+
+	codeCompany := Utils.SuffixDigitsToUpper(company.Name, Consts.DigitCompanyCode)
+
+	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, codeCompany, false, true)
 
 	if err != nil {
 		return "", "", http.StatusInternalServerError, errors.New("error generate token")

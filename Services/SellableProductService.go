@@ -11,7 +11,7 @@ import (
 
 type (
 	ISellableProductService interface {
-		GetAll(companyID string, query *Common.Query) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error)
+		GetAll(companyID string, query *Common.Query, onlyActive bool) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error)
 		UpdateStock(id string, request *Dto.SellableProductDTO) (statusCode int, err error)
 	}
 
@@ -28,19 +28,12 @@ func SellableProductServiceProvider(sellableProductRepository Repositories.ISell
 	}
 }
 
-func (service *SellableProductService) GetAll(companyID string, query *Common.Query) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
-	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, nil, query)
+func (service *SellableProductService) GetAll(companyID string, query *Common.Query, onlyActive bool) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
+	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, onlyActive, query)
 	if err != nil {
 		return nil, Common.Meta{}, http.StatusInternalServerError, err
 	}
 
-	meta = Common.Meta{
-		TotalData: totalData,
-		Limit:     query.Limit,
-		Page:      query.Page,
-	}
-
-	// return sellableProducts, meta, http.StatusOK, nil
 	var res []*Response.SellableResponse
 
 	for _, sellableProduct := range sellableProducts {
@@ -53,28 +46,42 @@ func (service *SellableProductService) GetAll(companyID string, query *Common.Qu
 			status = "Non-Aktif"
 		}
 
-		res = append(res, &Response.SellableResponse{
-			ID:              sellableProduct.ID,
-			Name:            sellableProduct.Name,
-			CompanyID:       sellableProduct.CompanyID,
-			SmallestUnitID:  sellableProduct.SmallestUnitID,
-			CategoryID:      sellableProduct.CategoryID,
-			Image:           sellableProduct.Image,
-			Description:     sellableProduct.Description,
-			Status:          *sellableProduct.Status,
-			StatusDisplay:   status,
-			HasReceipt:      sellableProduct.HasReceipt,
-			CurrentQuantity: sellableProduct.CurrentQuantity,
-			Price:           sellableProduct.Price,
-			CreatedAt:       *sellableProduct.CreatedAt,
-			UpdatedAt:       *sellableProduct.UpdatedAt,
-			DeletedAt:       sellableProduct.DeletedAt,
-			Unit:            sellableProduct.Unit,
-			Category:        sellableProduct.Category,
-			PromoItems:      sellableProduct.PromoItems,
-		})
+		if onlyActive {
+			res = append(res, &Response.SellableResponse{
+				ID:              sellableProduct.ID,
+				Name:            &sellableProduct.Name,
+				Image:           &sellableProduct.Image,
+				Description:     &sellableProduct.Description,
+				CurrentQuantity: &sellableProduct.CurrentQuantity,
+				Price:           &sellableProduct.Price,
+			})
+			continue
+		} else {
+			res = append(res, &Response.SellableResponse{
+				ID:              sellableProduct.ID,
+				Name:            &sellableProduct.Name,
+				CompanyID:       &sellableProduct.CompanyID,
+				SmallestUnitID:  &sellableProduct.SmallestUnitID,
+				CategoryID:      &sellableProduct.CategoryID,
+				Image:           &sellableProduct.Image,
+				Description:     &sellableProduct.Description,
+				Status:          sellableProduct.Status,
+				StatusDisplay:   &status,
+				HasReceipt:      &sellableProduct.HasReceipt,
+				CurrentQuantity: &sellableProduct.CurrentQuantity,
+				Price:           &sellableProduct.Price,
+				CreatedAt:       sellableProduct.CreatedAt,
+				UpdatedAt:       sellableProduct.UpdatedAt,
+				DeletedAt:       sellableProduct.DeletedAt,
+				Unit:            sellableProduct.Unit,
+				Category:        sellableProduct.Category,
+				PromoItems:      sellableProduct.PromoItems,
+			})
 
+		}
 	}
+
+	meta = Common.PaginateMetadata(nil, totalData, query.Limit, query.Page)
 
 	return res, meta, http.StatusOK, nil
 }

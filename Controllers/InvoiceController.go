@@ -2,12 +2,9 @@ package Controllers
 
 import (
 	"2024_akutansi_project/Helper"
-	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
-	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -58,29 +55,7 @@ func (controller *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 }
 
 func (controller *InvoiceController) GetSalesHistory(ctx *gin.Context) {
-
-	search := ctx.Query("search")
-	status := ctx.Query("status")
-
-	limit, page := Utils.GetPaginationParams(ctx, Common.DEFAULTLIMIT, Common.DEFAULTPAGE)
-
-	var query Common.Query
-
-	if status != "" {
-		status, err := strconv.ParseBool(status)
-
-		if err != nil {
-			Helper.SetErrorResponse(ctx, "Invalid status", http.StatusBadRequest)
-			return
-		}
-
-		query.Status = status
-	}
-
-	query.Search = &search
-	query.Limit = limit
-	query.Page = page
-	query.Limit = limit
+	query := Utils.InsertParams(ctx)
 
 	invoices, meta, statusCode, err := controller.InvoiceService.GetAllByCompany(ctx.GetString("company_id"), &query)
 	if err != nil {
@@ -92,7 +67,7 @@ func (controller *InvoiceController) GetSalesHistory(ctx *gin.Context) {
 		ctx,
 		"Berhasil mendapatkan data riwayat penjualan!",
 		invoices,
-		Common.PaginateMetadata(ctx, meta.TotalData, meta.Limit, meta.Page),
+		meta,
 		statusCode,
 	)
 

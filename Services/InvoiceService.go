@@ -99,7 +99,7 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 		}
 
 		if sellableProduct.CompanyID != companyID {
-			return nil, http.StatusForbidden, errors.New("forbidden access")
+			return nil, http.StatusForbidden, errors.New("FORBIDDEN_ACCESS")
 		}
 
 		// check stock availability
@@ -291,11 +291,7 @@ func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *C
 
 	}
 
-	meta = Common.Meta{
-		TotalData: totalData,
-		Limit:     query.Limit,
-		Page:      query.Page,
-	}
+	meta = Common.PaginateMetadata(nil, totalData, query.Limit, query.Page)
 
 	return res, meta, http.StatusOK, nil
 }

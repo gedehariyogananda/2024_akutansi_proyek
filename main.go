@@ -2,6 +2,7 @@ package main
 
 import (
 	"2024_akutansi_project/Config"
+	"2024_akutansi_project/Consts"
 	"2024_akutansi_project/Dependencies"
 	"2024_akutansi_project/Middleware"
 	"2024_akutansi_project/Routes"
@@ -39,9 +40,9 @@ func main() {
 	setup.RemoveExtraSlash = true
 	setup.Use(Middleware.ExecutionTimeMiddleware())
 
-	setup.MaxMultipartMemory = int64(Config.MaxMultipartMemory)
+	setup.MaxMultipartMemory = int64(Consts.MaxMultipartMemory)
 
-	setup.Static(Config.StaticFileRoute, Config.StaticFileDir)
+	setup.Static(Consts.StaticFileRoute, Consts.StaticFileDir)
 
 	setup.Use(Middleware.SetupCORS())
 
