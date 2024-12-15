@@ -2,7 +2,6 @@ package Controllers
 
 import (
 	"2024_akutansi_project/Helper"
-	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
@@ -13,6 +12,7 @@ import (
 type (
 	ISellableProductController interface {
 		GetAllSellableProduct(ctx *gin.Context)
+		GetActiveSellableProduct(ctx *gin.Context)
 		UpdateSellableProduct(ctx *gin.Context)
 	}
 
@@ -28,18 +28,9 @@ func SellableProductControllerProvider(SellableProductService Services.ISellable
 }
 
 func (controller *SellableProductController) GetAllSellableProduct(ctx *gin.Context) {
-	search := ctx.Query("search")
+	query := Utils.InsertParams(ctx)
 
-	limit, page := Utils.GetPaginationParams(ctx, Common.DEFAULTLIMIT, Common.DEFAULTPAGE)
-
-	var query Common.Query
-
-	query.Search = &search
-	query.Limit = limit
-	query.Page = page
-	query.Limit = limit
-
-	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &query)
+	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &query, false)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
@@ -48,7 +39,23 @@ func (controller *SellableProductController) GetAllSellableProduct(ctx *gin.Cont
 	Helper.SetPaginationResponse(ctx,
 		"Berhasil mendapatkan data sellable product",
 		sellableProducts,
-		Common.PaginateMetadata(ctx, meta.TotalData, meta.Limit, meta.Page),
+		meta,
+		statusCode)
+}
+
+func (controller *SellableProductController) GetActiveSellableProduct(ctx *gin.Context) {
+	query := Utils.InsertParams(ctx)
+
+	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &query, true)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetPaginationResponse(ctx,
+		"Berhasil mendapatkan data sellable product active",
+		sellableProducts,
+		meta,
 		statusCode)
 }
 

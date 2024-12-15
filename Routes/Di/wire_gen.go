@@ -133,3 +133,10 @@ func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
 	stockOpnameController := Controllers.StockOpnameControllerProvider(stockOpnameService)
 	return stockOpnameController
 }
+
+func DITransaction(db *gorm.DB) *Controllers.TransactionController {
+	transactionRepository := Repositories.TransactionRepositoryProvider(db)
+	transactionService := Services.TransactionServiceProvider(transactionRepository)
+	transactionController := Controllers.TransactionControllerProvider(transactionService)
+	return transactionController
+}

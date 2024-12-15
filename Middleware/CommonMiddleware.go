@@ -52,6 +52,7 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 	companyId, _ := claims["company_id"].(string)
 	name, _ := claims["name"].(string)
 	isEmployee, _ := claims["is_employee"].(bool)
+	companyCode, _ := claims["company_code"].(string)
 
 	if !ok {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "INVALID_KEY"})
@@ -71,6 +72,7 @@ func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
 	ctx.Set("id", key)
 	ctx.Set("company_id", companyId)
 	ctx.Set("is_employee", isEmployee)
+	ctx.Set("company_code", companyCode)
 	ctx.Set("name", name)
 
 	ctx.Next()

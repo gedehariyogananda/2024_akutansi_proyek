@@ -20,4 +20,5 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	MaterialProduct(apiPrefix, deps.DB, deps.Redis)
 	Account(apiPrefix, deps.DB, deps.Redis)
 	StockOpnameRoutes(apiPrefix, deps.DB, deps.Redis)
+	TransactionRoute(apiPrefix, deps.DB, deps.Redis)
 }

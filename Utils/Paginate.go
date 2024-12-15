@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// -------------------- utils to pagination function --------------- //
 func Paginate(page int, perPage int) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		offset := (page - 1) * perPage
@@ -66,6 +65,11 @@ func InsertParams(ctx *gin.Context) Common.Query {
 		query.Status = status
 	}
 
+	if ctx.Query("category_id") != "" {
+		categoryID := ctx.Query("category_id")
+		query.CategoryID = &categoryID
+	}
+
 	return query
 }
 
@@ -76,5 +80,3 @@ func CountModelRecords(db *gorm.DB, model interface{}) (int64, error) {
 	}
 	return totalData, nil
 }
-
-// --------------- end function handler pagination ----------------- //

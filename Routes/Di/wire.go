@@ -255,3 +255,18 @@ func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
 
 	return &Controllers.StockOpnameController{}
 }
+
+func DITransaction(db *gorm.DB) *Controllers.TransactionController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.TransactionRepositoryProvider,
+		Services.TransactionServiceProvider,
+		Controllers.TransactionControllerProvider,
+
+		wire.Bind(new(Controllers.ITransactionController), new(*Controllers.TransactionController)),
+		wire.Bind(new(Services.ITransactionService), new(*Services.TransactionService)),
+		wire.Bind(new(Repositories.ITransactionRepository), new(*Repositories.TransactionRepository)),
+	),
+	))
+
+	return &Controllers.TransactionController{}
+}

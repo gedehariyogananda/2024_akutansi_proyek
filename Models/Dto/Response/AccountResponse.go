@@ -2,6 +2,18 @@ package Response
 
 import "2024_akutansi_project/Models"
 
+type Profile struct {
+	ID          string  `json:"id"`
+	Username    string  `json:"username,omitempty"`
+	Phone       string  `json:"phone,omitempty"`
+	Name        string  `json:"name,omitempty"`
+	Email       string  `json:"email,omitempty"`
+	CompanyID   string  `json:"company_id"`
+	CompanyName string  `json:"company_name"`
+	EmployeeKey *string `json:"employee_key,omitempty"`
+	IsEmployee  bool    `json:"is_employee"`
+}
+
 type Account struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`

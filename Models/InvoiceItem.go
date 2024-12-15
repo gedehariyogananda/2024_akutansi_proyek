@@ -1,8 +1,6 @@
 package Models
 
 import (
-	"log"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -21,10 +19,13 @@ type InvoiceItem struct {
 }
 
 func (item *InvoiceItem) BeforeCreate(tx *gorm.DB) (err error) {
-	// uuid
 	if item.ID == "" {
-		item.ID = uuid.New().String()
-		log.Printf("Generated new ID for InvoiceItem: %s", item.ID)
+		uuid, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+
+		item.ID = uuid.String()
 	}
 
 	return

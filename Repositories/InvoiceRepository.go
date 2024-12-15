@@ -55,7 +55,9 @@ func (r *InvoiceRepository) Update(id string, invoice *Models.Invoice) (err erro
 }
 
 func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, totalData int64, err error) {
-	if err := r.DB.Model(&Models.Invoice{}).Scopes(Helper.FilterSearchRiwayatTransaction(*query.Search)).Count(&totalData).Error; err != nil {
+	if err := r.DB.Model(&Models.Invoice{}).
+		Scopes(Helper.FilterSearchRiwayatTransaction(query.Search)).
+		Count(&totalData).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -67,7 +69,7 @@ func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Common.Quer
 		}).
 		Scopes(
 			Utils.Paginate(query.Page, query.Limit),
-			Helper.FilterSearchRiwayatTransaction(*query.Search)).
+			Helper.FilterSearchRiwayatTransaction(query.Search)).
 		Order("created_at desc").
 		Find(&invoices).Error; err != nil {
 		return nil, 0, err
