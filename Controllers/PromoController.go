@@ -21,6 +21,7 @@ type (
 		FindAll(ctx *gin.Context)
 		CreatePromoOnly(ctx *gin.Context)
 		AsignPromo(ctx *gin.Context)
+		UnAssignPromo(ctx *gin.Context)
 	}
 
 	PromoController struct {
@@ -142,4 +143,19 @@ func (controller *PromoController) AsignPromo(ctx *gin.Context) {
 		return
 	}
 	Helper.SetSuccessResponse(ctx, "Success asign promo", res, http.StatusCreated)
+}
+
+func (controller *PromoController) UnAssignPromo(ctx *gin.Context) {
+	var request Dto.AsignPromoDto
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		Helper.SetValidationErrorResponse(ctx, err.Error())
+		return
+	}
+	statusCode, err := controller.PromoService.UnasignPromo(&request)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+	Helper.SetSuccessResponse(ctx, "Success unassign promo", nil, http.StatusOK)
 }

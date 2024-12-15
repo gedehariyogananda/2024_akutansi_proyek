@@ -24,6 +24,7 @@ type (
 		AsginPromo(dto *Dto.AsignPromoDto) (res Response.PromoResponse, satusCode int, err error)
 		checkAvailableProduct(promoItems []Models.PromoItem) bool
 		asignPromoToAllProduct(companyID string, promoID string) error
+		UnasignPromo(dto *Dto.AsignPromoDto) (statusCode int, err error)
 	}
 
 	PromoService struct {
@@ -286,4 +287,25 @@ func (s *PromoService) asignPromoToAllProduct(companyID string, promoID string) 
 		}
 	}
 	return nil
+}
+
+func (s *PromoService) UnasignPromo(dto *Dto.AsignPromoDto) (statusCode int, err error) {
+	_, err = s.PromoRepository.FindById(dto.PromoID)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return http.StatusNotFound, err
+	}
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	for _, item := range dto.SellableProductIDS {
+		_, err = s.PromoItemRepository.DeleteBySellableProductID(item)
+		if err != nil {
+			return http.StatusInternalServerError, err
+		}
+	}
+
+	return http.StatusOK, nil
 }
