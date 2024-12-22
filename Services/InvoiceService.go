@@ -154,14 +154,14 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 	// true === lunas
 	if invoiceDataClient.Status {
 		// insert journal entry
-		if err := invoiceService.journalEntriesService.InsertJournalCashierLunas(Common.JournalEntryParams{
+		if err := invoiceService.journalEntriesService.InsertJournalCashier(Common.JournalEntryParams{
 			CompanyID:       companyID,
 			SubTotal:        invoiceDataClient.SubTotal,
 			Tax:             invoiceDataClient.Tax,
 			Note:            invoiceDataClient.Note,
 			TransactionCode: invoiceDataClient.InvoiceNumber,
 			AdditionalData:  nil,
-		}); err != nil {
+		}, true); err != nil {
 			return nil, http.StatusBadRequest, err
 		}
 	}
@@ -364,6 +364,18 @@ func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) 
 		}(),
 	}); err != nil {
 		return http.StatusInternalServerError, err
+	}
+
+	// insert journal entry
+	if err := invoiceService.journalEntriesService.InsertJournalCashier(Common.JournalEntryParams{
+		CompanyID:       companyID,
+		SubTotal:        invoice.SubTotal,
+		Tax:             invoice.Tax,
+		Note:            invoice.Note,
+		TransactionCode: invoice.InvoiceNumber,
+		AdditionalData:  nil,
+	}, false); err != nil {
+		return http.StatusBadRequest, err
 	}
 
 	return http.StatusOK, nil

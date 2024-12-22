@@ -11,7 +11,7 @@ import (
 type (
 	IJournalEntriesService interface {
 		FindAll(request Dto.GetJournalRequest) (res []*Models.JournalEntry, meta Common.Meta, err error)
-		InsertJournalCashierLunas(params Common.JournalEntryParams) (err error)
+		InsertJournalCashier(params Common.JournalEntryParams, isPaid bool) (err error)
 	}
 
 	JournalEntriesService struct {
@@ -38,7 +38,7 @@ func (service *JournalEntriesService) FindAll(request Dto.GetJournalRequest) (re
 	return res, meta, nil
 }
 
-func (service *JournalEntriesService) InsertJournalCashierLunas(params Common.JournalEntryParams) (err error) {
+func (service *JournalEntriesService) InsertJournalCashier(params Common.JournalEntryParams, isPaid bool) (err error) {
 	params = Common.JournalEntryParams{
 		AccountID:       params.AccountID,
 		SubTotal:        params.SubTotal,
@@ -58,11 +58,21 @@ func (service *JournalEntriesService) InsertJournalCashierLunas(params Common.Jo
 		return err
 	}
 
+	cashType := Models.DEBIT
+	outputTaxType := Models.CREDIT
+	revenueType := Models.CREDIT
+
+	if !isPaid {
+		cashType = Models.CREDIT
+		outputTaxType = Models.DEBIT
+		revenueType = Models.DEBIT
+	}
+
 	res := []Models.JournalEntry{
 		{
 			AccountID:       cashAccount.ID, // kas
 			Amount:          params.SubTotal + params.Tax,
-			Type:            Models.DEBIT,
+			Type:            cashType,
 			CompanyID:       params.CompanyID,
 			Note:            params.Note,
 			TransactionCode: params.TransactionCode,
@@ -71,7 +81,7 @@ func (service *JournalEntriesService) InsertJournalCashierLunas(params Common.Jo
 		{
 			AccountID:       outputTaxAccount.ID, // Pajak Luaran
 			Amount:          params.Tax,
-			Type:            Models.CREDIT,
+			Type:            outputTaxType,
 			CompanyID:       params.CompanyID,
 			Note:            params.Note,
 			TransactionCode: params.TransactionCode,
@@ -80,7 +90,7 @@ func (service *JournalEntriesService) InsertJournalCashierLunas(params Common.Jo
 		{
 			AccountID:       revenueAccount.ID, // Pendapatan
 			Amount:          params.SubTotal,
-			Type:            Models.CREDIT,
+			Type:            revenueType,
 			CompanyID:       params.CompanyID,
 			Note:            params.Note,
 			TransactionCode: params.TransactionCode,
