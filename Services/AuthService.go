@@ -122,8 +122,8 @@ func (service *AuthService) LoginEmployee(ctx context.Context, request *Dto.Logi
 		return "", http.StatusNotFound, errors.New("karyawan tidak ditemukan!")
 	}
 
-	if err := Utils.ComparePassword(employeeData.Password, request.Password); err != nil {
-		return "", http.StatusUnauthorized, errors.New("password salah!")
+	if employeeData.Password != request.Password {
+		return "", http.StatusBadRequest, errors.New("password salah!")
 	}
 
 	company, err := service.companyRepository.FindByID(employeeData.CompanyID)
@@ -169,8 +169,8 @@ func (service *AuthService) LoginMobile(ctx context.Context, request *Dto.LoginM
 			return "", "", http.StatusNotFound, errors.New("user tidak ditemukan")
 		}
 
-		if err := Utils.ComparePassword(employeeData.Password, request.Password); err != nil {
-			return "", "", http.StatusUnauthorized, errors.New("password salah!")
+		if employeeData.Password != request.Password {
+			return "", "", http.StatusBadRequest, errors.New("password salah!")
 		}
 
 		company, err := service.companyRepository.FindByID(employeeData.CompanyID)
