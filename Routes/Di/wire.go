@@ -272,3 +272,18 @@ func DITransaction(db *gorm.DB) *Controllers.TransactionController {
 
 	return &Controllers.TransactionController{}
 }
+
+func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.JournalEntriesProvider,
+		Services.JournalEntriesProvider,
+		Controllers.JournalEntriesProvider,
+
+		wire.Bind(new(Controllers.IJournalEntriesController), new(*Controllers.JournalEntriesController)),
+		wire.Bind(new(Services.IJournalEntriesService), new(*Services.JournalEntriesService)),
+		wire.Bind(new(Repositories.IJournalEntriesRepository), new(*Repositories.JournalEntriesRepository)),
+	),
+	))
+
+	return &Controllers.JournalEntriesController{}
+}

@@ -9,6 +9,16 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: journal_entries_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.journal_entries_type AS ENUM (
+    'DEBIT',
+    'CREDIT'
+);
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -62,6 +72,22 @@ CREATE TABLE public.geographies (
     district_name character varying(20) NOT NULL,
     city_name character varying(20) NOT NULL,
     sub_district_name character varying(20) NOT NULL
+);
+
+
+--
+-- Name: journal_entries; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.journal_entries (
+    id character varying(100) NOT NULL,
+    amount numeric(20,2),
+    account_id character varying(50) NOT NULL,
+    type public.journal_entries_type NOT NULL,
+    additional_data jsonb,
+    note character varying(255),
+    date timestamp with time zone NOT NULL,
+    transaction_code character varying(255)
 );
 
 
@@ -235,15 +261,15 @@ CREATE TABLE public.transactions (
     title character varying(50) NOT NULL,
     name character varying(255) NOT NULL,
     additional_data jsonb,
-    type character varying(255) NOT NULL,
-    date timestamp with time zone NOT NULL,
-    due_date timestamp with time zone,
+    date date NOT NULL,
+    due_date date,
     note character varying(255),
     transaction_record_code character varying(255),
     transaction_id character varying(100),
-    activity_type character varying(255) NOT NULL,
+    payment_method character varying(255) NOT NULL,
     payment_type character varying(255) NOT NULL,
-    amount numeric(20,2) NOT NULL
+    amount numeric(20,2) NOT NULL,
+    company_id character varying(100) NOT NULL
 );
 
 
@@ -285,6 +311,14 @@ ALTER TABLE ONLY public.categories
 
 ALTER TABLE ONLY public.geographies
     ADD CONSTRAINT geographies_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journal_entries journal_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.journal_entries
+    ADD CONSTRAINT journal_entries_pkey PRIMARY KEY (id);
 
 
 --
@@ -402,6 +436,7 @@ ALTER TABLE ONLY public.units
 
 INSERT INTO public.schema_migrations (version) VALUES
     ('20241112094421'),
+    ('20241112095711'),
     ('20241112101144'),
     ('20241112101751'),
     ('20241112102007'),

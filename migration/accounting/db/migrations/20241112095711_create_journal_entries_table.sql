@@ -1,18 +1,19 @@
 -- migrate:up
+CREATE TYPE journal_entries_type AS ENUM ('DEBIT', 'CREDIT');
 
-SET TIME ZONE 'Asia/Jakarta';
 CREATE TABLE journal_entries
 (
     id               VARCHAR(100) PRIMARY KEY NOT NULL UNIQUE,
-    ammount          NUMERIC(20, 2),
+    amount           NUMERIC(20, 2),
     account_id       VARCHAR(50)              NOT NULL,
-    type             VARCHAR(255)             NOT NULL,
+    type             journal_entries_type     NOT NULL,
     additional_data  JSONB,
-    type             VARCHAR(255)             NOT NULL,
     note             VARCHAR(255),
     date             TIMESTAMP WITH TIME ZONE NOT NULL,
-    transaction_code VARCHAR(255)
+    transaction_code VARCHAR(255),
+    company_id       VARCHAR(50)              NOT NULL
 );
 
 -- migrate:down
 DROP TABLE journal_entries;
+DROP TYPE journal_entries_type;

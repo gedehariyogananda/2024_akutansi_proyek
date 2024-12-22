@@ -141,3 +141,10 @@ func DITransaction(db *gorm.DB) *Controllers.TransactionController {
 	transactionController := Controllers.TransactionControllerProvider(transactionService)
 	return transactionController
 }
+
+func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
+	journalEntriesRepository := Repositories.JournalEntriesProvider(db)
+	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository)
+	journalEntriesController := Controllers.JournalEntriesProvider(journalEntriesService)
+	return journalEntriesController
+}
