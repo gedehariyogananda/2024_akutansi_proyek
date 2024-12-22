@@ -1,6 +1,11 @@
 package Models
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
 
 type SellableStock struct {
 	ID                string           `json:"id"`
@@ -9,6 +14,14 @@ type SellableStock struct {
 	Quantity          int              `json:"quantity"`
 	CurrentQuantity   int              `json:"current_quantity"`
 	ExpiredDate       time.Time        `json:"expired_date"`
-	CreatedAt         time.Time        `json:"created_at"`
+	CompanyID         string           `json:"company_id"`
 	SellableProduct   *SellableProduct `json:"sellable_product,omitempty"`
+}
+
+func (u *SellableStock) BeforeCreate(tx *gorm.DB) (err error) {
+	if u.ID == "" {
+		u.ID = uuid.New().String()
+	}
+
+	return
 }

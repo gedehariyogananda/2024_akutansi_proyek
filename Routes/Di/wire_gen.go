@@ -157,7 +157,12 @@ func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
 func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
 	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
 	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
-	purchaseService := Services.PurchaseServiceProvider(sellableProductRepository, materialProductRepository)
+	materialStockRepository := Repositories.MaterialStockRepositoryProvider(db)
+	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
+	purchaseSellableProductRepository := Repositories.PurchaseSellableProductRepositoryProvider(db)
+	purchaseMaterialProductRepository := Repositories.PurchaseMaterialProductRepositoryProvider(db)
+	purchaseRepository := Repositories.PurchaseRepositoryProvider(db)
+	purchaseService := Services.PurchaseServiceProvider(sellableProductRepository, materialProductRepository, materialStockRepository, sellableStockRepository, purchaseSellableProductRepository, purchaseMaterialProductRepository, purchaseRepository)
 	purchaseController := Controllers.PurchaseControllerProvider(purchaseService)
 	return purchaseController
 }

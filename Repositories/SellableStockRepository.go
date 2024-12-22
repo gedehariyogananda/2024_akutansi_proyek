@@ -12,6 +12,7 @@ type (
 		UpdateCurrent(trx *gorm.DB, sellableStockID string, qtyClient int) error
 		SumCurrentQuantity(sellableStockID string) (total int, err error)
 		GetAvailableStock(companyId string) (sellableStock []*Models.SellableStock, err error)
+		Create(sellableStock *Models.SellableStock) (*Models.SellableStock, error)
 	}
 
 	SellableStockRepository struct {
@@ -70,6 +71,14 @@ func (r *SellableStockRepository) GetAvailableStock(companyId string) (sellableS
 		Where("expired_date > now()").
 		Where("current_quantity > 0").
 		Find(&sellableStock).Error; err != nil {
+		return nil, err
+	}
+
+	return sellableStock, nil
+}
+
+func (r *SellableStockRepository) Create(sellableStock *Models.SellableStock) (*Models.SellableStock, error) {
+	if err := r.DB.Create(sellableStock).Error; err != nil {
 		return nil, err
 	}
 
