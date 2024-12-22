@@ -25,7 +25,6 @@ type (
 		FindById(id string) (res *Response.SellableResponse, statusCode int, err error)
 		Delete(id string) (statusCode int, err error)
 		Update(request *Dto.UpdateSellableProductDTO, id string) (statusCode int, err error)
-		// FindAll(companyID string, query *Common.Query) (res []*Response.SellableResponse, meta Common.Meta, err error)
 	}
 
 	SellableProductService struct {
@@ -324,20 +323,3 @@ func (s *SellableProductService) Update(dto *Dto.UpdateSellableProductDTO, id st
 
 	return http.StatusOK, nil
 }
-
-// func (s *SellableProductService) FindAll(companyID string, query *Common.Query) (res []*Response.SellableResponse, meta Common.Meta, err error) {
-// 	sellableProducts, totalData, err := s.SellableProductRepository.GetAll(companyID, nil, query)
-// 	if err != nil {
-// 		return nil, Common.Meta{}, err
-// 	}
-
-// 	meta = Common.Meta{
-// 		TotalData: totalData,
-// 		Limit:     query.Limit,
-// 		Page:      query.Page,
-// 	}
-
-// 	res = Response.ToSellableResponsSlice(sellableProducts)
-
-// 	return res, meta, nil
-// }
