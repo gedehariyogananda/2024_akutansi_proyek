@@ -154,4 +154,10 @@ func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
 	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository, transactionRepository)
 	journalEntriesController := Controllers.JournalEntriesProvider(journalEntriesService)
 	return journalEntriesController
+func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
+	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
+	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
+	purchaseService := Services.PurchaseServiceProvider(sellableProductRepository, materialProductRepository)
+	purchaseController := Controllers.PurchaseControllerProvider(purchaseService)
+	return purchaseController
 }

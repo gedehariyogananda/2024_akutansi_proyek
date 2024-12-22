@@ -302,4 +302,16 @@ func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
 	))
 
 	return &Controllers.JournalEntriesController{}
+func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.SellableProductRepositoryProvider,
+		Repositories.MaterialProductRepositoryProvider,
+		Services.PurchaseServiceProvider,
+		Controllers.PurchaseControllerProvider,
+
+		wire.Bind(new(Controllers.IPurchaseController), new(*Controllers.PurchaseController)),
+		wire.Bind(new(Services.IPurchaseService), new(*Services.PurchaseService)),
+		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
+		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
+	)))
 }

@@ -21,6 +21,7 @@ type (
 		FindByID(id string) (*Models.SellableProduct, error)
 
 		// FindAll(companyID string, query *Common.Query) ([]*Models.SellableProduct, int64, error)
+		GetProductWhithoutReceipt(companyId string) (sellableProducts []*Models.SellableProduct, err error)
 	}
 
 	SellableProductRepository struct {
@@ -166,5 +167,14 @@ func (sellableProductRepository *SellableProductRepository) FindByID(id string) 
 // 		return nil, 0, err
 // 	}
 
-// 	return sellableProducts, totalData, nil
-// }
+//		return sellableProducts, totalData, nil
+//	}
+func (sellableProductRepository SellableProductRepository) GetProductWhithoutReceipt(companyId string) (sellableProducts []*Models.SellableProduct, err error) {
+	if err := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
+		Where("has_receipt = ?", false).
+		Find(&sellableProducts).Error; err != nil {
+		return nil, err
+	}
+
+	return sellableProducts, nil
+}
