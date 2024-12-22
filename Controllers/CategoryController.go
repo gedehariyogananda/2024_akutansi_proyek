@@ -58,7 +58,7 @@ func (c *CategoryController) FindAll(ctx *gin.Context) {
 			return
 		}
 
-		query.Status = status
+		query.Status = &status
 	}
 
 	res, meta, err := c.CategoryService.FindAll(companyId, &query)

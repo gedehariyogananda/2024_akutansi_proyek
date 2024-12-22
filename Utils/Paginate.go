@@ -57,12 +57,12 @@ func InsertParams(ctx *gin.Context) Common.Query {
 
 	if ctx.Query("is_locked") != "" {
 		isLocked, _ := strconv.ParseBool(ctx.Query("is_locked"))
-		query.IsLocked = isLocked
+		query.IsLocked = &isLocked
 	}
 
 	if ctx.Query("status") != "" {
 		status, _ := strconv.ParseBool(ctx.Query("status"))
-		query.Status = status
+		query.Status = &status
 	}
 
 	if ctx.Query("category_id") != "" {
