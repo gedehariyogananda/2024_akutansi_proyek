@@ -8,6 +8,7 @@ type SubUser struct {
 	EmployeeKey string `json:"employee_key"`
 	Status      bool   `json:"status"`
 	CompanyID   string `json:"company_id"`
+	Password    string `json:"password"`
 }
 
 func ToSubUser(subUser *Models.SubUser) *SubUser {
@@ -17,6 +18,7 @@ func ToSubUser(subUser *Models.SubUser) *SubUser {
 		EmployeeKey: subUser.EmployeeKey,
 		Status:      subUser.Status,
 		CompanyID:   subUser.CompanyID,
+		Password:    subUser.Password,
 	}
 }
 
