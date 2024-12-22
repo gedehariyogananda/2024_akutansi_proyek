@@ -38,13 +38,12 @@ func main() {
 
 	setup := gin.Default()
 	setup.RemoveExtraSlash = true
+	setup.Use(Middleware.SetupCORS())
 	setup.Use(Middleware.ExecutionTimeMiddleware())
 
 	setup.MaxMultipartMemory = int64(Consts.MaxMultipartMemory)
 
 	setup.Static(Consts.StaticFileRoute, Consts.StaticFileDir)
-
-	setup.Use(Middleware.SetupCORS())
 
 	Routes.Init(setup, deps)
 
