@@ -11,6 +11,6 @@ func SetupCORS() gin.HandlerFunc {
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "HEAD", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowCredentials: true,
-		// AllowAllOrigins:  true,
+		AllowAllOrigins:  true,
 	})
 }
