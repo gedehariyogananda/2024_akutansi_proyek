@@ -72,17 +72,19 @@ CREATE TABLE public.geographies (
 CREATE TABLE public.invoices (
     id character varying(100) NOT NULL,
     customer_name character varying(255) NOT NULL,
+    phone_number character varying(255),
     note character varying(255),
     tax_id character varying(255) NOT NULL,
     payment_method character varying(255) NOT NULL,
     invoice_number character varying(255) NOT NULL,
     company_id character varying(255) NOT NULL,
-    status integer NOT NULL,
+    status boolean NOT NULL,
     tax integer NOT NULL,
     sub_total numeric(15,2) NOT NULL,
     deleted_at timestamp with time zone,
     created_at timestamp with time zone,
-    updated_at timestamp with time zone
+    updated_at timestamp with time zone,
+    refund_at timestamp with time zone
 );
 
 
@@ -207,6 +209,7 @@ CREATE TABLE public.sellable_products (
     smallest_unit_id character varying(255) NOT NULL,
     category_id character varying(255) NOT NULL,
     image character varying(255) NOT NULL,
+    sku character varying(255) NOT NULL,
     description character varying(255) NOT NULL,
     status boolean NOT NULL,
     has_receipt boolean NOT NULL,
@@ -256,15 +259,15 @@ CREATE TABLE public.transactions (
     title character varying(50) NOT NULL,
     name character varying(255) NOT NULL,
     additional_data jsonb,
-    type character varying(255) NOT NULL,
-    date timestamp with time zone NOT NULL,
-    due_date timestamp with time zone,
+    date date NOT NULL,
+    due_date date,
     note character varying(255),
     transaction_record_code character varying(255),
     transaction_id character varying(100),
-    activity_type character varying(255) NOT NULL,
+    payment_method character varying(255) NOT NULL,
     payment_type character varying(255) NOT NULL,
-    amount numeric(20,2) NOT NULL
+    amount numeric(20,2) NOT NULL,
+    company_id character varying(100) NOT NULL
 );
 
 

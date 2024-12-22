@@ -203,17 +203,21 @@ func DIAccount(db *gorm.DB) *Controllers.AccountController {
 	)))
 	return &Controllers.AccountController{}
 }
+
 func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.SellableProductRepositoryProvider,
+		Repositories.PromoItemRepositoryProvider,
+		Repositories.ReceiptRepositoryProvider,
 		Services.SellableProductServiceProvider,
 		Controllers.SellableProductControllerProvider,
-		Repositories.PromoItemRepositoryProvider,
 
-		wire.Bind(new(Controllers.ISellableProductController), new(*Controllers.SellableProductController)),
-		wire.Bind(new(Services.ISellableProductService), new(*Services.SellableProductService)),
-		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
+		// Bind interfaces ke implementasinya
 		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
+		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
+		wire.Bind(new(Repositories.IReceiptRepository), new(*Repositories.ReceiptRepository)),
+		wire.Bind(new(Services.ISellableProductService), new(*Services.SellableProductService)),
+		wire.Bind(new(Controllers.ISellableProductController), new(*Controllers.SellableProductController)),
 	),
 	))
 
