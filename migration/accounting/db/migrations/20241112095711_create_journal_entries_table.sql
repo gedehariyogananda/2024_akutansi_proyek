@@ -6,6 +6,7 @@ CREATE TABLE journal_entries
     id               VARCHAR(100) PRIMARY KEY NOT NULL UNIQUE,
     amount           NUMERIC(20, 2),
     account_id       VARCHAR(50)              NOT NULL,
+    company_id       VARCHAR(50)              NOT NULL,
     type             journal_entries_type     NOT NULL,
     additional_data  JSONB,
     note             VARCHAR(255),

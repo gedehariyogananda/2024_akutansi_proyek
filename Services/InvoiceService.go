@@ -9,7 +9,6 @@ import (
 	"2024_akutansi_project/Utils"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -35,11 +34,14 @@ type (
 		materialProductRepository Repositories.IMaterialProductRepository
 		sellableStockRepository   Repositories.ISellableStockRepository
 		materialStockRepository   Repositories.IMaterialStockRepository
+		journalEntriesRepository  Repositories.IJournalEntriesRepository
+		accountRepository         Repositories.IAccountRepository
+		journalEntriesService     IJournalEntriesService
 		DB                        *gorm.DB
 	}
 )
 
-func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceItemRepository Repositories.IInvoiceItemRepository, sellableProductRepository Repositories.ISellableProductRepository, receiptProductRepository Repositories.IReceiptRepository, materialProductRepository Repositories.IMaterialProductRepository, sellableStockRepository Repositories.ISellableStockRepository, materialStockRepository Repositories.IMaterialStockRepository, DB *gorm.DB) *InvoiceService {
+func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceItemRepository Repositories.IInvoiceItemRepository, sellableProductRepository Repositories.ISellableProductRepository, receiptProductRepository Repositories.IReceiptRepository, materialProductRepository Repositories.IMaterialProductRepository, sellableStockRepository Repositories.ISellableStockRepository, materialStockRepository Repositories.IMaterialStockRepository, journalEntries Repositories.IJournalEntriesRepository, accountRepository Repositories.IAccountRepository, journalEntriesService IJournalEntriesService, DB *gorm.DB) *InvoiceService {
 	return &InvoiceService{
 		invoiceRepository:         invoiceRepository,
 		invoiceItemRepository:     invoiceItemRepository,
@@ -48,6 +50,9 @@ func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, i
 		materialProductRepository: materialProductRepository,
 		sellableStockRepository:   sellableStockRepository,
 		materialStockRepository:   materialStockRepository,
+		journalEntriesRepository:  journalEntries,
+		accountRepository:         accountRepository,
+		journalEntriesService:     journalEntriesService,
 		DB:                        DB,
 	}
 }
@@ -146,6 +151,21 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 		return nil, http.StatusBadRequest, fmt.Errorf("terdapat beberapa masalah: %v", strings.Join(allErrors, "; "))
 	}
 
+	// true === lunas
+	if invoiceDataClient.Status {
+		// insert journal entry
+		if err := invoiceService.journalEntriesService.InsertJournalCashierLunas(Common.JournalEntryParams{
+			CompanyID:       companyID,
+			SubTotal:        invoiceDataClient.SubTotal,
+			Tax:             invoiceDataClient.Tax,
+			Note:            invoiceDataClient.Note,
+			TransactionCode: invoiceDataClient.InvoiceNumber,
+			AdditionalData:  nil,
+		}); err != nil {
+			return nil, http.StatusBadRequest, err
+		}
+	}
+
 	return invoice, http.StatusOK, nil
 }
 
@@ -222,8 +242,6 @@ func (invoiceService *InvoiceService) handleSellableStocks(trx *gorm.DB, sellabl
 
 	sumCurrentStock, _ := invoiceService.sellableStockRepository.SumCurrentQuantity(sellableProduct.ID)
 	totalAvailableQty := sumCurrentStock
-
-	log.Println("log: totalAvailableQty", totalAvailableQty)
 
 	// if stock != matched
 	if totalAvailableQty < qty {

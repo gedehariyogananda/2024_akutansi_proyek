@@ -17,6 +17,7 @@ type (
 		Update(account *Models.Account, id string) (*Models.Account, error)
 		FindAll(companyID string, qeury *Common.Query) (accounts []*Models.Account, totalData int64, err error)
 		InsertDefaultAccounts(companyID string) error
+		FindByCode(companyID string, code string) (*Models.Account, error)
 	}
 	AccountRepository struct {
 		DB *gorm.DB
@@ -93,70 +94,70 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			Name:      Models.AccountCash,
 			Type:      Models.ASSET,
 			CompanyID: companyID,
-			Code:      "1001",
+			Code:      Models.AccountCashCode,
 			Status:    true,
 		},
 		{
 			Name:      Models.AccountRevenue,
 			Type:      Models.REVENUE,
 			CompanyID: companyID,
-			Code:      "4001",
+			Code:      Models.AccountRevenueCode,
 			Status:    true,
 		},
 		{
 			Name:      Models.AccountOutputTax,
 			Type:      Models.LIABILITY,
 			CompanyID: companyID,
-			Code:      "3002",
+			Code:      Models.AccountOutputTaxCode,
 			Status:    true,
 		},
 		{
 			Name:      Models.AccountInputTax,
 			Type:      Models.ASSET,
 			CompanyID: companyID,
-			Code:      "1003",
+			Code:      Models.AccountInputTaxCode,
 			Status:    true,
 		},
 		{
 			Name:      Models.AccountProductMaterial,
 			Type:      Models.ASSET,
 			CompanyID: companyID,
-			Code:      "1002",
+			Code:      Models.AccountProductMaterialCode,
 			Status:    true,
 		},
 		{
 			Name:      Models.AccountBusinessDebt,
 			Type:      Models.LIABILITY,
 			CompanyID: companyID,
-			Code:      "3001",
+			Code:      Models.AccountBusinessDebtCode,
 			Status:    true,
 		},
 		{
 			Name:      Models.AccountBusinessCapital,
 			Type:      Models.EQUITY,
 			CompanyID: companyID,
-			Code:      "2001",
+			Code:      Models.AccountBusinessCapitalCode,
 			Status:    true,
 		},
 		{
 			Name:      Models.AccountReceivables,
 			Type:      Models.ASSET,
 			CompanyID: companyID,
-			Code:      "1004",
+			Code:      Models.AccountReceivablesCode,
 			Status:    true,
 		},
 		{
 			Name:      Models.AccountAssets,
 			Type:      Models.ASSET,
 			CompanyID: companyID,
-			Code:      "1000",
+			Code:      Models.AccountAssetsCode,
 			Status:    true,
 		},
 		{
 			Name:      Models.AccountCompanyExpense,
 			Type:      Models.EXPENSE,
 			CompanyID: companyID,
-			Code:      "5000",
+			Code:      Models.AccountCompanyExpenseCode,
 			Status:    true,
 		},
 	}
@@ -168,4 +169,15 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 	}
 
 	return nil
+}
+
+func (r *AccountRepository) FindByCode(companyID string, code string) (*Models.Account, error) {
+	account := &Models.Account{}
+
+	if err := r.DB.Where("code = ? AND company_id = ?", code, companyID).
+		First(account).Error; err != nil {
+		return nil, err
+	}
+
+	return account, nil
 }

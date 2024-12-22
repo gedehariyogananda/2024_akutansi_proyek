@@ -17,8 +17,9 @@ const (
 type JournalEntry struct {
 	ID              string                  `json:"id"`
 	Amount          float64                 `json:"amount"`
+	CompanyID       string                  `json:"company_id"`
 	AccountID       string                  `json:"account_id"`
-	Type            string                  `json:"type"`
+	Type            JournalType             `json:"type"`
 	Note            string                  `json:"note"`
 	Date            time.Time               `json:"date"`
 	TransactionCode string                  `json:"transaction_code"`

@@ -4,13 +4,16 @@ import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Utils"
+
 	"gorm.io/gorm"
 )
 
 type (
 	IJournalEntriesRepository interface {
 		FindAll(request Dto.GetJournalRequest) ([]*Models.JournalEntry, int64, error)
-		Insert(journalEntries []Models.JournalEntry) error
+		CalculateAmountByType(companyID string, prefixType Models.JournalType) (countAmount float64, err error)
+		CheckupUnbalance(companyID string) (bool, error)
+		Insert(journalEntries []Models.JournalEntry, trx *gorm.DB) error
 	}
 
 	JournalEntriesRepository struct {
@@ -53,6 +56,44 @@ func (repository *JournalEntriesRepository) FindAll(request Dto.GetJournalReques
 	return journalEntries, totalData, nil
 }
 
-func (repository *JournalEntriesRepository) Insert(journalEntries []Models.JournalEntry) error {
-	return repository.DB.Create(&journalEntries).Error
+func (repository *JournalEntriesRepository) Insert(journalEntries []Models.JournalEntry, trx *gorm.DB) error {
+	db := trx
+	if db == nil {
+		db = repository.DB
+	}
+
+	if err := db.Create(&journalEntries).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repository *JournalEntriesRepository) CalculateAmountByType(companyID string, prefixType Models.JournalType) (countAmount float64, err error) {
+	if err := repository.DB.
+		Model(&Models.JournalEntry{}).
+		Where("company_id = ? AND type = ?", companyID, prefixType).
+		Select("sum(amount)").
+		Scan(&countAmount).Error; err != nil {
+		return 0, err
+	}
+
+	return countAmount, nil
+}
+
+func (repository *JournalEntriesRepository) CheckupUnbalance(companyID string) (bool, error) {
+	var countDebit float64
+	var countCredit float64
+
+	countDebit, err := repository.CalculateAmountByType(companyID, Models.DEBIT)
+	if err != nil {
+		return false, err
+	}
+
+	countCredit, err = repository.CalculateAmountByType(companyID, Models.CREDIT)
+	if err != nil {
+		return false, err
+	}
+
+	return countDebit == countCredit, nil
 }
