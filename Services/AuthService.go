@@ -30,16 +30,18 @@ type (
 		companyRepository Repositories.ICompanyRepository
 		jwtService        IJwtService
 		redisClient       *redis.Client
+		accountRepository Repositories.IAccountRepository
 	}
 )
 
-func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client) *AuthService {
+func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client, accountRepository Repositories.IAccountRepository) *AuthService {
 	return &AuthService{
 		userRepository:    userRepository,
 		companyRepository: companyRepository,
 		jwtService:        jwtService,
 		subUserRepository: subUser,
 		redisClient:       redisClient,
+		accountRepository: accountRepository,
 	}
 }
 
@@ -69,6 +71,11 @@ func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models
 	})
 
 	if err != nil {
+		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat account")
+	}
+
+	// create account for company
+	if err := service.accountRepository.InsertDefaultAccounts(company.ID); err != nil {
 		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat account")
 	}
 

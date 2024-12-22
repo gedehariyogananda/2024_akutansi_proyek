@@ -26,6 +26,7 @@ func DIAuth(db *gorm.DB, redis *redis.Client) *Controllers.AuthController {
 		Services.JwtServiceProvider,
 		Repositories.SubUserRepositoryProvider,
 		Repositories.CompanyRepositoryProvider,
+		Repositories.AccountProvider,
 
 		wire.Bind(new(Controllers.IAuthController), new(*Controllers.AuthController)),
 		wire.Bind(new(Repositories.ISubUserRepository), new(*Repositories.SubUserRepository)),
@@ -33,6 +34,7 @@ func DIAuth(db *gorm.DB, redis *redis.Client) *Controllers.AuthController {
 		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
 		wire.Bind(new(Services.IJwtService), new(*Services.JwtService)),
 		wire.Bind(new(Repositories.ICompanyRepository), new(*Repositories.CompanyRepository)),
+		wire.Bind(new(Repositories.IAccountRepository), new(*Repositories.AccountRepository)),
 	),
 	))
 

@@ -52,7 +52,6 @@ func (s *AccountService) Create(dto *Dto.CreateAccountDto) (res *Response.Accoun
 		Code:      dto.Code,
 		Type:      dto.Type,
 		CompanyID: dto.CompanyID,
-		IsLocked:  dto.IsLocked,
 		Status:    dto.Status,
 	}
 
@@ -79,7 +78,6 @@ func (s *AccountService) Update(dto *Dto.UpdateAccountDto, id string) (res *Resp
 		Code:      dto.Code,
 		Type:      dto.Type,
 		CompanyID: dto.CompanyID,
-		IsLocked:  dto.IsLocked,
 	}
 
 	account, err = s.AccountRepository.Update(account, id)

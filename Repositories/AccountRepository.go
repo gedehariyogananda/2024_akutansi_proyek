@@ -16,6 +16,7 @@ type (
 		Delete(id string) error
 		Update(account *Models.Account, id string) (*Models.Account, error)
 		FindAll(companyID string, qeury *Common.Query) (accounts []*Models.Account, totalData int64, err error)
+		InsertDefaultAccounts(companyID string) error
 	}
 	AccountRepository struct {
 		DB *gorm.DB
@@ -84,4 +85,87 @@ func (r *AccountRepository) FindAll(companyID string, query *Common.Query) (acco
 	}
 
 	return accounts, totalData, nil
+}
+
+func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
+	accounts := []*Models.Account{
+		{
+			Name:      Models.AccountCash,
+			Type:      Models.ASSET,
+			CompanyID: companyID,
+			Code:      "1001",
+			Status:    true,
+		},
+		{
+			Name:      Models.AccountRevenue,
+			Type:      Models.REVENUE,
+			CompanyID: companyID,
+			Code:      "4001",
+			Status:    true,
+		},
+		{
+			Name:      Models.AccountOutputTax,
+			Type:      Models.LIABILITY,
+			CompanyID: companyID,
+			Code:      "3002",
+			Status:    true,
+		},
+		{
+			Name:      Models.AccountInputTax,
+			Type:      Models.ASSET,
+			CompanyID: companyID,
+			Code:      "1003",
+			Status:    true,
+		},
+		{
+			Name:      Models.AccountProductMaterial,
+			Type:      Models.ASSET,
+			CompanyID: companyID,
+			Code:      "1002",
+			Status:    true,
+		},
+		{
+			Name:      Models.AccountBusinessDebt,
+			Type:      Models.LIABILITY,
+			CompanyID: companyID,
+			Code:      "3001",
+			Status:    true,
+		},
+		{
+			Name:      Models.AccountBusinessCapital,
+			Type:      Models.EQUITY,
+			CompanyID: companyID,
+			Code:      "2001",
+			Status:    true,
+		},
+		{
+			Name:      Models.AccountReceivables,
+			Type:      Models.ASSET,
+			CompanyID: companyID,
+			Code:      "1004",
+			Status:    true,
+		},
+		{
+			Name:      Models.AccountAssets,
+			Type:      Models.ASSET,
+			CompanyID: companyID,
+			Code:      "1000",
+			Status:    true,
+		},
+		{
+			Name:      Models.AccountCompanyExpense,
+			Type:      Models.EXPENSE,
+			CompanyID: companyID,
+			Code:      "5000",
+			Status:    true,
+		},
+	}
+
+	for _, account := range accounts {
+		if err := r.DB.Create(account).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

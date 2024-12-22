@@ -9,7 +9,6 @@ CREATE TABLE accounts
     type       VARCHAR(255)             NOT NULL,
     code       VARCHAR(20)              NOT NULL,
     status     BOOLEAN                  NOT NULL,
-    is_locked     BOOLEAN                  NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     deleted_at TIMESTAMP WITH TIME ZONE,
     updated_at TIMESTAMP WITH TIME ZONE

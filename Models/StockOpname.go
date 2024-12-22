@@ -1,9 +1,10 @@
 package Models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"time"
 )
 
 type StockOpname struct {

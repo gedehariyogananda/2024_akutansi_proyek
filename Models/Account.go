@@ -17,15 +17,27 @@ const (
 	EXPENSE   TypeAccount = "EXPENSE"
 )
 
+const (
+	AccountCash            = "Cash"             // kas
+	AccountRevenue         = "Revenue"          // pendapatan
+	AccountOutputTax       = "Output Tax"       // pajak luaran
+	AccountInputTax        = "Input Tax"        // pajak masukan
+	AccountProductMaterial = "Product Material" // bahan produk
+	AccountBusinessDebt    = "Business Debt"    // Hutang Usaha
+	AccountBusinessCapital = "Business Capital" // modal usaha
+	AccountReceivables     = "Receivables"      // piutang usaha
+	AccountAssets          = "Assets"           // aset
+	AccountCompanyExpense  = "Company Expense"  // beban perusahaan
+)
+
 type Account struct {
 	ID        string      `json:"id"`
 	Name      string      `json:"name"`
 	Type      TypeAccount `json:"type"`
 	CompanyID string      `json:"company_id"`
 	Code      string      `json:"code"`
-	IsLocked  bool        `json:"is_locked"`
 	Status    bool        `json:"status"`
-	CreatedAt time.Time   `json:"created_at"`
+	CreatedAt *time.Time  `json:"created_at"`
 	UpdatedAt time.Time   `json:"updated_at"`
 	DeletedAt gorm.DeletedAt
 }
@@ -34,7 +46,17 @@ type Account struct {
 func (account *Account) BeforeCreate(tx *gorm.DB) (err error) {
 	// uuid
 	if account.ID == "" {
-		account.ID = uuid.New().String()
+		uuid, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+
+		account.ID = uuid.String()
+	}
+
+	if account.CreatedAt == nil {
+		now := time.Now()
+		account.CreatedAt = &now
 	}
 
 	return
