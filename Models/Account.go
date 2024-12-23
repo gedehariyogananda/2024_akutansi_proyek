@@ -37,6 +37,8 @@ const (
 	AccountAssetsCode          = "1000"
 	AccountCompanyExpense      = "COMPANY_EXPENSE" // Beban Perusahaan
 	AccountCompanyExpenseCode  = "5000"
+	AccountWithdrawal          = "WITHDRAWAL"
+	AccountWithdrawalCode      = "2002"
 )
 
 type Account struct {

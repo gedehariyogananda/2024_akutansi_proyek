@@ -160,6 +160,13 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			Code:      Models.AccountCompanyExpenseCode,
 			Status:    true,
 		},
+		{
+			Name:      Models.AccountWithdrawal,
+			Type:      Models.EQUITY,
+			CompanyID: companyID,
+			Code:      Models.AccountWithdrawalCode,
+			Status:    true,
+		},
 	}
 
 	for _, account := range accounts {

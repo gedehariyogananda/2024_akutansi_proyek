@@ -24,7 +24,7 @@ type JournalEntry struct {
 	Date            time.Time               `json:"date"`
 	TransactionCode string                  `json:"transaction_code"`
 	Account         *Account                `json:"accounts,omitempty"`
-	CreatedAt 	 time.Time              `json:"created_at"`
+	CreatedAt       *time.Time              `json:"created_at"`
 	AdditionalData  *map[string]interface{} `json:"additional_data,omitempty" gorm:"type:jsonb"`
 }
 
@@ -39,9 +39,9 @@ func (journalEntry *JournalEntry) BeforeCreate(tx *gorm.DB) (err error) {
 		journalEntry.ID = uuidV7.String()
 	}
 
-	if jo.CreatedAt == nil {
+	if journalEntry.CreatedAt == nil {
 		now := time.Now()
-		jo.CreatedAt = &now
+		journalEntry.CreatedAt = &now
 	}
 
 	return
