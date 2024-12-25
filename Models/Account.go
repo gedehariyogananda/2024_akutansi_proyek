@@ -16,6 +16,7 @@ const (
 	REVENUE   TypeAccount = "REVENUE"
 	EXPENSE   TypeAccount = "EXPENSE"
 )
+
 const (
 	AccountCash                = "CASH" // Kas
 	AccountCashCode            = "1001"
@@ -37,7 +38,7 @@ const (
 	AccountAssetsCode          = "1000"
 	AccountCompanyExpense      = "COMPANY_EXPENSE" // Beban Perusahaan
 	AccountCompanyExpenseCode  = "5000"
-	AccountWithdrawal          = "WITHDRAWAL"
+	AccountWithdrawal          = "WITHDRAWAL" // prive
 	AccountWithdrawalCode      = "2002"
 )
 

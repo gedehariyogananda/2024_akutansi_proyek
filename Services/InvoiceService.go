@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -383,14 +382,15 @@ func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) 
 
 func (invoiceService *InvoiceService) StatisticSales(companyID string, date string) (data interface{}, statusCode int, err error) {
 
-	yearInit, _ := strconv.Atoi(strings.Split(date, "-")[0])
-	monthInit, _ := strconv.Atoi(strings.Split(date, "-")[1])
-	prevMonth := monthInit - 1
+	dateInit := Utils.SeperateDate(date)
+	yearInit := dateInit.Year
+	monthInit := dateInit.Month
+	prevMonth := *monthInit - 1
 
-	// set safety first and latest month init
+	// // set safety first and latest month init
 	if prevMonth < 1 {
 		prevMonth = 12
-		yearInit -= 1
+		*yearInit -= 1
 	}
 
 	currentDate, _ := time.Parse("2006-01-02", date)
@@ -399,8 +399,8 @@ func (invoiceService *InvoiceService) StatisticSales(companyID string, date stri
 	sumSalesNow, _ := invoiceService.invoiceRepository.SumSalesByDate(companyID, date)
 	sumSalesPrev, _ := invoiceService.invoiceRepository.SumSalesByDate(companyID, prevDay)
 
-	sumSalesNowByMonth, _ := invoiceService.invoiceRepository.SumSalesByYearMonth(companyID, yearInit, monthInit)
-	sumSalesPrevByMonth, _ := invoiceService.invoiceRepository.SumSalesByYearMonth(companyID, yearInit, prevMonth)
+	sumSalesNowByMonth, _ := invoiceService.invoiceRepository.SumSalesByYearMonth(companyID, *yearInit, *monthInit)
+	sumSalesPrevByMonth, _ := invoiceService.invoiceRepository.SumSalesByYearMonth(companyID, *yearInit, prevMonth)
 
 	// calculate peresentage kenaikan
 	salesNowPercentage := Utils.CalculatePercentageInit(sumSalesPrev, sumSalesNow)

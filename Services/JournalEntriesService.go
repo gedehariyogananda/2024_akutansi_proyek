@@ -5,13 +5,16 @@ import (
 	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Repositories"
+	"2024_akutansi_project/Utils"
 	"fmt"
+	"time"
 )
 
 type (
 	IJournalEntriesService interface {
 		FindAll(request Dto.GetJournalRequest) (res []*Models.JournalEntry, meta Common.Meta, err error)
 		InsertJournalCashier(params Common.JournalEntryParams, isPaid bool) (err error)
+		InsertJournalPurchase(params Common.JournalEntryParams, isPaid bool) (err error)
 	}
 
 	JournalEntriesService struct {
@@ -39,22 +42,13 @@ func (service *JournalEntriesService) FindAll(request Dto.GetJournalRequest) (re
 }
 
 func (service *JournalEntriesService) InsertJournalCashier(params Common.JournalEntryParams, isPaid bool) (err error) {
-	params = Common.JournalEntryParams{
-		AccountID:       params.AccountID,
-		SubTotal:        params.SubTotal,
-		Tax:             params.Tax,
-		CompanyID:       params.CompanyID,
-		Note:            params.Note,
-		TransactionCode: params.TransactionCode,
-		AdditionalData:  params.AdditionalData,
+	// checkup unbalance
+	if err := service.unbalanceCheckup(params.CompanyID); err != nil {
+		return err
 	}
 
-	cashAccount, _ := service.FindAccountIDByCode(params.CompanyID, Models.AccountCashCode)
-	outputTaxAccount, _ := service.FindAccountIDByCode(params.CompanyID, Models.AccountOutputTaxCode)
-	revenueAccount, _ := service.FindAccountIDByCode(params.CompanyID, Models.AccountRevenueCode)
-
-	// checkup unbalance
-	if _, err := service.UnbalanceCheckup(params.CompanyID); err != nil {
+	acc, err := service.allAccountCompanyUser(params.CompanyID)
+	if err != nil {
 		return err
 	}
 
@@ -69,33 +63,9 @@ func (service *JournalEntriesService) InsertJournalCashier(params Common.Journal
 	}
 
 	res := []Models.JournalEntry{
-		{
-			AccountID:       cashAccount.ID, // kas
-			Amount:          params.SubTotal + params.Tax,
-			Type:            cashType,
-			CompanyID:       params.CompanyID,
-			Note:            params.Note,
-			TransactionCode: params.TransactionCode,
-			AdditionalData:  params.AdditionalData,
-		},
-		{
-			AccountID:       outputTaxAccount.ID, // Pajak Luaran
-			Amount:          params.Tax,
-			Type:            outputTaxType,
-			CompanyID:       params.CompanyID,
-			Note:            params.Note,
-			TransactionCode: params.TransactionCode,
-			AdditionalData:  params.AdditionalData,
-		},
-		{
-			AccountID:       revenueAccount.ID, // Pendapatan
-			Amount:          params.SubTotal,
-			Type:            revenueType,
-			CompanyID:       params.CompanyID,
-			Note:            params.Note,
-			TransactionCode: params.TransactionCode,
-			AdditionalData:  params.AdditionalData,
-		},
+		service.createJournalEntry(acc[Models.AccountCashCode].ID, params, cashType, params.SubTotal+params.Tax), // kas
+		service.createJournalEntry(acc[Models.AccountOutputTaxCode].ID, params, outputTaxType, params.Tax),       // pajak luaran
+		service.createJournalEntry(acc[Models.AccountRevenueCode].ID, params, revenueType, params.SubTotal),      // pendapatan
 	}
 
 	// Insert Journal Entry
@@ -106,24 +76,90 @@ func (service *JournalEntriesService) InsertJournalCashier(params Common.Journal
 	return nil
 }
 
-func (service *JournalEntriesService) FindAccountIDByCode(companyID string, code string) (res *Models.Account, err error) {
-	res, err = service.AccountRepository.FindByCode(companyID, code)
+func (service *JournalEntriesService) InsertJournalPurchase(params Common.JournalEntryParams, isPaid bool) (err error) {
+	// checkup unbalance
+	if err := service.unbalanceCheckup(params.CompanyID); err != nil {
+		return err
+	}
+
+	acc, err := service.allAccountCompanyUser(params.CompanyID)
 	if err != nil {
+		return err
+	}
+
+	productMaterialType := Models.DEBIT
+	inputTaxType := Models.DEBIT
+	cashType := Models.CREDIT
+	bussinessDebtType := Models.CREDIT
+
+	res := []Models.JournalEntry{
+		service.createJournalEntry(acc[Models.AccountProductMaterialCode].ID, params, productMaterialType, params.SubTotal), // bahan produk
+		service.createJournalEntry(acc[Models.AccountInputTaxCode].ID, params, inputTaxType, params.Tax),                    // pajak masukan
+	}
+
+	if isPaid {
+		res = append(res, service.createJournalEntry(acc[Models.AccountCashCode].ID, params, cashType, params.SubTotal+params.Tax)) // kas
+	} else {
+		res = append(res, service.createJournalEntry(acc[Models.AccountBusinessDebtCode].ID, params, bussinessDebtType, params.SubTotal+params.Tax)) // hutang usaha
+	}
+
+	// Insert Journal Entry
+	if err := service.JournalEntriesRepository.Insert(res, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (service *JournalEntriesService) createJournalEntry(accountID string, params Common.JournalEntryParams, journalType Models.JournalType, amount float64) Models.JournalEntry {
+
+	now := time.Now()
+	if params.Date != nil {
+		now = *params.Date
+	}
+
+	dataDate := Utils.SeperateDate(now.Format("2006-01-02"))
+
+	return Models.JournalEntry{
+		AccountID:       accountID,
+		Amount:          amount,
+		Type:            journalType,
+		CompanyID:       params.CompanyID,
+		Note:            params.Note,
+		Date:            now,
+		TransactionCode: "TRX-" + Utils.GenerateUniqueSuffix() + "-" + fmt.Sprintf("%d", *dataDate.Year),
+		AdditionalData:  params.AdditionalData,
+	}
+}
+
+func (service *JournalEntriesService) allAccountCompanyUser(companyID string) (map[string]*Models.Account, error) {
+	accounts, _, err := service.AccountRepository.FindAll(companyID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	acc := make(map[string]*Models.Account)
+
+	for _, account := range accounts {
+		acc[account.Code] = account
+	}
+
+	if len(acc) == 0 {
 		return nil, fmt.Errorf("E_ACCOUNT_NOT_FOUND")
 	}
 
-	return res, nil
+	return acc, nil
 }
 
-func (service *JournalEntriesService) UnbalanceCheckup(companyID string) (safety bool, err error) {
+func (service *JournalEntriesService) unbalanceCheckup(companyID string) (err error) {
 	unbalance, err := service.JournalEntriesRepository.CheckupUnbalance(companyID)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	if !unbalance {
-		return false, fmt.Errorf("E_JOURNAL_ENTRY_UNBALANCE")
+		return fmt.Errorf("E_JOURNAL_ENTRY_UNBALANCE")
 	}
 
-	return true, nil
+	return nil
 }

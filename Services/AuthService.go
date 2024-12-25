@@ -101,7 +101,7 @@ func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOw
 
 	codeCompany := Utils.SuffixDigitsToUpper(company.Name, Consts.DigitCompanyCode)
 
-	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, codeCompany, false, false)
+	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, codeCompany, false, true)
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error generate token")
