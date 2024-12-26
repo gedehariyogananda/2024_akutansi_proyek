@@ -6,6 +6,7 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -19,7 +20,6 @@ type (
 		GetAllSellableProduct(ctx *gin.Context)
 		UpdateSellableProduct(ctx *gin.Context)
 		Create(ctx *gin.Context)
-		CreateWithAssignMaterial(ctx *gin.Context)
 		AssignMaterial(ctx *gin.Context)
 		UnAssignMAterial(ctx *gin.Context)
 		FindById(ctx *gin.Context)
@@ -89,15 +89,36 @@ func (controller *SellableProductController) UpdateSellableProduct(ctx *gin.Cont
 func (controller *SellableProductController) Create(ctx *gin.Context) {
 	var createSellableProduct Dto.CreateSellableProductDTO
 
+	// BINDING SECTION START
 	if err := ctx.ShouldBind(&createSellableProduct); err != nil {
 		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
 		return
 	}
 
+	var materials *[]Dto.ReceiptMaterialDto
+	if createSellableProduct.Materials != "" {
+		if err := json.Unmarshal([]byte(createSellableProduct.Materials), &materials); err != nil {
+			Helper.SetErrorResponse(ctx, "Format Input Data Resep Salah", 400)
+			return
+		}
+
+		createSellableProduct.MaterialsObj = materials
+	}
+	// BINDING SECTION END
+
+	// VALIDATION SECTION START
 	if validationErrors := Utils.ValidateRequest(ctx, &createSellableProduct); validationErrors != nil {
 		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
+
+	for _, material := range *materials {
+		if material.MaterialID == "" || material.Quantity <= 0 {
+			Helper.SetErrorResponse(ctx, "Kesalahan Input Data Resep", 400)
+			return
+		}
+	}
+	// VALIDATION SECTION END
 
 	image, err := Utils.UploadFile(ctx, "image", fmt.Sprintf("%s/%s", os.Getenv("UPLOAD_DIR"), "products"))
 	if err != nil {
@@ -110,41 +131,6 @@ func (controller *SellableProductController) Create(ctx *gin.Context) {
 	createSellableProduct.CompanyID = ctx.GetString("company_id")
 
 	res, err := controller.SellableProductService.Create(&createSellableProduct)
-	if err != nil {
-		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	Helper.SetSuccessResponse(ctx, "Berhasil membuat sellable product", res, http.StatusCreated)
-}
-
-func (controller *SellableProductController) CreateWithAssignMaterial(ctx *gin.Context) {
-
-	ctx.Request.ParseForm()
-
-	var createSellableProduct Dto.CreateSellableProductWithAssignMaterialDTO
-
-	if err := ctx.Bind(&createSellableProduct); err != nil {
-		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
-		return
-	}
-
-	if validationErrors := Utils.ValidateRequest(ctx, &createSellableProduct); validationErrors != nil {
-		Helper.SetValidationErrorResponse(ctx, validationErrors)
-		return
-	}
-
-	image, err := Utils.UploadFile(ctx, "image", fmt.Sprintf("%s/%s", os.Getenv("UPLOAD_DIR"), "products"))
-	if err != nil {
-		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	createSellableProduct.Image = image
-
-	createSellableProduct.CompanyID = ctx.GetString("company_id")
-
-	res, err := controller.SellableProductService.CreateWithAsignMaterial(&createSellableProduct)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
 		return

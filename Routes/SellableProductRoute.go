@@ -18,7 +18,6 @@ func SellableProductRoutes(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client)
 	SellableController := Di.DISellableProduct(db)
 
 	route.POST("/", SellableController.Create)
-	route.POST("/with-assign-material", SellableController.CreateWithAssignMaterial)
 	route.DELETE("/", SellableController.UnAssignMAterial)
 	route.POST("/assign-material", SellableController.AssignMaterial)
 	route.GET("/", SellableController.GetAllSellableProduct)
