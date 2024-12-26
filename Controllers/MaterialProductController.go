@@ -36,7 +36,12 @@ func (controller *MaterialProductController) Create(ctx *gin.Context) {
 	request.CompanyID = companyID
 
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		Helper.SetValidationErrorResponse(ctx, err.Error())
+		Helper.SetErrorResponse(ctx, "kesalagan input data", http.StatusBadRequest)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, &request); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
 
@@ -76,7 +81,12 @@ func (controller *MaterialProductController) Update(ctx *gin.Context) {
 	var request Dto.UpdateMaterialProductDto
 
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		Helper.SetValidationErrorResponse(ctx, err.Error())
+		Helper.SetErrorResponse(ctx, "kesalahan input data", http.StatusBadRequest)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, &request); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
 

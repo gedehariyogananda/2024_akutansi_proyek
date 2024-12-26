@@ -46,17 +46,17 @@ func (s *MaterialProductService) Create(dto *Dto.CreateMaterialProductDto) (*Res
 		return nil, err
 	}
 
-	for _, conversion := range dto.MaterialConversions {
-		modelConversion := &Models.MaterialConversion{
-			MaterialProductID: materialProduct.ID,
-			UnitID:            conversion.UniID,
-			Quantity:          conversion.Quantity,
-		}
-		_, err := s.materialConversionRepository.Create(modelConversion)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// for _, conversion := range dto.MaterialConversions {
+	// 	modelConversion := &Models.MaterialConversion{
+	// 		MaterialProductID: materialProduct.ID,
+	// 		UnitID:            conversion.UniID,
+	// 		Quantity:          conversion.Quantity,
+	// 	}
+	// 	_, err := s.materialConversionRepository.Create(modelConversion)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
 	res := Response.ToMaterialProduckResponse(*materialProduct)
 
@@ -96,10 +96,10 @@ func (s *MaterialProductService) Delete(id string) (statusCode int, err error) {
 		return http.StatusInternalServerError, err
 	}
 
-	err = s.materialConversionRepository.DeleteMany(id)
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
+	// err = s.materialConversionRepository.DeleteMany(id)
+	// if err != nil {
+	// 	return http.StatusInternalServerError, err
+	// }
 
 	return http.StatusOK, nil
 }
@@ -134,17 +134,17 @@ func (s *MaterialProductService) Update(dto *Dto.UpdateMaterialProductDto, id st
 		return nil, http.StatusInternalServerError, err
 	}
 
-	for _, conversion := range dto.MaterialConversions {
-		modelConversion := &Models.MaterialConversion{
-			MaterialProductID: id,
-			UnitID:            conversion.UniID,
-			Quantity:          conversion.Quantity,
-		}
-		_, err := s.materialConversionRepository.Create(modelConversion)
-		if err != nil {
-			return nil, http.StatusInternalServerError, err
-		}
-	}
+	// for _, conversion := range dto.MaterialConversions {
+	// 	modelConversion := &Models.MaterialConversion{
+	// 		MaterialProductID: id,
+	// 		UnitID:            conversion.UniID,
+	// 		Quantity:          conversion.Quantity,
+	// 	}
+	// 	_, err := s.materialConversionRepository.Create(modelConversion)
+	// 	if err != nil {
+	// 		return nil, http.StatusInternalServerError, err
+	// 	}
+	// }
 
 	res := Response.ToMaterialProduckResponse(*materialProduct)
 	res.ID = id
