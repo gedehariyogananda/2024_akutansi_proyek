@@ -2,21 +2,23 @@ package Controllers
 
 import (
 	"2024_akutansi_project/Helper"
-	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 type (
 	ISellableProductController interface {
 		GetAllSellableProduct(ctx *gin.Context)
+		GetActiveSellableProduct(ctx *gin.Context)
 		UpdateSellableProduct(ctx *gin.Context)
 		Create(ctx *gin.Context)
 		CreateWithAssignMaterial(ctx *gin.Context)
@@ -39,18 +41,9 @@ func SellableProductControllerProvider(SellableProductService Services.ISellable
 }
 
 func (controller *SellableProductController) GetAllSellableProduct(ctx *gin.Context) {
-	search := ctx.Query("search")
+	query := Utils.InsertParams(ctx)
 
-	limit, page := Utils.GetPaginationParams(ctx, Common.DEFAULTLIMIT, Common.DEFAULTPAGE)
-
-	var query Common.Query
-
-	query.Search = &search
-	query.Limit = limit
-	query.Page = page
-	query.Limit = limit
-
-	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &query)
+	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &query, false)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
@@ -59,7 +52,23 @@ func (controller *SellableProductController) GetAllSellableProduct(ctx *gin.Cont
 	Helper.SetPaginationResponse(ctx,
 		"Berhasil mendapatkan data sellable product",
 		sellableProducts,
-		Common.PaginateMetadata(ctx, meta.TotalData, meta.Limit, meta.Page),
+		meta,
+		statusCode)
+}
+
+func (controller *SellableProductController) GetActiveSellableProduct(ctx *gin.Context) {
+	query := Utils.InsertParams(ctx)
+
+	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &query, true)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetPaginationResponse(ctx,
+		"Berhasil mendapatkan data sellable product active",
+		sellableProducts,
+		meta,
 		statusCode)
 }
 
@@ -120,20 +129,37 @@ func (controller *SellableProductController) Create(ctx *gin.Context) {
 
 func (controller *SellableProductController) CreateWithAssignMaterial(ctx *gin.Context) {
 
-	ctx.Request.ParseForm()
+	body, err := ioutil.ReadAll(ctx.Request.Body)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	fmt.Println(string(body)) // Proses data sesuai kebutuhan
+
+	ctx.JSON(http.StatusOK, gin.H{"message": string(body)})
+
+	return
 
 	var createSellableProduct Dto.CreateSellableProductWithAssignMaterialDTO
 
-	if err := ctx.Bind(&createSellableProduct); err != nil {
+	// Bind data JSON ke struct
+	if err := ctx.ShouldBindWith(&createSellableProduct, binding.Form); err != nil {
+		fmt.Println("Binding error:", err)
 		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
 		return
 	}
 
+	ctx.JSON(http.StatusOK, createSellableProduct)
+	return
+
+	// Validasi data
 	if validationErrors := Utils.ValidateRequest(ctx, &createSellableProduct); validationErrors != nil {
 		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
 
+	// Proses file gambar
 	image, err := Utils.UploadFile(ctx, "image", fmt.Sprintf("%s/%s", os.Getenv("UPLOAD_DIR"), "products"))
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
@@ -141,9 +167,9 @@ func (controller *SellableProductController) CreateWithAssignMaterial(ctx *gin.C
 	}
 
 	createSellableProduct.Image = image
-
 	createSellableProduct.CompanyID = ctx.GetString("company_id")
 
+	// Panggil service untuk membuat produk
 	res, err := controller.SellableProductService.CreateWithAsignMaterial(&createSellableProduct)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)

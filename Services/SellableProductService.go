@@ -18,13 +18,13 @@ type (
 	ISellableProductService interface {
 		Create(request *Dto.CreateSellableProductDTO) (res *Response.SellableResponse, err error)
 		CreateWithAsignMaterial(request *Dto.CreateSellableProductWithAssignMaterialDTO) (res *Response.SellableResponse, err error)
-		GetAll(companyID string, query *Common.Query) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error)
-		UpdateStock(id string, request *Dto.SellableProductDTO) (statusCode int, err error)
+		GetAll(companyID string, query *Common.Query, onlyActive bool) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error)
 		AssignMaterial(request *Dto.AssignMaterialDtos) (statusCode int, err error)
 		UnAssignMaterial(request *Dto.UnAssignMaterialDto) (statusCode int, err error)
 		FindById(id string) (res *Response.SellableResponse, statusCode int, err error)
 		Delete(id string) (statusCode int, err error)
 		Update(request *Dto.UpdateSellableProductDTO, id string) (statusCode int, err error)
+		UpdateStock(id string, request *Dto.SellableProductDTO) (statusCode int, err error)
 		// FindAll(companyID string, query *Common.Query) (res []*Response.SellableResponse, meta Common.Meta, err error)
 	}
 
@@ -43,19 +43,12 @@ func SellableProductServiceProvider(sellableProductRepository Repositories.ISell
 	}
 }
 
-func (service *SellableProductService) GetAll(companyID string, query *Common.Query) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
-	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, nil, query)
+func (service *SellableProductService) GetAll(companyID string, query *Common.Query, onlyActive bool) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
+	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, onlyActive, query)
 	if err != nil {
 		return nil, Common.Meta{}, http.StatusInternalServerError, err
 	}
 
-	meta = Common.Meta{
-		TotalData: totalData,
-		Limit:     query.Limit,
-		Page:      query.Page,
-	}
-
-	// return sellableProducts, meta, http.StatusOK, nil
 	var res []*Response.SellableResponse
 
 	for _, sellableProduct := range sellableProducts {
@@ -68,28 +61,42 @@ func (service *SellableProductService) GetAll(companyID string, query *Common.Qu
 			status = "Non-Aktif"
 		}
 
-		res = append(res, &Response.SellableResponse{
-			ID:              sellableProduct.ID,
-			Name:            sellableProduct.Name,
-			CompanyID:       sellableProduct.CompanyID,
-			SmallestUnitID:  sellableProduct.SmallestUnitID,
-			CategoryID:      sellableProduct.CategoryID,
-			Image:           sellableProduct.Image,
-			Description:     sellableProduct.Description,
-			Status:          *sellableProduct.Status,
-			StatusDisplay:   status,
-			HasReceipt:      sellableProduct.HasReceipt,
-			CurrentQuantity: sellableProduct.CurrentQuantity,
-			Price:           sellableProduct.Price,
-			CreatedAt:       *sellableProduct.CreatedAt,
-			UpdatedAt:       *sellableProduct.UpdatedAt,
-			DeletedAt:       sellableProduct.DeletedAt,
-			Unit:            sellableProduct.Unit,
-			Category:        sellableProduct.Category,
-			PromoItems:      sellableProduct.PromoItems,
-		})
+		if onlyActive {
+			res = append(res, &Response.SellableResponse{
+				ID:              sellableProduct.ID,
+				Name:            &sellableProduct.Name,
+				Image:           &sellableProduct.Image,
+				Description:     &sellableProduct.Description,
+				CurrentQuantity: &sellableProduct.CurrentQuantity,
+				Price:           &sellableProduct.Price,
+			})
+			continue
+		} else {
+			res = append(res, &Response.SellableResponse{
+				ID:              sellableProduct.ID,
+				Name:            &sellableProduct.Name,
+				CompanyID:       &sellableProduct.CompanyID,
+				SmallestUnitID:  &sellableProduct.SmallestUnitID,
+				CategoryID:      &sellableProduct.CategoryID,
+				Image:           &sellableProduct.Image,
+				Description:     &sellableProduct.Description,
+				Status:          sellableProduct.Status,
+				StatusDisplay:   &status,
+				HasReceipt:      &sellableProduct.HasReceipt,
+				CurrentQuantity: &sellableProduct.CurrentQuantity,
+				Price:           &sellableProduct.Price,
+				CreatedAt:       sellableProduct.CreatedAt,
+				UpdatedAt:       sellableProduct.UpdatedAt,
+				DeletedAt:       sellableProduct.DeletedAt,
+				Unit:            sellableProduct.Unit,
+				Category:        sellableProduct.Category,
+				PromoItems:      sellableProduct.PromoItems,
+			})
 
+		}
 	}
+
+	meta = Common.PaginateMetadata(nil, totalData, query.Limit, query.Page)
 
 	return res, meta, http.StatusOK, nil
 }
@@ -185,24 +192,24 @@ func (service *SellableProductService) CreateWithAsignMaterial(request *Dto.Crea
 		CompanyID:      request.CompanyID,
 	}
 
+	fmt.Println(request.Materials[0].MaterialID)
 	product, err := service.SellableProductRepository.Create(sellableProduct)
 
 	if err != nil {
 		return res, err
 	}
 
-	fmt.Println(request.Materials)
-	fmt.Println("test")
+	if request.Materials != nil {
+		for _, material := range request.Materials {
+			receipt := &Models.Receipt{
+				SellableProductID: product.ID,
+				MaterialProductID: material.MaterialID,
+				Quantity:          material.Quantity,
+			}
 
-	for _, material := range request.Materials {
-		receipt := &Models.Receipt{
-			SellableProductID: product.ID,
-			MaterialProductID: material.MaterialID,
-			Quantity:          material.Quantity,
-		}
-
-		if err = service.ReceiptRepository.Create(receipt); err != nil {
-			return res, err
+			if err = service.ReceiptRepository.Create(receipt); err != nil {
+				return res, err
+			}
 		}
 	}
 

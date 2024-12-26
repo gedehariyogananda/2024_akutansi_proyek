@@ -12,13 +12,14 @@ import (
 
 type (
 	ISellableProductRepository interface {
-		GetAll(companyID string, status *bool, query *Common.Query) (sellableProducts []*Models.SellableProduct, totalData int64, err error)
+		GetAll(companyID string, onlyActive bool, query *Common.Query) (sellableProducts []*Models.SellableProduct, totalData int64, err error)
 		Update(id string, sellableProduct *Models.SellableProduct) error
 		Find(id string) (sellableProduct *Models.SellableProduct, err error)
 		UpdateCurrent(trx *gorm.DB, sellableProductID string, QtyClient int) error
 		Create(sellableProduct *Models.SellableProduct) (*Models.SellableProduct, error)
 		Delete(id string) error
 		FindByID(id string) (*Models.SellableProduct, error)
+
 		// FindAll(companyID string, query *Common.Query) ([]*Models.SellableProduct, int64, error)
 	}
 
@@ -31,9 +32,17 @@ func SellableProductRepositoryProvider(db *gorm.DB) *SellableProductRepository {
 	return &SellableProductRepository{DB: db}
 }
 
-func (sellableProductRepository *SellableProductRepository) GetAll(companyID string, status *bool, query *Common.Query) (sellableProducts []*Models.SellableProduct, totalData int64, err error) {
-	if err := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
-		Scopes(Helper.FilterSearch(*query.Search)).
+func (sellableProductRepository *SellableProductRepository) GetAll(companyID string, onlyActive bool, query *Common.Query) (sellableProducts []*Models.SellableProduct, totalData int64, err error) {
+	totalCountInit := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
+		Where("company_id = ?", companyID)
+
+	if onlyActive {
+		totalCountInit = totalCountInit.Where("status = ?", true)
+	}
+
+	if err := totalCountInit.Scopes(
+		Helper.FilterSearchProduct(query.Search),
+		Helper.FilterCategoryID(query.CategoryID)).
 		Count(&totalData).Error; err != nil {
 		return nil, 0, err
 	}
@@ -41,23 +50,25 @@ func (sellableProductRepository *SellableProductRepository) GetAll(companyID str
 	db := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
 		Where("company_id = ?", companyID)
 
-	if status != nil {
-		db = db.Where("status = ?", status)
-	}
-
-	if err := db.
-		Preload("PromoItems", func(promoItemPayload *gorm.DB) *gorm.DB {
+	if onlyActive {
+		db = db.Where("status = ?", true).
+			Select("id", "name", "image", "description", "current_quantity", "price", "status")
+	} else {
+		db = db.Preload("PromoItems", func(promoItemPayload *gorm.DB) *gorm.DB {
 			return promoItemPayload.Preload("Promo", func(promoItem *gorm.DB) *gorm.DB {
 				return promoItem.Select("id, name, start_date, end_date")
 			})
 		}).
-		Preload("Category", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id, name")
-		}).
-		Scopes(
-			Utils.Paginate(query.Page, query.Limit),
-			Helper.FilterSearch(*query.Search),
-		).Find(&sellableProducts).Error; err != nil {
+			Preload("Category", func(db *gorm.DB) *gorm.DB {
+				return db.Select("id, name")
+			})
+	}
+
+	if err := db.Scopes(
+		Utils.Paginate(query.Page, query.Limit),
+		Helper.FilterSearchProduct(query.Search),
+		Helper.FilterCategoryID(query.CategoryID),
+	).Find(&sellableProducts).Error; err != nil {
 		return nil, 0, err
 	}
 

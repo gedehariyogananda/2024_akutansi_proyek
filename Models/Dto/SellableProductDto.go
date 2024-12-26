@@ -30,9 +30,11 @@ type AssignMaterialDtos struct {
 }
 
 type AssignMaterialDtoForm struct {
-	MaterialID string `from:"material_id" validate:"required"`
+	MaterialID string `form:"material_id" validate:"required"`
 	Quantity   int    `form:"quantity" validate:"required"`
 }
+
+// ... (rest of your code)
 type CreateSellableProductWithAssignMaterialDTO struct {
 	Name           string                   `form:"name" validate:"required"`
 	SmallestUnitID string                   `form:"smallest_unit_id" validate:"required"`
@@ -43,7 +45,7 @@ type CreateSellableProductWithAssignMaterialDTO struct {
 	Image          string                   `form:"-"`
 	Price          float64                  `form:"price" validate:"required"`
 	CompanyID      string                   `form:"-"`
-	Materials      []*AssignMaterialDtoForm `form:"materials" validate:"required"`
+	Materials      []*AssignMaterialDtoForm `form:"materials" validate:"required,dive"`
 }
 
 type UnAssignMaterialDto struct {
