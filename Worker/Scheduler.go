@@ -2,14 +2,16 @@ package Worker
 
 import (
 	"2024_akutansi_project/Dependencies"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Routes/Di"
 	"context"
 	"fmt"
-	"github.com/go-co-op/gocron"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-co-op/gocron"
 )
 
 func InitScheduler(deps *Dependencies.Dependency) {
@@ -102,6 +104,38 @@ func InitScheduler(deps *Dependencies.Dependency) {
 			sh := gocron.NewScheduler(time.Local)
 
 			if _, scheduleErr := sh.Every(1).Day().At("01:00").Do(jobHandler); scheduleErr != nil {
+				fmt.Printf("Failed to schedule job: %v\n", scheduleErr)
+				return
+			}
+
+			sh.StartAsync()
+		}(context.Background())
+	}
+
+	// Add Journal Entry Scheduler
+	if func() bool {
+		scheduler := os.Getenv("USE_SCHEDULER_JOURNAL_ENTRY")
+		b, _ := strconv.ParseBool(scheduler)
+		return b
+	}() {
+		go func(ctx context.Context) {
+			jobHandler := func() {
+				fmt.Println("Start [JOB] :: Process Journal Entries")
+
+				service := Di.DIJournalEntries(deps.DB)
+
+				if err := service.JournalEntriesService.InsertJournalOtherTransaction(ctx, Common.JournalEntryParams{}); err != nil {
+					fmt.Printf("Failed [JOB] :: Process Journal Entries, got err := %v\n", err)
+					return
+				}
+
+				fmt.Println("Success [JOB] :: Process Journal Entries")
+			}
+
+			sh := gocron.NewScheduler(time.Local)
+
+			// set time 23:59
+			if _, scheduleErr := sh.Every(1).Day().At("23:59").Do(jobHandler); scheduleErr != nil {
 				fmt.Printf("Failed to schedule job: %v\n", scheduleErr)
 				return
 			}

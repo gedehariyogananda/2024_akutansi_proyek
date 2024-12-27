@@ -6,6 +6,7 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Utils"
+	"context"
 	"fmt"
 	"time"
 )
@@ -15,18 +16,21 @@ type (
 		FindAll(request Dto.GetJournalRequest) (res []*Models.JournalEntry, meta Common.Meta, err error)
 		InsertJournalCashier(params Common.JournalEntryParams, isPaid bool) (err error)
 		InsertJournalPurchase(params Common.JournalEntryParams, isPaid bool) (err error)
+		InsertJournalOtherTransaction(ctx context.Context, params Common.JournalEntryParams) (err error)
 	}
 
 	JournalEntriesService struct {
 		JournalEntriesRepository Repositories.IJournalEntriesRepository
 		AccountRepository        Repositories.IAccountRepository
+		TransactionRepository    Repositories.ITransactionRepository
 	}
 )
 
-func JournalEntriesProvider(journalRepo Repositories.IJournalEntriesRepository, accountRepo Repositories.IAccountRepository) *JournalEntriesService {
+func JournalEntriesProvider(journalRepo Repositories.IJournalEntriesRepository, accountRepo Repositories.IAccountRepository, transactionRepo Repositories.ITransactionRepository) *JournalEntriesService {
 	return &JournalEntriesService{
 		JournalEntriesRepository: journalRepo,
 		AccountRepository:        accountRepo,
+		TransactionRepository:    transactionRepo,
 	}
 }
 
@@ -68,7 +72,6 @@ func (service *JournalEntriesService) InsertJournalCashier(params Common.Journal
 		service.createJournalEntry(acc[Models.AccountRevenueCode].ID, params, revenueType, params.SubTotal),      // pendapatan
 	}
 
-	// Insert Journal Entry
 	if err := service.JournalEntriesRepository.Insert(res, nil); err != nil {
 		return err
 	}
@@ -103,7 +106,6 @@ func (service *JournalEntriesService) InsertJournalPurchase(params Common.Journa
 		res = append(res, service.createJournalEntry(acc[Models.AccountBusinessDebtCode].ID, params, bussinessDebtType, params.SubTotal+params.Tax)) // hutang usaha
 	}
 
-	// Insert Journal Entry
 	if err := service.JournalEntriesRepository.Insert(res, nil); err != nil {
 		return err
 	}
@@ -159,6 +161,102 @@ func (service *JournalEntriesService) unbalanceCheckup(companyID string) (err er
 
 	if !unbalance {
 		return fmt.Errorf("E_JOURNAL_ENTRY_UNBALANCE")
+	}
+
+	return nil
+}
+
+func (service *JournalEntriesService) InsertJournalOtherTransaction(ctx context.Context, params Common.JournalEntryParams) (err error) {
+	now := time.Now()
+	currentDate := now.Format("2006-01-02")
+
+	transactions, err := service.TransactionRepository.GetByDate(currentDate)
+	if err != nil {
+		return err
+	}
+
+	for _, transaction := range transactions {
+		var entries []Models.JournalEntry
+
+		acc, err := service.allAccountCompanyUser(transaction.CompanyID)
+		if err != nil {
+			return err
+		}
+
+		if transaction.PaymentType == "" {
+			return fmt.Errorf("transaction payment type is empty")
+		}
+
+		switch Models.TypeTransactionClient(transaction.PaymentType) {
+		case Models.TIPE_WITHDRAWAL: // Case 1: Prive
+			entries = []Models.JournalEntry{
+				service.createJournalEntry(acc[Models.AccountWithdrawalCode].ID, params, Models.DEBIT, transaction.Amount), // Debit: Prive
+				service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.CREDIT, transaction.Amount),      // Kredit: Kas
+			}
+		case Models.TIPE_CAPITAL_ADDITION: // Case 2: Penambahan Modal
+			entries = []Models.JournalEntry{
+				service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.DEBIT, transaction.Amount),         // Debit: Kas
+				service.createJournalEntry(acc[Models.AccountBusinessCapital].ID, params, Models.CREDIT, transaction.Amount), // Kredit: Modal Usaha
+			}
+		case Models.TIPE_DEBT_PAYMENT: // Case 3: Pembayaran Hutang
+			entries = []Models.JournalEntry{
+				service.createJournalEntry(acc[Models.AccountBusinessDebtCode].ID, params, Models.DEBIT, transaction.Amount), // Debit: Hutang Usaha
+				service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.CREDIT, transaction.Amount),        // Kredit: Kas
+			}
+		case Models.TIPE_RECEIVABLE_PAYMENT: // Case 4: Pembayaran Piutang
+			entries = []Models.JournalEntry{
+				service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.DEBIT, transaction.Amount),         // Debit: Kas
+				service.createJournalEntry(acc[Models.AccountReceivablesCode].ID, params, Models.CREDIT, transaction.Amount), // Kredit: Piutang Usaha
+			}
+		case Models.TIPE_SALE: // Case 5 & 8: Penjualan
+			if transaction.PaymentType == string(Models.PAYMENT_METHOD_CASH) { // Metode Cash
+				entries = []Models.JournalEntry{
+					service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.DEBIT, transaction.Amount),     // Debit: Kas
+					service.createJournalEntry(acc[Models.AccountRevenueCode].ID, params, Models.CREDIT, transaction.Amount), // Kredit: Pendapatan
+				}
+			} else { // Metode Hutang
+				entries = []Models.JournalEntry{
+					service.createJournalEntry(acc[Models.AccountReceivablesCode].ID, params, Models.DEBIT, transaction.Amount), // Debit: Piutang Usaha
+					service.createJournalEntry(acc[Models.AccountRevenueCode].ID, params, Models.CREDIT, transaction.Amount),    // Kredit: Pendapatan
+				}
+			}
+		case Models.TIPE_PURCHASE: // Case 6 & 7: Pembelian
+			if transaction.PaymentType == string(Models.PAYMENT_METHOD_CASH) {
+				entries = []Models.JournalEntry{
+					service.createJournalEntry(acc[Models.AccountAssetsCode].ID, params, Models.DEBIT, transaction.Amount), // Debit: Aset
+					service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.CREDIT, transaction.Amount),  // Kredit: Kas
+				}
+			} else {
+				entries = []Models.JournalEntry{
+					service.createJournalEntry(acc[Models.AccountAssetsCode].ID, params, Models.DEBIT, transaction.Amount),        // Debit: Aset
+					service.createJournalEntry(acc[Models.AccountBusinessDebtCode].ID, params, Models.CREDIT, transaction.Amount), // Kredit: Hutang Usaha
+				}
+			}
+		case Models.TIPE_TAX_PAYMENT: // Case 9: Pembayaran Pajak
+			entries = []Models.JournalEntry{
+				service.createJournalEntry(acc[Models.AccountOutputTaxCode].ID, params, Models.DEBIT, transaction.Amount), // Debit: Pajak Keluaran
+				service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.CREDIT, transaction.Amount),     // Kredit: Kas
+			}
+		case Models.TYPE_EXPENSE: // Case 10 & 11: Pembayaran Beban
+			if transaction.PaymentType == string(Models.PAYMENT_METHOD_CASH) { // Metode Cash
+				entries = []Models.JournalEntry{
+					service.createJournalEntry(acc[Models.AccountCompanyExpenseCode].ID, params, Models.DEBIT, transaction.Amount), // Debit: Beban Perusahaan
+					service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.CREDIT, transaction.Amount),          // Kredit: Kas
+				}
+			} else { // Metode Hutang
+				entries = []Models.JournalEntry{
+					service.createJournalEntry(acc[Models.AccountCompanyExpenseCode].ID, params, Models.DEBIT, transaction.Amount), // Debit: Beban Perusahaan
+					service.createJournalEntry(acc[Models.AccountBusinessDebtCode].ID, params, Models.CREDIT, transaction.Amount),  // Kredit: Hutang Usaha
+				}
+			}
+		default:
+			fmt.Printf("E_UNSUPPORT_TYPE: %s\n", transaction.PaymentType)
+			continue
+		}
+
+		if err := service.JournalEntriesRepository.Insert(entries, nil); err != nil {
+			return err
+		}
 	}
 
 	return nil

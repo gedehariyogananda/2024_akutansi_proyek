@@ -69,6 +69,7 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 		Repositories.AccountProvider,
 		Repositories.MaterialStockRepositoryProvider,
 		Repositories.JournalEntriesProvider,
+		Repositories.TransactionRepositoryProvider,
 		Services.JournalEntriesProvider,
 
 		wire.Bind(new(Controllers.IInvoiceController), new(*Controllers.InvoiceController)),
@@ -83,6 +84,7 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 		wire.Bind(new(Repositories.IJournalEntriesRepository), new(*Repositories.JournalEntriesRepository)),
 		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
 		wire.Bind(new(Services.IJournalEntriesService), new(*Services.JournalEntriesService)),
+		wire.Bind(new(Repositories.ITransactionRepository), new(*Repositories.TransactionRepository)),
 	),
 	))
 
@@ -285,11 +287,13 @@ func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
 		Services.JournalEntriesProvider,
 		Controllers.JournalEntriesProvider,
 		Repositories.AccountProvider,
+		Repositories.TransactionRepositoryProvider,
 
 		wire.Bind(new(Controllers.IJournalEntriesController), new(*Controllers.JournalEntriesController)),
 		wire.Bind(new(Services.IJournalEntriesService), new(*Services.JournalEntriesService)),
 		wire.Bind(new(Repositories.IJournalEntriesRepository), new(*Repositories.JournalEntriesRepository)),
 		wire.Bind(new(Repositories.IAccountRepository), new(*Repositories.AccountRepository)),
+		wire.Bind(new(Repositories.ITransactionRepository), new(*Repositories.TransactionRepository)),
 	),
 	))
 

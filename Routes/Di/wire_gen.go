@@ -47,7 +47,8 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 	materialStockRepository := Repositories.MaterialStockRepositoryProvider(db)
 	journalEntriesRepository := Repositories.JournalEntriesProvider(db)
 	accountRepository := Repositories.AccountProvider(db)
-	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository)
+	transactionRepository := Repositories.TransactionRepositoryProvider(db)
+	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository, transactionRepository)
 	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, sellableStockRepository, materialStockRepository, journalEntriesRepository, accountRepository, journalEntriesService, db)
 	invoiceController := Controllers.InvoiceControllerProvider(invoiceService)
 	return invoiceController
@@ -148,7 +149,8 @@ func DITransaction(db *gorm.DB) *Controllers.TransactionController {
 func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
 	journalEntriesRepository := Repositories.JournalEntriesProvider(db)
 	accountRepository := Repositories.AccountProvider(db)
-	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository)
+	transactionRepository := Repositories.TransactionRepositoryProvider(db)
+	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository, transactionRepository)
 	journalEntriesController := Controllers.JournalEntriesProvider(journalEntriesService)
 	return journalEntriesController
 }
