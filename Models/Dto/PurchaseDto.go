@@ -13,7 +13,7 @@ type CreatePurchasesDto struct {
 	Tax                 float32             `json:"tax" validate:"required"`
 	Discount            float32             `json:"discount" validate:"required"`
 	PaymentType         string              `json:"payment_type" validate:"required"`
-	DueDate             string              `json:"due_date" validate:"required,date"`
+	DueDate             string              `json:"due_date,omitempty" validate:"omitempty,date"`
 	CompanyID           string              `json:"-"`
 	TotalPurchaseAmount int                 `json:"total_purchase_amount" validate:"required"`
 }
