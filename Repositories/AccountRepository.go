@@ -16,6 +16,7 @@ type (
 		Delete(id string) error
 		Update(account *Models.Account, id string) (*Models.Account, error)
 		FindAll(companyID string, qeury *Common.Query) (accounts []*Models.Account, totalData int64, err error)
+		GetAll(companyID string) ([]*Models.Account, error)
 		InsertDefaultAccounts(companyID string) error
 		FindByCode(companyID string, code string) (*Models.Account, error)
 	}
@@ -187,4 +188,14 @@ func (r *AccountRepository) FindByCode(companyID string, code string) (*Models.A
 	}
 
 	return account, nil
+}
+
+func (r *AccountRepository) GetAll(companyID string) ([]*Models.Account, error) {
+	var accounts []*Models.Account
+
+	if err := r.DB.Where("company_id = ?", companyID).Find(&accounts).Error; err != nil {
+		return nil, err
+	}
+
+	return accounts, nil
 }

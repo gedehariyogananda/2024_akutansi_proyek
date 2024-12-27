@@ -42,5 +42,3 @@ func ToAccountSlice(accounts []*Models.Account) []*Account {
 	}
 	return accountResponses
 }
-
-func toAccountDynamic(accounts []*Account) 

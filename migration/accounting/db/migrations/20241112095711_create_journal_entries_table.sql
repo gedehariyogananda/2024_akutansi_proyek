@@ -12,7 +12,6 @@ CREATE TABLE journal_entries
     note             VARCHAR(255),
     date             TIMESTAMP WITH TIME ZONE NOT NULL,
     transaction_code VARCHAR(255),
-    company_id       VARCHAR(50)              NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 

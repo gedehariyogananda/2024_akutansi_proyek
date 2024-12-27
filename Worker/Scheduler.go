@@ -2,7 +2,6 @@ package Worker
 
 import (
 	"2024_akutansi_project/Dependencies"
-	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Routes/Di"
 	"context"
 	"fmt"
@@ -124,7 +123,7 @@ func InitScheduler(deps *Dependencies.Dependency) {
 
 				service := Di.DIJournalEntries(deps.DB)
 
-				if err := service.JournalEntriesService.InsertJournalOtherTransaction(ctx, Common.JournalEntryParams{}); err != nil {
+				if err := service.JournalEntriesService.InsertJournalOtherTransaction(ctx); err != nil {
 					fmt.Printf("Failed [JOB] :: Process Journal Entries, got err := %v\n", err)
 					return
 				}

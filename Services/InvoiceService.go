@@ -160,7 +160,7 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 			Note:            invoiceDataClient.Note,
 			TransactionCode: invoiceDataClient.InvoiceNumber,
 			AdditionalData:  nil,
-		}, true); err != nil {
+		}, true, trx); err != nil {
 			return nil, http.StatusBadRequest, err
 		}
 	}
@@ -373,7 +373,7 @@ func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) 
 		Note:            invoice.Note,
 		TransactionCode: invoice.InvoiceNumber,
 		AdditionalData:  nil,
-	}, false); err != nil {
+	}, false, nil); err != nil {
 		return http.StatusBadRequest, err
 	}
 

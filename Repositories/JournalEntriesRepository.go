@@ -11,6 +11,7 @@ import (
 type (
 	IJournalEntriesRepository interface {
 		FindAll(request Dto.GetJournalRequest) ([]*Models.JournalEntry, int64, error)
+		FindByCompanyID(companyID string) (journalEntry *Models.JournalEntry, err error)
 		CalculateAmountByType(companyID string, prefixType Models.JournalType) (countAmount float64, err error)
 		CheckupUnbalance(companyID string) (bool, error)
 		Insert(journalEntries []Models.JournalEntry, trx *gorm.DB) error
@@ -56,6 +57,18 @@ func (repository *JournalEntriesRepository) FindAll(request Dto.GetJournalReques
 	return journalEntries, totalData, nil
 }
 
+func (repository *JournalEntriesRepository) FindByCompanyID(companyID string) (journalEntry *Models.JournalEntry, err error) {
+	journalEntry = &Models.JournalEntry{}
+
+	if err := repository.DB.
+		Where("company_id = ?", companyID).
+		First(journalEntry).Error; err != nil {
+		return nil, err
+	}
+
+	return journalEntry, nil
+}
+
 func (repository *JournalEntriesRepository) Insert(journalEntries []Models.JournalEntry, trx *gorm.DB) error {
 	db := trx
 	if db == nil {
@@ -70,6 +83,7 @@ func (repository *JournalEntriesRepository) Insert(journalEntries []Models.Journ
 }
 
 func (repository *JournalEntriesRepository) CalculateAmountByType(companyID string, prefixType Models.JournalType) (countAmount float64, err error) {
+
 	if err := repository.DB.
 		Model(&Models.JournalEntry{}).
 		Where("company_id = ? AND type = ?", companyID, prefixType).

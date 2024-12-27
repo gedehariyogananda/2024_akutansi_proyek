@@ -5,13 +5,14 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type (
 	IJournalEntriesController interface {
-		FindAll(c *gin.Context)
+		FindAll(ctx *gin.Context)
 	}
 
 	JournalEntriesController struct {

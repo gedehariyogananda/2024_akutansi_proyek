@@ -7,16 +7,19 @@ import (
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Utils"
 	"context"
+	"errors"
 	"fmt"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type (
 	IJournalEntriesService interface {
 		FindAll(request Dto.GetJournalRequest) (res []*Models.JournalEntry, meta Common.Meta, err error)
-		InsertJournalCashier(params Common.JournalEntryParams, isPaid bool) (err error)
-		InsertJournalPurchase(params Common.JournalEntryParams, isPaid bool) (err error)
-		InsertJournalOtherTransaction(ctx context.Context, params Common.JournalEntryParams) (err error)
+		InsertJournalCashier(params Common.JournalEntryParams, isPaid bool, trx *gorm.DB) (err error)
+		InsertJournalPurchase(params Common.JournalEntryParams, isPaid bool, trx *gorm.DB) (err error)
+		InsertJournalOtherTransaction(ctx context.Context) (err error)
 	}
 
 	JournalEntriesService struct {
@@ -45,9 +48,13 @@ func (service *JournalEntriesService) FindAll(request Dto.GetJournalRequest) (re
 	return res, meta, nil
 }
 
-func (service *JournalEntriesService) InsertJournalCashier(params Common.JournalEntryParams, isPaid bool) (err error) {
-	// checkup unbalance
-	if err := service.unbalanceCheckup(params.CompanyID); err != nil {
+func (service *JournalEntriesService) InsertJournalCashier(params Common.JournalEntryParams, isPaid bool, trx *gorm.DB) (err error) {
+	isContinued, err := service.unbalanceCheckup(params.CompanyID)
+	if err != nil {
+		return err
+	}
+
+	if !isContinued {
 		return err
 	}
 
@@ -72,16 +79,21 @@ func (service *JournalEntriesService) InsertJournalCashier(params Common.Journal
 		service.createJournalEntry(acc[Models.AccountRevenueCode].ID, params, revenueType, params.SubTotal),      // pendapatan
 	}
 
-	if err := service.JournalEntriesRepository.Insert(res, nil); err != nil {
+	if err := service.JournalEntriesRepository.Insert(res, trx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (service *JournalEntriesService) InsertJournalPurchase(params Common.JournalEntryParams, isPaid bool) (err error) {
-	// checkup unbalance
-	if err := service.unbalanceCheckup(params.CompanyID); err != nil {
+func (service *JournalEntriesService) InsertJournalPurchase(params Common.JournalEntryParams, isPaid bool, trx *gorm.DB) (err error) {
+
+	isContinued, err := service.unbalanceCheckup(params.CompanyID)
+	if err != nil {
+		return err
+	}
+
+	if !isContinued {
 		return err
 	}
 
@@ -106,67 +118,14 @@ func (service *JournalEntriesService) InsertJournalPurchase(params Common.Journa
 		res = append(res, service.createJournalEntry(acc[Models.AccountBusinessDebtCode].ID, params, bussinessDebtType, params.SubTotal+params.Tax)) // hutang usaha
 	}
 
-	if err := service.JournalEntriesRepository.Insert(res, nil); err != nil {
+	if err := service.JournalEntriesRepository.Insert(res, trx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (service *JournalEntriesService) createJournalEntry(accountID string, params Common.JournalEntryParams, journalType Models.JournalType, amount float64) Models.JournalEntry {
-
-	now := time.Now()
-	if params.Date != nil {
-		now = *params.Date
-	}
-
-	dataDate := Utils.SeperateDate(now.Format("2006-01-02"))
-
-	return Models.JournalEntry{
-		AccountID:       accountID,
-		Amount:          amount,
-		Type:            journalType,
-		CompanyID:       params.CompanyID,
-		Note:            params.Note,
-		Date:            now,
-		TransactionCode: "TRX-" + Utils.GenerateUniqueSuffix() + "-" + fmt.Sprintf("%d", *dataDate.Year),
-		AdditionalData:  params.AdditionalData,
-	}
-}
-
-func (service *JournalEntriesService) allAccountCompanyUser(companyID string) (map[string]*Models.Account, error) {
-	accounts, _, err := service.AccountRepository.FindAll(companyID, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	acc := make(map[string]*Models.Account)
-
-	for _, account := range accounts {
-		acc[account.Code] = account
-	}
-
-	if len(acc) == 0 {
-		return nil, fmt.Errorf("E_ACCOUNT_NOT_FOUND")
-	}
-
-	return acc, nil
-}
-
-func (service *JournalEntriesService) unbalanceCheckup(companyID string) (err error) {
-	unbalance, err := service.JournalEntriesRepository.CheckupUnbalance(companyID)
-	if err != nil {
-		return err
-	}
-
-	if !unbalance {
-		return fmt.Errorf("E_JOURNAL_ENTRY_UNBALANCE")
-	}
-
-	return nil
-}
-
-func (service *JournalEntriesService) InsertJournalOtherTransaction(ctx context.Context, params Common.JournalEntryParams) (err error) {
+func (service *JournalEntriesService) InsertJournalOtherTransaction(ctx context.Context) (err error) {
 	now := time.Now()
 	currentDate := now.Format("2006-01-02")
 
@@ -178,13 +137,20 @@ func (service *JournalEntriesService) InsertJournalOtherTransaction(ctx context.
 	for _, transaction := range transactions {
 		var entries []Models.JournalEntry
 
+		params := Common.JournalEntryParams{
+			CompanyID:      transaction.CompanyID,
+			Note:           *transaction.Note,
+			Date:           &transaction.Date,
+			AdditionalData: transaction.AdditionalData,
+		}
+
 		acc, err := service.allAccountCompanyUser(transaction.CompanyID)
 		if err != nil {
 			return err
 		}
 
 		if transaction.PaymentType == "" {
-			return fmt.Errorf("transaction payment type is empty")
+			return fmt.Errorf("tipe transaksi kosong!")
 		}
 
 		switch Models.TypeTransactionClient(transaction.PaymentType) {
@@ -260,4 +226,67 @@ func (service *JournalEntriesService) InsertJournalOtherTransaction(ctx context.
 	}
 
 	return nil
+}
+
+func (service *JournalEntriesService) createJournalEntry(accountID string, params Common.JournalEntryParams, journalType Models.JournalType, amount float64) Models.JournalEntry {
+
+	now := time.Now()
+	if params.Date != nil {
+		now = *params.Date
+	}
+
+	dataDate := Utils.SeperateDate(now.Format("2006-01-02"))
+
+	return Models.JournalEntry{
+		AccountID:       accountID,
+		Amount:          amount,
+		Type:            journalType,
+		CompanyID:       params.CompanyID,
+		Note:            params.Note,
+		Date:            now,
+		TransactionCode: "TRX-" + Utils.GenerateUniqueSuffix() + "-" + fmt.Sprintf("%d", *dataDate.Year),
+		AdditionalData:  params.AdditionalData,
+	}
+}
+
+func (service *JournalEntriesService) allAccountCompanyUser(companyID string) (map[string]*Models.Account, error) {
+	accounts, err := service.AccountRepository.GetAll(companyID)
+	if err != nil {
+		return nil, fmt.Errorf("E_ACCOUNT_NOT_FOUND")
+	}
+
+	acc := make(map[string]*Models.Account)
+
+	for _, account := range accounts {
+		acc[account.Code] = account
+	}
+
+	if len(acc) == 0 {
+		return nil, fmt.Errorf("E_ACCOUNT_NOT_FOUND")
+	}
+
+	return acc, nil
+}
+
+func (service *JournalEntriesService) unbalanceCheckup(companyID string) (isContinued bool, err error) {
+	data, err := service.JournalEntriesRepository.FindByCompanyID(companyID)
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, err
+		}
+	}
+
+	if data != nil {
+		// checkup unbalance
+		unbalance, err := service.JournalEntriesRepository.CheckupUnbalance(companyID)
+		if err != nil {
+			return false, err
+		}
+
+		if !unbalance {
+			return false, fmt.Errorf("E_JOURNAL_ENTRY_UNBALANCE")
+		}
+	}
+
+	return true, nil
 }

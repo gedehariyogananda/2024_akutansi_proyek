@@ -49,7 +49,7 @@ func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models
 
 	checkEmail, _ := service.userRepository.FindEmail(request.Email)
 	if checkEmail != nil {
-		return nil, http.StatusConflict, errors.New("email sudah terdaftar di sistem kami!")
+		return nil, http.StatusBadRequest, errors.New("email sudah terdaftar di sistem kami!")
 	}
 
 	company, err := service.companyRepository.Create(&Models.Company{
