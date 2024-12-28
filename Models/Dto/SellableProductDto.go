@@ -8,16 +8,24 @@ type SellableProductDTO struct {
 	PrefixDeletePromo *bool   `json:"prefix_delete_promo" `
 }
 
+type ReceiptMaterialDto struct {
+	MaterialID string  `json:"material_id" validate:"required"`
+	Quantity   float64 `json:"quantity" validate:"required"`
+}
+
 type CreateSellableProductDTO struct {
-	Name           string  `form:"name" validate:"required"`
-	SmallestUnitID string  `form:"smallest_unit_id" validate:"required"`
-	CategoryID     string  `form:"category_id" validate:"required"`
-	Sku            string  `form:"sku" validate:"required"`
-	Description    string  `form:"description" validate:"required"`
-	Status         *bool   `form:"status"`
-	Image          string  `form:"-"`
-	Price          float64 `form:"price" validate:"required"`
-	CompanyID      string  `form:"-"`
+	Name           string                `form:"name" validate:"required"`
+	SmallestUnitID string                `form:"smallest_unit_id" validate:"required"`
+	CategoryID     string                `form:"category_id" validate:"required"`
+	Sku            string                `form:"sku" validate:"required"`
+	Description    string                `form:"description" validate:"required"`
+	Status         *bool                 `form:"status"`
+	HasReceipt     bool                  `form:"has_receipt" validareL:"required"`
+	Image          string                `form:"-"`
+	Price          float64               `form:"price" validate:"required"`
+	CompanyID      string                `form:"-"`
+	Materials      string                `form:"materials"`
+	MaterialsObj   *[]ReceiptMaterialDto `form:"-"`
 }
 
 type AssignMaterialDtoJson struct {

@@ -17,7 +17,7 @@ import (
 type (
 	ISellableProductService interface {
 		Create(request *Dto.CreateSellableProductDTO) (res *Response.SellableResponse, err error)
-		CreateWithAsignMaterial(request *Dto.CreateSellableProductWithAssignMaterialDTO) (res *Response.SellableResponse, err error)
+		// CreateWithAsignMaterial(request *Dto.CreateSellableProductWithAssignMaterialDTO) (res *Response.SellableResponse, err error)
 		GetAll(companyID string, query *Common.Query, onlyActive bool) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error)
 		AssignMaterial(request *Dto.AssignMaterialDtos) (statusCode int, err error)
 		UnAssignMaterial(request *Dto.UnAssignMaterialDto) (statusCode int, err error)
@@ -32,14 +32,16 @@ type (
 		SellableProductRepository Repositories.ISellableProductRepository
 		PromoItemRepository       Repositories.IPromoItemRepository
 		ReceiptRepository         Repositories.IReceiptRepository
+		DB                        *gorm.DB
 	}
 )
 
-func SellableProductServiceProvider(sellableProductRepository Repositories.ISellableProductRepository, promoItemRepository Repositories.IPromoItemRepository, receiptRepository Repositories.IReceiptRepository) *SellableProductService {
+func SellableProductServiceProvider(sellableProductRepository Repositories.ISellableProductRepository, promoItemRepository Repositories.IPromoItemRepository, receiptRepository Repositories.IReceiptRepository, DB *gorm.DB) *SellableProductService {
 	return &SellableProductService{
 		SellableProductRepository: sellableProductRepository,
 		PromoItemRepository:       promoItemRepository,
 		ReceiptRepository:         receiptRepository,
+		DB:                        DB,
 	}
 }
 
@@ -154,13 +156,30 @@ func (service *SellableProductService) UpdateStock(id string, request *Dto.Sella
 }
 
 func (service *SellableProductService) Create(request *Dto.CreateSellableProductDTO) (res *Response.SellableResponse, err error) {
+	trx := service.DB.Begin()
+
+	if trx.Error != nil {
+		return nil, trx.Error
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			trx.Rollback()
+			err = fmt.Errorf("panic occurred: %v", r)
+		} else if err != nil {
+			trx.Rollback()
+		} else {
+			trx.Commit()
+		}
+	}()
+
 	sellableProduct := &Models.SellableProduct{
 		Name:           request.Name,
 		SmallestUnitID: request.SmallestUnitID,
 		CategoryID:     request.CategoryID,
 		Description:    request.Description,
 		Status:         request.Status,
-		HasReceipt:     false,
+		HasReceipt:     request.HasReceipt,
 		Price:          request.Price,
 		Sku:            request.Sku,
 		Image:          request.Image,
@@ -173,50 +192,67 @@ func (service *SellableProductService) Create(request *Dto.CreateSellableProduct
 		return res, err
 	}
 
-	res = Response.ToSellableResponse(product)
-
-	return res, nil
-}
-
-func (service *SellableProductService) CreateWithAsignMaterial(request *Dto.CreateSellableProductWithAssignMaterialDTO) (res *Response.SellableResponse, err error) {
-	sellableProduct := &Models.SellableProduct{
-		Name:           request.Name,
-		SmallestUnitID: request.SmallestUnitID,
-		CategoryID:     request.CategoryID,
-		Description:    request.Description,
-		Status:         request.Status,
-		HasReceipt:     true,
-		Price:          request.Price,
-		Sku:            request.Sku,
-		Image:          request.Image,
-		CompanyID:      request.CompanyID,
+	if !request.HasReceipt && request.MaterialsObj == nil {
+		return res, errors.New("if don't have receipt can't send materials")
 	}
 
-	fmt.Println(request.Materials[0].MaterialID)
-	product, err := service.SellableProductRepository.Create(sellableProduct)
-
-	if err != nil {
-		return res, err
-	}
-
-	if request.Materials != nil {
-		for _, material := range request.Materials {
-			receipt := &Models.Receipt{
+	if request.MaterialsObj != nil {
+		for _, material := range *request.MaterialsObj {
+			receipts := &Models.Receipt{
 				SellableProductID: product.ID,
-				MaterialProductID: material.MaterialID,
-				Quantity:          material.Quantity,
+				Quantity:          int(material.Quantity),
 			}
+			err = service.ReceiptRepository.Create(receipts)
 
-			if err = service.ReceiptRepository.Create(receipt); err != nil {
+			if err != nil {
 				return res, err
 			}
 		}
 	}
-
 	res = Response.ToSellableResponse(product)
 
 	return res, nil
 }
+
+// func (service *SellableProductService) CreateWithAsignMaterial(request *Dto.CreateSellableProductWithAssignMaterialDTO) (res *Response.SellableResponse, err error) {
+// 	sellableProduct := &Models.SellableProduct{
+// 		Name:           request.Name,
+// 		SmallestUnitID: request.SmallestUnitID,
+// 		CategoryID:     request.CategoryID,
+// 		Description:    request.Description,
+// 		Status:         request.Status,
+// 		HasReceipt:     true,
+// 		Price:          request.Price,
+// 		Sku:            request.Sku,
+// 		Image:          request.Image,
+// 		CompanyID:      request.CompanyID,
+// 	}
+
+// 	fmt.Println(request.Materials[0].MaterialID)
+// 	product, err := service.SellableProductRepository.Create(sellableProduct)
+
+// 	if err != nil {
+// 		return res, err
+// 	}
+
+// 	if request.Materials != nil {
+// 		for _, material := range request.Materials {
+// 			receipt := &Models.Receipt{
+// 				SellableProductID: product.ID,
+// 				MaterialProductID: material.MaterialID,
+// 				Quantity:          material.Quantity,
+// 			}
+
+// 			if err = service.ReceiptRepository.Create(receipt); err != nil {
+// 				return res, err
+// 			}
+// 		}
+// 	}
+
+// 	res = Response.ToSellableResponse(product)
+
+// 	return res, nil
+// }
 
 func (service *SellableProductService) AssignMaterial(request *Dto.AssignMaterialDtos) (statusCode int, err error) {
 	for _, material := range request.Materials {
@@ -263,6 +299,23 @@ func (s *SellableProductService) FindById(id string) (res *Response.SellableResp
 }
 
 func (s *SellableProductService) Delete(id string) (statusCode int, err error) {
+	trx := s.DB.Begin()
+
+	if trx.Error != nil {
+		return http.StatusInternalServerError, trx.Error
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			trx.Rollback()
+			err = fmt.Errorf("panic occurred: %v", r)
+		} else if err != nil {
+			trx.Rollback()
+		} else {
+			trx.Commit()
+		}
+	}()
+
 	_, err = s.SellableProductRepository.FindByID(id)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {

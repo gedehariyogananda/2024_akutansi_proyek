@@ -113,7 +113,7 @@ func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
 	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
 	promoItemRepository := Repositories.PromoItemRepositoryProvider(db)
 	receiptRepository := Repositories.ReceiptRepositoryProvider(db)
-	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository, receiptRepository)
+	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository, receiptRepository, db)
 	sellableProductController := Controllers.SellableProductControllerProvider(sellableProductService)
 	return sellableProductController
 }
