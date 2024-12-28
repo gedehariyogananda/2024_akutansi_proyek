@@ -50,4 +50,5 @@ type UpdateSellableProductDTO struct {
 	Status         *bool   `form:"status"`
 	Image          string  `form:"-"`
 	Price          float64 `form:"price"`
+	HasReceipt     bool    `form:"has_receipt"`
 }

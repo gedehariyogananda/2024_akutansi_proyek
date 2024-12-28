@@ -354,9 +354,6 @@ func (s *SellableProductService) Update(dto *Dto.UpdateSellableProductDTO, id st
 
 	var image string
 
-	fmt.Println("test")
-	fmt.Println(dto.Image)
-
 	if dto.Image == "" {
 		image = product.Image
 	} else if dto.Image != product.Image {
