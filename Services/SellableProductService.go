@@ -374,6 +374,7 @@ func (s *SellableProductService) Update(dto *Dto.UpdateSellableProductDTO, id st
 		Price:          dto.Price,
 		Sku:            dto.Sku,
 		Image:          image,
+		HasReceipt:     dto.HasReceipt,
 	}
 
 	if err = s.SellableProductRepository.Update(id, sellableProduct); err != nil {
