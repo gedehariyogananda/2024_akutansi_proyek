@@ -123,7 +123,6 @@ func (c *AuthController) LoginMobile(ctx *gin.Context) {
 	}, statusCode)
 }
 
-
 func (c *AuthController) Profile(ctx *gin.Context) {
 	profileData, statusCode, err := c.service.GetProfile(ctx.GetString("id"))
 	if err != nil {

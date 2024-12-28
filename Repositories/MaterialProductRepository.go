@@ -18,7 +18,7 @@ type (
 		FindByID(id string) (*Models.MaterialProduct, error)
 		Delete(id string) error
 		Update(materialProduct *Models.MaterialProduct, id string) (*Models.MaterialProduct, error)
-		FindAll(companyID string, query *Common.Query) ([]Models.MaterialProduct, int64, error)
+		FindAll(companyID string, query *Common.Query) ([]*Models.MaterialProduct, int64, error)
 	}
 
 	MaterialProductRepository struct {
@@ -91,8 +91,8 @@ func (r *MaterialProductRepository) Update(materialProduct *Models.MaterialProdu
 	return materialProduct, nil
 }
 
-func (r *MaterialProductRepository) FindAll(companyID string, query *Common.Query) ([]Models.MaterialProduct, int64, error) {
-	var materialProducts []Models.MaterialProduct
+func (r *MaterialProductRepository) FindAll(companyID string, query *Common.Query) ([]*Models.MaterialProduct, int64, error) {
+	var materialProducts []*Models.MaterialProduct
 	var total int64
 
 	err := r.DB.Preload("Unit").Preload("MaterialConversions.Unit").Scopes(Utils.Paginate(query.Page, query.Limit),

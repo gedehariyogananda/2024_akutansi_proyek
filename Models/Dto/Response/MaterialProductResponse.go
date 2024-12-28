@@ -17,8 +17,8 @@ type MaterialProduckResponse struct {
 	MaterialConversions []MaterialConversionResponse `json:"material_conversions"`
 }
 
-func ToMaterialProduckResponse(materialProduck Models.MaterialProduct) MaterialProduckResponse {
-	return MaterialProduckResponse{
+func ToMaterialProduckResponse(materialProduck *Models.MaterialProduct) *MaterialProduckResponse {
+	return &MaterialProduckResponse{
 		ID:                  materialProduck.ID,
 		Name:                materialProduck.Name,
 		Sku:                 materialProduck.Sku,
@@ -32,8 +32,8 @@ func ToMaterialProduckResponse(materialProduck Models.MaterialProduct) MaterialP
 	}
 }
 
-func ToMaterialProduckResponseSlice(materialProducks []Models.MaterialProduct) []MaterialProduckResponse {
-	materialProduckResponses := []MaterialProduckResponse{}
+func ToMaterialProduckResponseSlice(materialProducks []*Models.MaterialProduct) []*MaterialProduckResponse {
+	materialProduckResponses := []*MaterialProduckResponse{}
 	for _, materialProduck := range materialProducks {
 		materialProduckResponses = append(materialProduckResponses, ToMaterialProduckResponse(materialProduck))
 	}

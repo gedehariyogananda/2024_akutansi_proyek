@@ -7,7 +7,7 @@ type CreateMaterialProductDto struct {
 	CompanyID           string                        `json:"_" `
 	SmallestUnitID      string                        `json:"smallest_unit_id" binding:"required"`
 	Status              bool                          `json:"status"`
-	MaterialConversions []CreateMaterialConversionDto `json:"" binding:"required"`
+	MaterialConversions []CreateMaterialConversionDto `json:"material_conversions" binding:"required"`
 }
 
 type UpdateMaterialProductDto struct {
