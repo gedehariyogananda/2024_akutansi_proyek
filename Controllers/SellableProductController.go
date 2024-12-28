@@ -112,7 +112,13 @@ func (controller *SellableProductController) Create(ctx *gin.Context) {
 		createSellableProduct.MaterialsObj = materials
 	}
 	// BINDING SECTION END
+
 	// VALIDATION SECTION START
+
+	if validationErrors := Utils.ValidateRequest(ctx, &createSellableProduct); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
+		return
+	}
 
 	for _, material := range *materials {
 		if material.MaterialID == "" || material.Quantity <= 0 {

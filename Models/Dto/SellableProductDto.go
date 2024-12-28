@@ -37,25 +37,6 @@ type AssignMaterialDtos struct {
 	Materials         []*AssignMaterialDtoJson `json:"materials" validate:"required"`
 }
 
-type AssignMaterialDtoForm struct {
-	MaterialID string `form:"material_id" validate:"required"`
-	Quantity   int    `form:"quantity" validate:"required"`
-}
-
-// ... (rest of your code)
-type CreateSellableProductWithAssignMaterialDTO struct {
-	Name           string                   `form:"name" validate:"required"`
-	SmallestUnitID string                   `form:"smallest_unit_id" validate:"required"`
-	CategoryID     string                   `form:"category_id" validate:"required"`
-	Sku            string                   `form:"sku" validate:"required"`
-	Description    string                   `form:"description" validate:"required"`
-	Status         *bool                    `form:"status"`
-	Image          string                   `form:"-"`
-	Price          float64                  `form:"price" validate:"required"`
-	CompanyID      string                   `form:"-"`
-	Materials      []*AssignMaterialDtoForm `form:"materials" validate:"required,dive"`
-}
-
 type UnAssignMaterialDto struct {
 	MaterialIDS []string `json:"material_ids" validate:"required"`
 }
