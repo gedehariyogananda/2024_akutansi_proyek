@@ -2,7 +2,6 @@ package Response
 
 import (
 	"2024_akutansi_project/Models"
-	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -32,8 +31,6 @@ type SellableResponse struct {
 }
 
 func ToSellableResponse(sellableProduct *Models.SellableProduct) *SellableResponse {
-	fmt.Println(sellableProduct.Category)
-	fmt.Println(sellableProduct.Receipts)
 
 	var materials []*MaterialProduckResponse
 

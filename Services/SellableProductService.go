@@ -200,6 +200,7 @@ func (service *SellableProductService) Create(request *Dto.CreateSellableProduct
 		for _, material := range *request.MaterialsObj {
 			receipts := &Models.Receipt{
 				SellableProductID: product.ID,
+				MaterialProductID: material.MaterialID,
 				Quantity:          int(material.Quantity),
 			}
 			err = service.ReceiptRepository.Create(receipts)
