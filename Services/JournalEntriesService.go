@@ -129,7 +129,7 @@ func (service *JournalEntriesService) InsertJournalOtherTransaction(ctx context.
 	now := time.Now()
 	currentDate := now.Format("2006-01-02")
 
-	transactions, err := service.TransactionRepository.GetByDate(currentDate)
+	transactions, err := service.TransactionRepository.GetByDate(currentDate, &[]string{"id", "payment_type", "payment_method", "amount", "company_id", "title"})
 	if err != nil {
 		return err
 	}
@@ -137,9 +137,11 @@ func (service *JournalEntriesService) InsertJournalOtherTransaction(ctx context.
 	for _, transaction := range transactions {
 		var entries []Models.JournalEntry
 
+		note := transaction.Title + "_" + transaction.PaymentType + "_" + transaction.PaymentMethod
+
 		params := Common.JournalEntryParams{
 			CompanyID:      transaction.CompanyID,
-			Note:           *transaction.Note,
+			Note:           note,
 			Date:           &transaction.Date,
 			AdditionalData: transaction.AdditionalData,
 		}
@@ -175,7 +177,7 @@ func (service *JournalEntriesService) InsertJournalOtherTransaction(ctx context.
 				service.createJournalEntry(acc[Models.AccountReceivablesCode].ID, params, Models.CREDIT, transaction.Amount), // Kredit: Piutang Usaha
 			}
 		case Models.TIPE_SALE: // Case 5 & 8: Penjualan
-			if transaction.PaymentType == string(Models.PAYMENT_METHOD_CASH) { // Metode Cash
+			if transaction.PaymentMethod == string(Models.PAYMENT_METHOD_CASH) { // Metode Cash
 				entries = []Models.JournalEntry{
 					service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.DEBIT, transaction.Amount),     // Debit: Kas
 					service.createJournalEntry(acc[Models.AccountRevenueCode].ID, params, Models.CREDIT, transaction.Amount), // Kredit: Pendapatan
@@ -187,7 +189,7 @@ func (service *JournalEntriesService) InsertJournalOtherTransaction(ctx context.
 				}
 			}
 		case Models.TIPE_PURCHASE: // Case 6 & 7: Pembelian
-			if transaction.PaymentType == string(Models.PAYMENT_METHOD_CASH) {
+			if transaction.PaymentMethod == string(Models.PAYMENT_METHOD_CASH) {
 				entries = []Models.JournalEntry{
 					service.createJournalEntry(acc[Models.AccountAssetsCode].ID, params, Models.DEBIT, transaction.Amount), // Debit: Aset
 					service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.CREDIT, transaction.Amount),  // Kredit: Kas
@@ -204,7 +206,7 @@ func (service *JournalEntriesService) InsertJournalOtherTransaction(ctx context.
 				service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.CREDIT, transaction.Amount),     // Kredit: Kas
 			}
 		case Models.TYPE_EXPENSE: // Case 10 & 11: Pembayaran Beban
-			if transaction.PaymentType == string(Models.PAYMENT_METHOD_CASH) { // Metode Cash
+			if transaction.PaymentMethod == string(Models.PAYMENT_METHOD_CASH) { // Metode Cash
 				entries = []Models.JournalEntry{
 					service.createJournalEntry(acc[Models.AccountCompanyExpenseCode].ID, params, Models.DEBIT, transaction.Amount), // Debit: Beban Perusahaan
 					service.createJournalEntry(acc[Models.AccountCashCode].ID, params, Models.CREDIT, transaction.Amount),          // Kredit: Kas

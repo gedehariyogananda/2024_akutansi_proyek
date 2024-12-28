@@ -14,7 +14,7 @@ type (
 		GetAllByCompany(query *Common.Query) (data []*Models.Transaction, totalData int64, err error)
 		Store(transaction *Models.Transaction) (data *Models.Transaction, err error)
 		CountByDateCompanyID(companyID string, date string) (int64, error)
-		GetByDate(date string) (transactions []*Models.Transaction, err error)
+		GetByDate(date string, selectedFields *[]string) (transactions []*Models.Transaction, err error)
 	}
 
 	TransactionRepository struct {
@@ -68,10 +68,16 @@ func (r *TransactionRepository) CountByDateCompanyID(companyID string, date stri
 	return total, nil
 }
 
-func (r *TransactionRepository) GetByDate(date string) (transactions []*Models.Transaction, err error) {
-	if err := r.DB.Model(&Models.Transaction{}).
-		Where("DATE(created_at) = ?", date).
-		Find(&transactions).Error; err != nil {
+func (r *TransactionRepository) GetByDate(date string, selectedFields *[]string) (transactions []*Models.Transaction, err error) {
+
+	query := r.DB.Model(&Models.Transaction{}).
+		Where("DATE(created_at) = ?", date)
+
+	if selectedFields != nil {
+		query = query.Select(*selectedFields)
+	}
+
+	if err := query.Find(&transactions).Error; err != nil {
 		return nil, err
 	}
 

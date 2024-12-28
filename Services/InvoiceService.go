@@ -153,11 +153,12 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 	// true === lunas
 	if invoiceDataClient.Status {
 		// insert journal entry
+		note := "pembayaran transaksi kasir"
 		if err := invoiceService.journalEntriesService.InsertJournalCashier(Common.JournalEntryParams{
 			CompanyID:       companyID,
 			SubTotal:        invoiceDataClient.SubTotal,
 			Tax:             invoiceDataClient.Tax,
-			Note:            invoiceDataClient.Note,
+			Note:            note,
 			TransactionCode: invoiceDataClient.InvoiceNumber,
 			AdditionalData:  nil,
 		}, true, trx); err != nil {
@@ -365,12 +366,14 @@ func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) 
 		return http.StatusInternalServerError, err
 	}
 
+	note := "retur transaksi kasir"
+
 	// insert journal entry
 	if err := invoiceService.journalEntriesService.InsertJournalCashier(Common.JournalEntryParams{
 		CompanyID:       companyID,
 		SubTotal:        invoice.SubTotal,
 		Tax:             invoice.Tax,
-		Note:            invoice.Note,
+		Note:            note,
 		TransactionCode: invoice.InvoiceNumber,
 		AdditionalData:  nil,
 	}, false, nil); err != nil {
