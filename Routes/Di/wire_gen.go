@@ -25,7 +25,8 @@ func DIAuth(db *gorm.DB, redis2 *redis.Client) *Controllers.AuthController {
 	jwtService := Services.JwtServiceProvider()
 	companyRepository := Repositories.CompanyRepositoryProvider(db)
 	subUserRepository := Repositories.SubUserRepositoryProvider(db)
-	authService := Services.AuthServiceProvider(userRepository, jwtService, companyRepository, subUserRepository, redis2)
+	accountRepository := Repositories.AccountProvider(db)
+	authService := Services.AuthServiceProvider(userRepository, jwtService, companyRepository, subUserRepository, redis2, accountRepository)
 	authController := Controllers.AuthControllerProvider(authService)
 	return authController
 }
@@ -44,7 +45,11 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)
 	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
 	materialStockRepository := Repositories.MaterialStockRepositoryProvider(db)
-	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, sellableStockRepository, materialStockRepository, db)
+	journalEntriesRepository := Repositories.JournalEntriesProvider(db)
+	accountRepository := Repositories.AccountProvider(db)
+	transactionRepository := Repositories.TransactionRepositoryProvider(db)
+	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository, transactionRepository)
+	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, sellableStockRepository, materialStockRepository, journalEntriesRepository, accountRepository, journalEntriesService, db)
 	invoiceController := Controllers.InvoiceControllerProvider(invoiceService)
 	return invoiceController
 }
@@ -140,4 +145,13 @@ func DITransaction(db *gorm.DB) *Controllers.TransactionController {
 	transactionService := Services.TransactionServiceProvider(transactionRepository)
 	transactionController := Controllers.TransactionControllerProvider(transactionService)
 	return transactionController
+}
+
+func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
+	journalEntriesRepository := Repositories.JournalEntriesProvider(db)
+	accountRepository := Repositories.AccountProvider(db)
+	transactionRepository := Repositories.TransactionRepositoryProvider(db)
+	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository, transactionRepository)
+	journalEntriesController := Controllers.JournalEntriesProvider(journalEntriesService)
+	return journalEntriesController
 }

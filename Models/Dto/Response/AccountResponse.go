@@ -31,7 +31,6 @@ func ToAccount(account *Models.Account) *Account {
 		Type:      string(account.Type),
 		CompanyID: account.CompanyID,
 		Code:      account.Code,
-		IsLocked:  account.IsLocked,
 		Status:    account.Status,
 	}
 }

@@ -6,3 +6,4 @@ public/*
 
 *.json
 *.DS_Store
+**/schema.sql
