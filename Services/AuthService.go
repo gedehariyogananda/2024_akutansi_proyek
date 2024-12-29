@@ -30,16 +30,18 @@ type (
 		companyRepository Repositories.ICompanyRepository
 		jwtService        IJwtService
 		redisClient       *redis.Client
+		accountRepository Repositories.IAccountRepository
 	}
 )
 
-func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client) *AuthService {
+func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client, accountRepository Repositories.IAccountRepository) *AuthService {
 	return &AuthService{
 		userRepository:    userRepository,
 		companyRepository: companyRepository,
 		jwtService:        jwtService,
 		subUserRepository: subUser,
 		redisClient:       redisClient,
+		accountRepository: accountRepository,
 	}
 }
 
@@ -47,7 +49,7 @@ func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models
 
 	checkEmail, _ := service.userRepository.FindEmail(request.Email)
 	if checkEmail != nil {
-		return nil, http.StatusConflict, errors.New("email sudah terdaftar di sistem kami!")
+		return nil, http.StatusBadRequest, errors.New("email sudah terdaftar di sistem kami!")
 	}
 
 	company, err := service.companyRepository.Create(&Models.Company{
@@ -69,6 +71,11 @@ func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models
 	})
 
 	if err != nil {
+		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat account")
+	}
+
+	// create account for company
+	if err := service.accountRepository.InsertDefaultAccounts(company.ID); err != nil {
 		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat account")
 	}
 
@@ -94,7 +101,7 @@ func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOw
 
 	codeCompany := Utils.SuffixDigitsToUpper(company.Name, Consts.DigitCompanyCode)
 
-	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, codeCompany, false, false)
+	token, duration, err := service.jwtService.GenerateToken(ownerData.ID, ownerData.CompanyID, ownerData.Name, codeCompany, false, true)
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error generate token")

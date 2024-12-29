@@ -9,9 +9,7 @@ import (
 	"2024_akutansi_project/Utils"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -35,11 +33,14 @@ type (
 		materialProductRepository Repositories.IMaterialProductRepository
 		sellableStockRepository   Repositories.ISellableStockRepository
 		materialStockRepository   Repositories.IMaterialStockRepository
+		journalEntriesRepository  Repositories.IJournalEntriesRepository
+		accountRepository         Repositories.IAccountRepository
+		journalEntriesService     IJournalEntriesService
 		DB                        *gorm.DB
 	}
 )
 
-func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceItemRepository Repositories.IInvoiceItemRepository, sellableProductRepository Repositories.ISellableProductRepository, receiptProductRepository Repositories.IReceiptRepository, materialProductRepository Repositories.IMaterialProductRepository, sellableStockRepository Repositories.ISellableStockRepository, materialStockRepository Repositories.IMaterialStockRepository, DB *gorm.DB) *InvoiceService {
+func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceItemRepository Repositories.IInvoiceItemRepository, sellableProductRepository Repositories.ISellableProductRepository, receiptProductRepository Repositories.IReceiptRepository, materialProductRepository Repositories.IMaterialProductRepository, sellableStockRepository Repositories.ISellableStockRepository, materialStockRepository Repositories.IMaterialStockRepository, journalEntries Repositories.IJournalEntriesRepository, accountRepository Repositories.IAccountRepository, journalEntriesService IJournalEntriesService, DB *gorm.DB) *InvoiceService {
 	return &InvoiceService{
 		invoiceRepository:         invoiceRepository,
 		invoiceItemRepository:     invoiceItemRepository,
@@ -48,6 +49,9 @@ func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, i
 		materialProductRepository: materialProductRepository,
 		sellableStockRepository:   sellableStockRepository,
 		materialStockRepository:   materialStockRepository,
+		journalEntriesRepository:  journalEntries,
+		accountRepository:         accountRepository,
+		journalEntriesService:     journalEntriesService,
 		DB:                        DB,
 	}
 }
@@ -146,6 +150,22 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 		return nil, http.StatusBadRequest, fmt.Errorf("terdapat beberapa masalah: %v", strings.Join(allErrors, "; "))
 	}
 
+	// true === lunas
+	if invoiceDataClient.Status {
+		// insert journal entry
+		note := "pembayaran transaksi kasir"
+		if err := invoiceService.journalEntriesService.InsertJournalCashier(Common.JournalEntryParams{
+			CompanyID:       companyID,
+			SubTotal:        invoiceDataClient.SubTotal,
+			Tax:             invoiceDataClient.Tax,
+			Note:            note,
+			TransactionCode: invoiceDataClient.InvoiceNumber,
+			AdditionalData:  nil,
+		}, true, trx); err != nil {
+			return nil, http.StatusBadRequest, err
+		}
+	}
+
 	return invoice, http.StatusOK, nil
 }
 
@@ -222,8 +242,6 @@ func (invoiceService *InvoiceService) handleSellableStocks(trx *gorm.DB, sellabl
 
 	sumCurrentStock, _ := invoiceService.sellableStockRepository.SumCurrentQuantity(sellableProduct.ID)
 	totalAvailableQty := sumCurrentStock
-
-	log.Println("log: totalAvailableQty", totalAvailableQty)
 
 	// if stock != matched
 	if totalAvailableQty < qty {
@@ -348,19 +366,34 @@ func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) 
 		return http.StatusInternalServerError, err
 	}
 
+	note := "retur transaksi kasir"
+
+	// insert journal entry
+	if err := invoiceService.journalEntriesService.InsertJournalCashier(Common.JournalEntryParams{
+		CompanyID:       companyID,
+		SubTotal:        invoice.SubTotal,
+		Tax:             invoice.Tax,
+		Note:            note,
+		TransactionCode: invoice.InvoiceNumber,
+		AdditionalData:  nil,
+	}, false, nil); err != nil {
+		return http.StatusBadRequest, err
+	}
+
 	return http.StatusOK, nil
 }
 
 func (invoiceService *InvoiceService) StatisticSales(companyID string, date string) (data interface{}, statusCode int, err error) {
 
-	yearInit, _ := strconv.Atoi(strings.Split(date, "-")[0])
-	monthInit, _ := strconv.Atoi(strings.Split(date, "-")[1])
-	prevMonth := monthInit - 1
+	dateInit := Utils.SeperateDate(date)
+	yearInit := dateInit.Year
+	monthInit := dateInit.Month
+	prevMonth := *monthInit - 1
 
-	// set safety first and latest month init
+	// // set safety first and latest month init
 	if prevMonth < 1 {
 		prevMonth = 12
-		yearInit -= 1
+		*yearInit -= 1
 	}
 
 	currentDate, _ := time.Parse("2006-01-02", date)
@@ -369,8 +402,8 @@ func (invoiceService *InvoiceService) StatisticSales(companyID string, date stri
 	sumSalesNow, _ := invoiceService.invoiceRepository.SumSalesByDate(companyID, date)
 	sumSalesPrev, _ := invoiceService.invoiceRepository.SumSalesByDate(companyID, prevDay)
 
-	sumSalesNowByMonth, _ := invoiceService.invoiceRepository.SumSalesByYearMonth(companyID, yearInit, monthInit)
-	sumSalesPrevByMonth, _ := invoiceService.invoiceRepository.SumSalesByYearMonth(companyID, yearInit, prevMonth)
+	sumSalesNowByMonth, _ := invoiceService.invoiceRepository.SumSalesByYearMonth(companyID, *yearInit, *monthInit)
+	sumSalesPrevByMonth, _ := invoiceService.invoiceRepository.SumSalesByYearMonth(companyID, *yearInit, prevMonth)
 
 	// calculate peresentage kenaikan
 	salesNowPercentage := Utils.CalculatePercentageInit(sumSalesPrev, sumSalesNow)

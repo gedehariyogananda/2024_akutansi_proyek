@@ -101,7 +101,7 @@ func (cotroller *AccountController) FindAll(c *gin.Context) {
 			return
 		}
 
-		query.Status = statusBool
+		query.Status = &statusBool
 	}
 
 	isLocked := c.Query("is_locked")
@@ -113,7 +113,7 @@ func (cotroller *AccountController) FindAll(c *gin.Context) {
 			return
 		}
 
-		query.IsLocked = isLockedBool
+		query.IsLocked = &isLockedBool
 	}
 
 	res, meta, err := cotroller.accountService.FindAll(companyId, &query)

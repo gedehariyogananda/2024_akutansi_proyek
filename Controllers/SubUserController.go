@@ -140,7 +140,7 @@ func (controller *SubUserController) FindAll(c *gin.Context) {
 			return
 		}
 
-		dto.Status = statusBool
+		dto.Status = &statusBool
 	}
 
 	res, meta, err := controller.SubUserService.FindAll(companyId, &dto)

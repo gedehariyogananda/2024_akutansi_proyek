@@ -9,6 +9,7 @@ CREATE TABLE sellable_products
     smallest_unit_id VARCHAR(255)             NOT NULL,
     category_id      VARCHAR(255)             NOT NULL,
     image            VARCHAR(255)             NOT NULL,
+    sku             VARCHAR(255)             NOT NULL,
     description      VARCHAR(255)             NOT NULL,
     status           BOOLEAN                  NOT NULL,
     has_receipt      BOOLEAN                  NOT NULL,

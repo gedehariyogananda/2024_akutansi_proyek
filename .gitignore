@@ -5,3 +5,5 @@ public/*
 .idea
 
 *.json
+*.DS_Store
+**/schema.sql

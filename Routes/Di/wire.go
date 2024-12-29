@@ -26,6 +26,7 @@ func DIAuth(db *gorm.DB, redis *redis.Client) *Controllers.AuthController {
 		Services.JwtServiceProvider,
 		Repositories.SubUserRepositoryProvider,
 		Repositories.CompanyRepositoryProvider,
+		Repositories.AccountProvider,
 
 		wire.Bind(new(Controllers.IAuthController), new(*Controllers.AuthController)),
 		wire.Bind(new(Repositories.ISubUserRepository), new(*Repositories.SubUserRepository)),
@@ -33,6 +34,7 @@ func DIAuth(db *gorm.DB, redis *redis.Client) *Controllers.AuthController {
 		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
 		wire.Bind(new(Services.IJwtService), new(*Services.JwtService)),
 		wire.Bind(new(Repositories.ICompanyRepository), new(*Repositories.CompanyRepository)),
+		wire.Bind(new(Repositories.IAccountRepository), new(*Repositories.AccountRepository)),
 	),
 	))
 
@@ -64,7 +66,11 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 		Repositories.ReceiptRepositoryProvider,
 		Repositories.MaterialProductRepositoryProvider,
 		Repositories.SellableStockRepositoryProvider,
+		Repositories.AccountProvider,
 		Repositories.MaterialStockRepositoryProvider,
+		Repositories.JournalEntriesProvider,
+		Repositories.TransactionRepositoryProvider,
+		Services.JournalEntriesProvider,
 
 		wire.Bind(new(Controllers.IInvoiceController), new(*Controllers.InvoiceController)),
 		wire.Bind(new(Services.IInvoiceService), new(*Services.InvoiceService)),
@@ -74,7 +80,11 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 		wire.Bind(new(Repositories.IReceiptRepository), new(*Repositories.ReceiptRepository)),
 		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
 		wire.Bind(new(Repositories.IMaterialStockRepository), new(*Repositories.MaterialStockRepository)),
+		wire.Bind(new(Repositories.IAccountRepository), new(*Repositories.AccountRepository)),
+		wire.Bind(new(Repositories.IJournalEntriesRepository), new(*Repositories.JournalEntriesRepository)),
 		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
+		wire.Bind(new(Services.IJournalEntriesService), new(*Services.JournalEntriesService)),
+		wire.Bind(new(Repositories.ITransactionRepository), new(*Repositories.TransactionRepository)),
 	),
 	))
 
@@ -203,17 +213,21 @@ func DIAccount(db *gorm.DB) *Controllers.AccountController {
 	)))
 	return &Controllers.AccountController{}
 }
+
 func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.SellableProductRepositoryProvider,
+		Repositories.PromoItemRepositoryProvider,
+		Repositories.ReceiptRepositoryProvider,
 		Services.SellableProductServiceProvider,
 		Controllers.SellableProductControllerProvider,
-		Repositories.PromoItemRepositoryProvider,
 
-		wire.Bind(new(Controllers.ISellableProductController), new(*Controllers.SellableProductController)),
-		wire.Bind(new(Services.ISellableProductService), new(*Services.SellableProductService)),
-		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
+		// Bind interfaces ke implementasinya
 		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
+		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
+		wire.Bind(new(Repositories.IReceiptRepository), new(*Repositories.ReceiptRepository)),
+		wire.Bind(new(Services.ISellableProductService), new(*Services.SellableProductService)),
+		wire.Bind(new(Controllers.ISellableProductController), new(*Controllers.SellableProductController)),
 	),
 	))
 
@@ -269,4 +283,23 @@ func DITransaction(db *gorm.DB) *Controllers.TransactionController {
 	))
 
 	return &Controllers.TransactionController{}
+}
+
+func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.JournalEntriesProvider,
+		Services.JournalEntriesProvider,
+		Controllers.JournalEntriesProvider,
+		Repositories.AccountProvider,
+		Repositories.TransactionRepositoryProvider,
+
+		wire.Bind(new(Controllers.IJournalEntriesController), new(*Controllers.JournalEntriesController)),
+		wire.Bind(new(Services.IJournalEntriesService), new(*Services.JournalEntriesService)),
+		wire.Bind(new(Repositories.IJournalEntriesRepository), new(*Repositories.JournalEntriesRepository)),
+		wire.Bind(new(Repositories.IAccountRepository), new(*Repositories.AccountRepository)),
+		wire.Bind(new(Repositories.ITransactionRepository), new(*Repositories.TransactionRepository)),
+	),
+	))
+
+	return &Controllers.JournalEntriesController{}
 }
