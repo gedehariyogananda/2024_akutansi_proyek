@@ -1,6 +1,9 @@
 package Models
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
 
 type PurchaseMaterialProduct struct {
 	ID                string  `json:"id"`
@@ -11,9 +14,9 @@ type PurchaseMaterialProduct struct {
 	CompanyID         string  `json:"company_id"`
 }
 
-func (p *PurchaseMaterialProduct) BeforeCreate() (err error) {
+func (p *PurchaseMaterialProduct) BeforeCreate(tx *gorm.DB) (err error) {
 	if p.ID == "" {
 		p.ID = uuid.New().String()
 	}
-	return nil
+	return nil // Explicitly return nil if no error
 }

@@ -6,6 +6,8 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
+	"fmt"
+	"time"
 )
 
 type (
@@ -72,7 +74,11 @@ func (p *PurchaseService) GetDropdown(companyID string) (res Response.DropDwonPu
 }
 
 func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
-	dueDate, err := Helper.FormatDate(dto.DueDate)
+	var dueDate *time.Time
+
+	if dto.DueDate != "" {
+		dueDate, err = Helper.FormatDate(dto.DueDate)
+	}
 
 	if err != nil {
 		return err
@@ -86,6 +92,9 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 		PaymentType:         dto.PaymentType,
 		DueDate:             dueDate,
 	}
+
+	fmt.Println(dueDate)
+
 	purchase, err := p.purchaseRepository.Create(&puchase)
 
 	if err != nil {
@@ -103,7 +112,7 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 			stockProduct := Models.SellableStock{
 				SellableProductID: product.ID,
 				Quantity:          product.Quantity,
-				ExpiredDate:       expDate,
+				ExpiredDate:       *expDate,
 				CompanyID:         dto.CompanyID,
 			}
 
@@ -135,7 +144,7 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 			stockMaterial := Models.MaterialStock{
 				MaterialProductID: product.ID,
 				Quantity:          product.Quantity,
-				ExpiredDate:       expDate,
+				ExpiredDate:       *expDate,
 				CompanyID:         dto.CompanyID,
 			}
 

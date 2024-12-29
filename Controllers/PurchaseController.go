@@ -5,6 +5,7 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,6 +43,8 @@ func (p *PurchaseController) Purchase(ctx *gin.Context) {
 		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
 		return
 	}
+
+	fmt.Println(dto.DueDate)
 
 	if validationErrors := Utils.ValidateRequest(ctx, &dto); validationErrors != nil {
 		Helper.SetValidationErrorResponse(ctx, validationErrors)

@@ -220,7 +220,7 @@ CREATE TABLE public.purchases (
     discount numeric(15,2) NOT NULL,
     tax numeric(15,2) NOT NULL,
     payment_type character varying(255) NOT NULL,
-    due_date timestamp with time zone NOT NULL,
+    due_date timestamp with time zone,
     created_at timestamp with time zone NOT NULL
 );
 
