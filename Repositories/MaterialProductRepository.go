@@ -67,7 +67,7 @@ func (r *MaterialProductRepository) UpdateCurrent(trx *gorm.DB, materialProductI
 func (r *MaterialProductRepository) FindByID(id string) (*Models.MaterialProduct, error) {
 	var materialProduct Models.MaterialProduct
 
-	if err := r.DB.Where("id = ?", id).Preload("Unit").Preload("MaterialConversions.Unit").First(&materialProduct).Error; err != nil {
+	if err := r.DB.Where("id = ?", id).Preload("Category").Preload("Unit").Preload("MaterialConversions.Unit").First(&materialProduct).Error; err != nil {
 		return nil, fmt.Errorf("material product not found: %w", err)
 	}
 
@@ -95,7 +95,7 @@ func (r *MaterialProductRepository) FindAll(companyID string, query *Common.Quer
 	var materialProducts []*Models.MaterialProduct
 	var total int64
 
-	err := r.DB.Preload("Unit").Preload("MaterialConversions.Unit").Scopes(Utils.Paginate(query.Page, query.Limit),
+	err := r.DB.Preload("Unit").Preload("Category").Preload("MaterialConversions.Unit").Scopes(Utils.Paginate(query.Page, query.Limit),
 		Helper.FilterCompanyID(companyID),
 		Helper.FilterStatus(query.Status),
 		Helper.FilterSearch(*query.Search),

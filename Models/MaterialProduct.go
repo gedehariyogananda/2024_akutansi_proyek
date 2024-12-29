@@ -15,6 +15,7 @@ type MaterialProduct struct {
 	SmallestUnitID      string               `json:"smallest_unit_id"`
 	Unit                Unit                 `json:"unit" gorm:"foreignKey:SmallestUnitID"`
 	CategoryID          string               `json:"category_id"`
+	Category            Category             `json:"category" gorm:"foreignKey:CategoryID"`
 	Status              bool                 `json:"status"`
 	CurrentQuantity     int                  `json:"current_quantity"`
 	MaterialConversions []MaterialConversion `json:"material_conversion"`
