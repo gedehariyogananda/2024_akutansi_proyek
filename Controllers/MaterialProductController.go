@@ -119,7 +119,7 @@ func (controller *MaterialProductController) FindAll(ctx *gin.Context) {
 			Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
 		}
 
-		query.Status = statusBool
+		query.Status = &statusBool
 	}
 
 	materialProducts, meta, err := controller.MaterialProductService.FindAll(ctx.GetString("company_id"), &query)

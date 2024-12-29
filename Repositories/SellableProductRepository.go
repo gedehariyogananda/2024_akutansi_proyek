@@ -16,6 +16,11 @@ type (
 		Update(id string, sellableProduct *Models.SellableProduct) error
 		Find(id string) (sellableProduct *Models.SellableProduct, err error)
 		UpdateCurrent(trx *gorm.DB, sellableProductID string, QtyClient int) error
+		Create(sellableProduct *Models.SellableProduct) (*Models.SellableProduct, error)
+		Delete(id string) error
+		FindByID(id string) (*Models.SellableProduct, error)
+
+		// FindAll(companyID string, query *Common.Query) ([]*Models.SellableProduct, int64, error)
 	}
 
 	SellableProductRepository struct {
@@ -84,7 +89,7 @@ func (sellableProductRepository *SellableProductRepository) Find(id string) (sel
 	sellableProduct = &Models.SellableProduct{}
 
 	if err = sellableProductRepository.DB.Where("id = ?", id).Preload("Unit").First(sellableProduct).Error; err != nil {
-		return nil, fmt.Errorf("sellable product tidak ditemukan! : %w", err)
+		return nil, fmt.Errorf("sellable product not found: %w", err)
 	}
 
 	return sellableProduct, nil
@@ -100,8 +105,66 @@ func (sellableProductRepository *SellableProductRepository) UpdateCurrent(trx *g
 	if err := db.Model(&Models.SellableProduct{}).
 		Where("id = ?", sellableProductID).
 		Update("current_quantity", gorm.Expr("current_quantity - ?", qtyClient)).Error; err != nil {
-		return fmt.Errorf("ada kesalahan saat update stock! : %w", err)
+		return fmt.Errorf("error when updating stock: %w", err)
 	}
 
 	return nil
 }
+
+func (sellableProductRepository *SellableProductRepository) Create(sellableProduct *Models.SellableProduct) (*Models.SellableProduct, error) {
+	if err := sellableProductRepository.DB.Create(sellableProduct).Error; err != nil {
+		return nil, fmt.Errorf("error saat membuat sellable product: %w", err)
+	}
+
+	return sellableProduct, nil
+}
+
+func (sellableProductRepository *SellableProductRepository) Delete(id string) error {
+	if err := sellableProductRepository.DB.Where("id = ?", id).Delete(&Models.SellableProduct{}).Error; err != nil {
+		return fmt.Errorf("error saat menghapus sellable product: %w", err)
+	}
+
+	return nil
+}
+
+func (sellableProductRepository *SellableProductRepository) FindByID(id string) (*Models.SellableProduct, error) {
+	var sellableProduct Models.SellableProduct
+
+	if err := sellableProductRepository.DB.Where("id = ?", id).Preload("Unit").Preload("Category").Preload("Receipts.MaterialProduct.Unit").First(&sellableProduct).Error; err != nil {
+		return nil, fmt.Errorf("sellable product not found: %w", err)
+	}
+
+	return &sellableProduct, nil
+}
+
+// func (sellableProductRepository *SellableProductRepository) FindAll(companyID string, query *Common.Query) ([]*Models.SellableProduct, int64, error) {
+// 	var sellableProducts []*Models.SellableProduct
+// 	var totalData int64
+
+// 	err := sellableProductRepository.DB.Scopes(
+// 		Utils.Paginate(query.Page, query.Limit),
+// 		Helper.FilterCompanyID(companyID),
+// 		Helper.FilterSearch(*query.Search),
+// 		Helper.FilterStatus(query.Status),
+// 		Helper.FilterCategory(*query.CategoryID),
+// 	).
+// 		Preload("Unit").Preload("Category").Preload("Receipts.MaterialProduct.Unit").
+// 		Find(&sellableProducts).Error
+
+// 	if err != nil {
+// 		return nil, 0, err
+// 	}
+
+// 	err = sellableProductRepository.DB.Model(&Models.SellableProduct{}).Scopes(
+// 		Helper.FilterCompanyID(companyID),
+// 		Helper.FilterSearch(*query.Search),
+// 		Helper.FilterStatus(query.Status),
+// 		Helper.FilterCategory(*query.CategoryID),
+// 	).Count(&totalData).Error
+
+// 	if err != nil {
+// 		return nil, 0, err
+// 	}
+
+// 	return sellableProducts, totalData, nil
+// }

@@ -44,7 +44,7 @@ func (s *TransactionService) Store(request *Dto.CreateTransactionDto, companyCod
 	data, err := s.transactionRepository.Store(&Models.Transaction{
 		Title:                 request.Title,
 		Name:                  request.Name,
-		AdditionalData:        request.AdditionalData,
+		AdditionalData:        nil,
 		Date:                  Utils.ParseDateStringToDate(request.Date, nil),
 		DueDate:               Utils.ParseDateStringToDate(*request.DueDate, nil),
 		Note:                  request.Note,

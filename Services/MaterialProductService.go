@@ -18,7 +18,7 @@ type (
 		FindById(id string) (*Response.MaterialProduckResponse, int, error)
 		Delete(id string) (statusCode int, err error)
 		Update(dto *Dto.UpdateMaterialProductDto, id string) (*Response.MaterialProduckResponse, int, error)
-		FindAll(companyID string, query *Common.Query) (res []Response.MaterialProduckResponse, meta Common.Meta, err error)
+		FindAll(companyID string, query *Common.Query) (res []*Response.MaterialProduckResponse, meta Common.Meta, err error)
 	}
 	MaterialProductService struct {
 		materialProductRepository    Repositories.IMaterialProductRepository
@@ -58,9 +58,9 @@ func (s *MaterialProductService) Create(dto *Dto.CreateMaterialProductDto) (*Res
 	// 	}
 	// }
 
-	res := Response.ToMaterialProduckResponse(*materialProduct)
+	res := Response.ToMaterialProduckResponse(materialProduct)
 
-	return &res, nil
+	return res, nil
 }
 
 func (s *MaterialProductService) FindById(id string) (*Response.MaterialProduckResponse, int, error) {
@@ -74,9 +74,9 @@ func (s *MaterialProductService) FindById(id string) (*Response.MaterialProduckR
 		return nil, http.StatusInternalServerError, err
 	}
 
-	res := Response.ToMaterialProduckResponse(*materialProduct)
+	res := Response.ToMaterialProduckResponse(materialProduct)
 
-	return &res, http.StatusOK, nil
+	return res, http.StatusOK, nil
 }
 
 func (s *MaterialProductService) Delete(id string) (statusCode int, err error) {
@@ -146,13 +146,13 @@ func (s *MaterialProductService) Update(dto *Dto.UpdateMaterialProductDto, id st
 	// 	}
 	// }
 
-	res := Response.ToMaterialProduckResponse(*materialProduct)
+	res := Response.ToMaterialProduckResponse(materialProduct)
 	res.ID = id
 
-	return &res, http.StatusOK, nil
+	return res, http.StatusOK, nil
 }
 
-func (s *MaterialProductService) FindAll(companyID string, query *Common.Query) (res []Response.MaterialProduckResponse, meta Common.Meta, err error) {
+func (s *MaterialProductService) FindAll(companyID string, query *Common.Query) (res []*Response.MaterialProduckResponse, meta Common.Meta, err error) {
 	materialProducts, total, err := s.materialProductRepository.FindAll(companyID, query)
 
 	if err != nil {

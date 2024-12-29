@@ -32,8 +32,8 @@ func ToMaterialProduckResponse(materialProduck Models.MaterialProduct) MaterialP
 	}
 }
 
-func ToMaterialProduckResponseSlice(materialProducks []Models.MaterialProduct) []MaterialProduckResponse {
-	materialProduckResponses := []MaterialProduckResponse{}
+func ToMaterialProduckResponseSlice(materialProducks []*Models.MaterialProduct) []*MaterialProduckResponse {
+	materialProduckResponses := []*MaterialProduckResponse{}
 	for _, materialProduck := range materialProducks {
 		materialProduckResponses = append(materialProduckResponses, ToMaterialProduckResponse(materialProduck))
 	}

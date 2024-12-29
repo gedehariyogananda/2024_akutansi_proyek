@@ -152,7 +152,7 @@ func (c *UnitController) FindAll(ctx *gin.Context) {
 			return
 		}
 
-		query.Status = status
+		query.Status = &status
 	}
 
 	query.Search = &search
