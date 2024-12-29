@@ -91,6 +91,7 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 		Discount:            dto.Discount,
 		PaymentType:         dto.PaymentType,
 		DueDate:             dueDate,
+		IsDiscountPercent:   dto.IsDiscountPercent,
 	}
 
 	fmt.Println(dueDate)

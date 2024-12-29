@@ -218,6 +218,7 @@ CREATE TABLE public.purchases (
     total_purchase_amount numeric(15,2) NOT NULL,
     company_id character varying(255) NOT NULL,
     discount numeric(15,2) NOT NULL,
+    is_discount_percent boolean NOT NULL,
     tax numeric(15,2) NOT NULL,
     payment_type character varying(255) NOT NULL,
     due_date timestamp with time zone,

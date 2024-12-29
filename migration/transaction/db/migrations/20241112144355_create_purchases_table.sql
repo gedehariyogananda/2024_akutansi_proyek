@@ -6,6 +6,7 @@ CREATE TABLE purchases
     total_purchase_amount DECIMAL(15, 2)           NOT NULL,
     company_id            VARCHAR(255)             NOT NULL,
     discount             DECIMAL(15, 2)           NOT NULL,
+    is_discount_percent  BOOLEAN                  NOT NULL,
     tax                   DECIMAL(15, 2)           NOT NULL,
     payment_type        VARCHAR(255)             NOT NULL,
     due_date              TIMESTAMP WITH TIME ZONE  NULL,
