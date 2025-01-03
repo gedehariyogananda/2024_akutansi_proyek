@@ -215,6 +215,7 @@ CREATE TABLE public.purchase_sellable_products (
 
 CREATE TABLE public.purchases (
     id character varying(100) NOT NULL,
+    purchase_number character varying(255) NOT NULL,
     total_purchase_amount numeric(15,2) NOT NULL,
     company_id character varying(255) NOT NULL,
     discount numeric(15,2) NOT NULL,

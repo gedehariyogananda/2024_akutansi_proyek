@@ -16,5 +16,5 @@ type CreatePurchasesDto struct {
 	PaymentType         string              `json:"payment_type" validate:"required,oneof=cash hutang"`
 	DueDate             string              `json:"due_date,omitempty" validate:"omitempty,date"`
 	CompanyID           string              `json:"-"`
-	TotalPurchaseAmount int                 `json:"total_purchase_amount" validate:"required"`
+	TotalPurchaseAmount float32             `json:"total_purchase_amount" validate:"required"`
 }

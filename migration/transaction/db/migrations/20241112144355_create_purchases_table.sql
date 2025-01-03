@@ -3,6 +3,7 @@ SET TIME ZONE 'Asia/Jakarta';
 CREATE TABLE purchases
 (
     id                    VARCHAR(100) PRIMARY KEY NOT NULL UNIQUE,
+    purchase_number      VARCHAR(255)             NOT NULL,
     total_purchase_amount DECIMAL(15, 2)           NOT NULL,
     company_id            VARCHAR(255)             NOT NULL,
     discount             DECIMAL(15, 2)           NOT NULL,
