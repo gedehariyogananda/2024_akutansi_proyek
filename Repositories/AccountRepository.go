@@ -68,7 +68,8 @@ func (r *AccountRepository) FindAll(companyID string, query *Common.Query) (acco
 		Helper.FilterCompanyID(companyID),
 		Helper.FilterStatus(query.Status),
 		Helper.FilterSearch(*query.Search),
-		Helper.FilterIslock(query.IsLocked)).
+		Helper.FilterIslock(query.IsLocked),
+		Helper.FilterTypeAccount(query.TypeAccount)).
 		Find(&accounts).Error
 
 	if err != nil {
@@ -79,6 +80,7 @@ func (r *AccountRepository) FindAll(companyID string, query *Common.Query) (acco
 		Helper.FilterCompanyID(companyID),
 		Helper.FilterSearch(*query.Search),
 		Helper.FilterIslock(query.IsLocked),
+		Helper.FilterTypeAccount(query.TypeAccount),
 	).
 		Count(&totalData).Error
 

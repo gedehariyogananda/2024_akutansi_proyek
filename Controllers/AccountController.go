@@ -40,6 +40,7 @@ func (controller *AccountController) Create(c *gin.Context) {
 	res, err := controller.accountService.Create(&request)
 	if err != nil {
 		Helper.SetErrorResponse(c, err.Error(), http.StatusBadRequest)
+		return
 	}
 	Helper.SetSuccessResponse(c, "Success create account", res, http.StatusCreated)
 }
@@ -89,7 +90,9 @@ func (cotroller *AccountController) FindAll(c *gin.Context) {
 	query.Page = page
 
 	search := c.Query("search")
+	typeAccount := c.Query("type")
 
+	query.TypeAccount = &typeAccount
 	query.Search = &search
 
 	status := c.Query("status")
