@@ -16,17 +16,17 @@ const (
 
 type JournalEntry struct {
 	ID              string                  `json:"id"`
-	Amount          float64                 `json:"amount"`
-	CompanyID       string                  `json:"company_id"`
-	AccountID       string                  `json:"account_id"`
-	Type            JournalType             `json:"type"`
-	Note            string                  `json:"note"`
-	Date            time.Time               `json:"date"`
-	TransactionCode string                  `json:"transaction_code"`
-	CreditAt        *float64                `json:"credit_at"`
-	DebitAt         *float64                `json:"debit_at"`
+	Amount          float64                 `json:"amount,omitempty"`
+	CompanyID       string                  `json:"company_id,omitempty"`
+	AccountID       string                  `json:"account_id,omitempty"`
+	Type            JournalType             `json:"type,omitempty"`
+	Note            string                  `json:"note,omitempty"`
+	Date            time.Time               `json:"date,omitempty"`
+	TransactionCode string                  `json:"transaction_code,omitempty"`
+	CreditAt        *float64                `json:"credit_at,omitempty"`
+	DebitAt         *float64                `json:"debit_at,omitempty"`
 	Account         *Account                `json:"accounts,omitempty"`
-	CreatedAt       *time.Time              `json:"created_at"`
+	CreatedAt       *time.Time              `json:"created_at,omitempty"`
 	AdditionalData  *map[string]interface{} `json:"additional_data,omitempty" gorm:"type:jsonb"`
 }
 

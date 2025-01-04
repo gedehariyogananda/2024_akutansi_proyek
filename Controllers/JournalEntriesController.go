@@ -1,11 +1,13 @@
 package Controllers
 
 import (
+	"2024_akutansi_project/Consts"
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +15,8 @@ import (
 type (
 	IJournalEntriesController interface {
 		FindAll(ctx *gin.Context)
+		TrialBalanceReport(ctx *gin.Context)
+		FinancialBalanceReport(ctx *gin.Context)
 	}
 
 	JournalEntriesController struct {
@@ -33,7 +37,8 @@ func (controller *JournalEntriesController) FindAll(ctx *gin.Context) {
 	request.EndDate = ctx.Query("end_date")
 	request.Query = query
 
-	data, meta, err := controller.JournalEntriesService.FindAll(request)
+	key := Consts.JOURNAL_ENTRY
+	data, meta, err := controller.JournalEntriesService.FindAll(request, &key)
 
 	if err != nil {
 		statusCode := Utils.HandleStatusCode(err)
@@ -43,6 +48,58 @@ func (controller *JournalEntriesController) FindAll(ctx *gin.Context) {
 
 	Helper.SetPaginationResponse(ctx,
 		"Berhasil mendapatkan data jurnal",
+		data,
+		meta,
+		http.StatusOK,
+	)
+}
+
+func (controller *JournalEntriesController) TrialBalanceReport(ctx *gin.Context) {
+	var request Dto.GetJournalRequest
+	query := Utils.InsertParams(ctx)
+
+	yesterdayDate := Utils.ShiftDate(time.Now(), -1)
+
+	request.PeriodDate = ctx.DefaultQuery("period_date", yesterdayDate.Format("2006-01-02"))
+	request.Query = query
+
+	key := Consts.TRIAL_BALANCE_REPORT
+	data, meta, err := controller.JournalEntriesService.FindAll(request, &key)
+
+	if err != nil {
+		statusCode := Utils.HandleStatusCode(err)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetPaginationResponse(ctx,
+		"Berhasil mendapatkan laporan neraca saldo",
+		data,
+		meta,
+		http.StatusOK,
+	)
+}
+
+func (controller *JournalEntriesController) FinancialBalanceReport(ctx *gin.Context) {
+	var request Dto.GetJournalRequest
+	query := Utils.InsertParams(ctx)
+
+	yesterdayDate := Utils.ShiftDate(time.Now(), -1)
+
+	request.PeriodDate = ctx.DefaultQuery("period_date", yesterdayDate.Format("2006-01-02"))
+	request.Query = query
+
+	key := Consts.FINANCIAL_BALANCE_REPORT
+	data, meta, err := controller.JournalEntriesService.FindAll(request, &key)
+
+	if err != nil {
+		statusCode := Utils.HandleStatusCode(err)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetPaginationResponse(ctx,
+		"Berhasil mendapatkan laporan neraca keuangan",
 		data,
 		meta,
 		http.StatusOK,

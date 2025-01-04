@@ -1,6 +1,7 @@
 package Services
 
 import (
+	"2024_akutansi_project/Consts"
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
@@ -16,7 +17,7 @@ import (
 
 type (
 	IJournalEntriesService interface {
-		FindAll(request Dto.GetJournalRequest) (res []*Models.JournalEntry, meta Common.Meta, err error)
+		FindAll(request Dto.GetJournalRequest, key *Consts.JournalEntriesType) (res []*Models.JournalEntry, meta Common.Meta, err error)
 		InsertJournalCashier(params Common.JournalEntryParams, isPaid bool, trx *gorm.DB) (err error)
 		InsertJournalPurchase(params Common.JournalEntryParams, isPaid bool, trx *gorm.DB) (err error)
 		InsertJournalOtherTransaction(ctx context.Context) (err error)
@@ -37,8 +38,22 @@ func JournalEntriesProvider(journalRepo Repositories.IJournalEntriesRepository, 
 	}
 }
 
-func (service *JournalEntriesService) FindAll(request Dto.GetJournalRequest) (res []*Models.JournalEntry, meta Common.Meta, err error) {
-	res, totalData, err := service.JournalEntriesRepository.FindAll(request)
+func (service *JournalEntriesService) FindAll(request Dto.GetJournalRequest, key *Consts.JournalEntriesType) (res []*Models.JournalEntry, meta Common.Meta, err error) {
+	var selectedFields *[]string = nil
+	var isFinancialReport = false
+
+	switch *key {
+	case Consts.JOURNAL_ENTRY:
+	case Consts.TRIAL_BALANCE_REPORT:
+		selectedFields = &[]string{"journal_entries.id", "account_id", "credit_at", "debit_at"}
+	case Consts.FINANCIAL_BALANCE_REPORT:
+		selectedFields = &[]string{"journal_entries.id", "account_id", "credit_at", "debit_at"}
+		isFinancialReport = true
+	default:
+		return nil, Common.Meta{}, fmt.Errorf("E_UNSUPPORT_TYPE")
+	}
+
+	res, totalData, err := service.JournalEntriesRepository.FindAll(request, selectedFields, isFinancialReport)
 	if err != nil {
 		return nil, Common.Meta{}, err
 	}

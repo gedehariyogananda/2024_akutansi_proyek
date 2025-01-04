@@ -17,4 +17,6 @@ func JournalEntriesRoutes(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) 
 	controller := Di.DIJournalEntries(db)
 
 	route.GET("/", controller.FindAll)
+	route.GET("/trial-balance", controller.TrialBalanceReport)
+	route.GET("/financial-balance", controller.FinancialBalanceReport)
 }
