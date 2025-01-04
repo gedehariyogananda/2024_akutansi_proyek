@@ -237,6 +237,15 @@ func (service *JournalEntriesService) createJournalEntry(accountID string, param
 		now = *params.Date
 	}
 
+	creditAt := params.CreditAt
+	debitAt := params.DebitAt
+
+	if journalType == Models.CREDIT {
+		creditAt = &amount
+	} else {
+		debitAt = &amount
+	}
+
 	dataDate := Utils.SeperateDate(now.Format("2006-01-02"))
 
 	return Models.JournalEntry{
@@ -246,6 +255,8 @@ func (service *JournalEntriesService) createJournalEntry(accountID string, param
 		CompanyID:       params.CompanyID,
 		Note:            params.Note,
 		Date:            now,
+		CreditAt:        creditAt,
+		DebitAt:         debitAt,
 		TransactionCode: "TRX-" + Utils.GenerateUniqueSuffix() + "-" + fmt.Sprintf("%d", *dataDate.Year),
 		AdditionalData:  params.AdditionalData,
 	}

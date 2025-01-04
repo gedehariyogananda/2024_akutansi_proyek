@@ -9,6 +9,8 @@ type JournalEntryParams struct {
 	Date            *time.Time
 	CompanyID       string
 	Note            string
+	CreditAt        *float64
+	DebitAt         *float64
 	TransactionCode string
 	AdditionalData  *map[string]interface{}
 }
