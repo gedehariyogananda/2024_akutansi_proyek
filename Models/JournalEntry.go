@@ -23,6 +23,8 @@ type JournalEntry struct {
 	Note            string                  `json:"note"`
 	Date            time.Time               `json:"date"`
 	TransactionCode string                  `json:"transaction_code"`
+	CreditAt        *float64                `json:"credit_at"`
+	DebitAt         *float64                `json:"debit_at"`
 	Account         *Account                `json:"accounts,omitempty"`
 	CreatedAt       *time.Time              `json:"created_at"`
 	AdditionalData  *map[string]interface{} `json:"additional_data,omitempty" gorm:"type:jsonb"`
