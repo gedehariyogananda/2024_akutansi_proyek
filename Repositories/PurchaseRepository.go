@@ -14,6 +14,7 @@ type (
 		Create(purchase *Models.Purchase) (*Models.Purchase, error)
 		FindAll(companyID string, query *Common.Query) ([]*Models.Purchase, int, error)
 		GetTotalPurchaseMonth(companyID string) (float32, error)
+		Delete(id string) error
 	}
 
 	PurchaseRepository struct {
@@ -59,4 +60,12 @@ func (r *PurchaseRepository) GetTotalPurchaseMonth(companyID string) (float32, e
 	}
 
 	return total, nil
+}
+
+func (r *PurchaseRepository) Delete(id string) error {
+	if err := r.DB.Where("id = ?", id).Delete(&Models.Purchase{}).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

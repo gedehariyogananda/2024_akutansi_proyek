@@ -16,6 +16,7 @@ type (
 		GetDropdown(companyID string) (res Response.DropDwonPurchase, err error)
 		Create(dto Dto.CreatePurchasesDto) (err error)
 		GetAllPurchaseWithStatistic(companyID string, query *Common.Query) (res Response.PurchasesWithStatisticResponse, meta Common.Meta, err error)
+		Delete(id string) (err error)
 	}
 
 	PurchaseService struct {
@@ -206,4 +207,26 @@ func (p *PurchaseService) GetAllPurchaseWithStatistic(companyID string, query *C
 	res = Response.ToPurchaseResponseSlice(purchases, purchaseStatistic)
 
 	return res, meta, nil
+}
+
+func (p *PurchaseService) Delete(id string) (err error) {
+	err = p.purchaseMaterialRepository.DeleteByPurchaseID(id)
+
+	if err != nil {
+		return
+	}
+
+	err = p.purchaseProductRepository.DeleteByPurchaseID(id)
+
+	if err != nil {
+		return
+	}
+
+	err = p.purchaseRepository.Delete(id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

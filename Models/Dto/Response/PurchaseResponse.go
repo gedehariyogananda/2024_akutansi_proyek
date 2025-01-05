@@ -90,7 +90,7 @@ func ToPurchaseResponse(purchase Models.Purchase) PurchaseResponse {
 
 	oneDay := time.Hour * 24
 
-	if purchase.CreatedAt.Sub(time.Now()) < oneDay {
+	if time.Now().Sub(purchase.CreatedAt) < oneDay {
 		isAbleDelete = true
 	} else {
 		isAbleDelete = false

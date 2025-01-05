@@ -16,6 +16,7 @@ type (
 		GetDropDown(ctx *gin.Context)
 		Purchase(ctx *gin.Context)
 		GetAllWithStatistic(ctx *gin.Context)
+		Delete(ctx *gin.Context)
 	}
 
 	PurchaseController struct {
@@ -83,4 +84,17 @@ func (p *PurchaseController) GetAllWithStatistic(ctx *gin.Context) {
 	}
 
 	Helper.SetPaginationResponse(ctx, "Get all purchases success", res, meta, 200)
+}
+
+func (p *PurchaseController) Delete(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	err := p.PurchaseService.Delete(id)
+
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), 500)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil menghapus pembelian", nil, 200)
 }

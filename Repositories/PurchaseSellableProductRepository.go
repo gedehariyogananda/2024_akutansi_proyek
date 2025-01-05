@@ -9,6 +9,7 @@ import (
 type (
 	IPurchaseSellableProductRepository interface {
 		Create(purchaseSellableProduct *Models.PurchaseSellableProduct) (*Models.PurchaseSellableProduct, error)
+		DeleteByPurchaseID(purchaseID string) error
 	}
 
 	PurchaseSellableProductRepository struct {
@@ -26,4 +27,12 @@ func (r *PurchaseSellableProductRepository) Create(purchaseSellableProduct *Mode
 	}
 
 	return purchaseSellableProduct, nil
+}
+
+func (r *PurchaseSellableProductRepository) DeleteByPurchaseID(purchaseID string) error {
+	if err := r.DB.Where("purchase_id = ?", purchaseID).Delete(&Models.PurchaseSellableProduct{}).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
