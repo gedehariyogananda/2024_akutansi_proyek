@@ -3,6 +3,7 @@ package Services
 import (
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
@@ -14,6 +15,7 @@ type (
 	IPurchaseService interface {
 		GetDropdown(companyID string) (res Response.DropDwonPurchase, err error)
 		Create(dto Dto.CreatePurchasesDto) (err error)
+		GetAllPurchaseWithStatistic(companyID string, query *Common.Query) (res Response.PurchasesWithStatisticResponse, meta Common.Meta, err error)
 	}
 
 	PurchaseService struct {
@@ -89,7 +91,7 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 		CompanyID:           dto.CompanyID,
 		Tax:                 dto.Tax,
 		Discount:            dto.Discount,
-		PaymentType:         dto.PaymentType,
+		Payment:             dto.Payment,
 		DueDate:             dueDate,
 		IsDiscountPercent:   dto.IsDiscountPercent,
 	}
@@ -173,4 +175,35 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 	}
 
 	return nil
+}
+
+func (p *PurchaseService) GetAllPurchaseWithStatistic(companyID string, query *Common.Query) (res Response.PurchasesWithStatisticResponse, meta Common.Meta, err error) {
+	purchases, total, err := p.purchaseRepository.FindAll(companyID, query)
+
+	if err != nil {
+		return
+	}
+
+	totalPurchaseMonth, err := p.purchaseRepository.GetTotalPurchaseMonth(companyID)
+
+	if err != nil {
+		return
+	}
+
+	fmt.Println("totalPurchaseMonth", totalPurchaseMonth)
+
+	purchaseStatistic := Response.StatisTicPurchase{
+		PurchaseMonth: float32(totalPurchaseMonth),
+	}
+
+	meta = Common.Meta{
+		Page:      query.Page,
+		Limit:     query.Limit,
+		TotalData: int64(total),
+		TotalPage: int64(total / query.Limit),
+	}
+
+	res = Response.ToPurchaseResponseSlice(purchases, purchaseStatistic)
+
+	return res, meta, nil
 }

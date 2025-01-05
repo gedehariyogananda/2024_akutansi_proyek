@@ -2,6 +2,7 @@ package Controllers
 
 import (
 	"2024_akutansi_project/Helper"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
@@ -14,21 +15,22 @@ type (
 	IPurchaseController interface {
 		GetDropDown(ctx *gin.Context)
 		Purchase(ctx *gin.Context)
+		GetAllWithStatistic(ctx *gin.Context)
 	}
 
 	PurchaseController struct {
-		IPurchaseService Services.IPurchaseService
+		PurchaseService Services.IPurchaseService
 	}
 )
 
 func PurchaseControllerProvider(purchaseService Services.IPurchaseService) *PurchaseController {
-	return &PurchaseController{IPurchaseService: purchaseService}
+	return &PurchaseController{PurchaseService: purchaseService}
 }
 
 func (p *PurchaseController) GetDropDown(ctx *gin.Context) {
 	companyID := ctx.GetString("company_id")
 
-	res, err := p.IPurchaseService.GetDropdown(companyID)
+	res, err := p.PurchaseService.GetDropdown(companyID)
 	if err != nil {
 		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -53,7 +55,7 @@ func (p *PurchaseController) Purchase(ctx *gin.Context) {
 
 	dto.CompanyID = ctx.GetString("company_id")
 
-	err := p.IPurchaseService.Create(dto)
+	err := p.PurchaseService.Create(dto)
 
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), 500)
@@ -61,4 +63,24 @@ func (p *PurchaseController) Purchase(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Berhasil membuat pembelian", nil, 200)
+}
+
+func (p *PurchaseController) GetAllWithStatistic(ctx *gin.Context) {
+	companyID := ctx.GetString("company_id")
+
+	var dto Common.Query
+
+	perage, page := Utils.GetPaginationParams(ctx, Common.DEFAULTLIMIT, Common.DEFAULTPAGE)
+
+	dto.Page = page
+	dto.Limit = perage
+
+	res, meta, err := p.PurchaseService.GetAllPurchaseWithStatistic(companyID, &dto)
+
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), 500)
+		return
+	}
+
+	Helper.SetPaginationResponse(ctx, "Get all purchases success", res, meta, 200)
 }

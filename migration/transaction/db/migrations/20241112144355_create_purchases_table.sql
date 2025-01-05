@@ -9,7 +9,7 @@ CREATE TABLE purchases
     discount             DECIMAL(15, 2)           NOT NULL,
     is_discount_percent  BOOLEAN                  NOT NULL,
     tax                   DECIMAL(15, 2)           NOT NULL,
-    payment_type        VARCHAR(255)             NOT NULL,
+    payment        VARCHAR(255)             NOT NULL,
     due_date              TIMESTAMP WITH TIME ZONE  NULL,
     created_at            TIMESTAMP WITH TIME ZONE NOT NULL
 );

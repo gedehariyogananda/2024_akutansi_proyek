@@ -19,4 +19,5 @@ func PurchaseRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 
 	route.GET("/dropdown", PurchaseController.GetDropDown)
 	route.POST("/", PurchaseController.Purchase)
+	route.GET("/", PurchaseController.GetAllWithStatistic)
 }
