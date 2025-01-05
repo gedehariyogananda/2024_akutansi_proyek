@@ -37,6 +37,7 @@ func main() {
 	)
 
 	setup := gin.Default()
+
 	setup.RemoveExtraSlash = true
 	setup.Use(Middleware.SetupCORS())
 	setup.Use(Middleware.ExecutionTimeMiddleware())

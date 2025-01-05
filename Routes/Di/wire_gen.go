@@ -131,6 +131,14 @@ func DIMaterialProduct(db *gorm.DB) *Controllers.MaterialProductController {
 	return materialProductController
 }
 
+func DIPromo(db *gorm.DB) *Controllers.PromoController {
+	promoRepository := Repositories.PromoRepositoryProvider(db)
+	promoItemRepository := Repositories.PromoItemRepositoryProvider(db)
+	promoService := Services.PromoServiceProvider(promoRepository, promoItemRepository)
+	promoController := Controllers.PromoControllerProvider(promoService)
+	return promoController
+}
+
 func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
 	stockOpnameRepository := Repositories.StockOpnameRepositoryProvider(db)
 	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
