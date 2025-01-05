@@ -8,7 +8,8 @@ import (
 
 type (
 	IPromoRepository interface {
-		FindByID(id string) (*Models.Promo, error)
+		Create(promo *Models.Promo) (*Models.Promo, error)
+		FindById(id string) (*Models.Promo, error)
 	}
 
 	PromoRepository struct {
@@ -20,11 +21,20 @@ func PromoRepositoryProvider(db *gorm.DB) *PromoRepository {
 	return &PromoRepository{DB: db}
 }
 
-func (promoRepository *PromoRepository) FindByID(id string) (*Models.Promo, error) {
-	var promo *Models.Promo
-	if err := promoRepository.DB.Where("id = ?", id).First(&promo).Error; err != nil {
+func (r *PromoRepository) Create(promo *Models.Promo) (*Models.Promo, error) {
+	if err := r.DB.Create(promo).Error; err != nil {
 		return nil, err
 	}
 
 	return promo, nil
+}
+
+func (r *PromoRepository) FindById(id string) (*Models.Promo, error) {
+	var promo Models.Promo
+
+	if err := r.DB.Where("id = ?", id).Preload("PromoItems.SellableProduct.Category").First(&promo).Error; err != nil {
+		return nil, err
+	}
+
+	return &promo, nil
 }
