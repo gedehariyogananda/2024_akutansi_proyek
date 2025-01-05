@@ -5,6 +5,7 @@ import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Utils"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -48,7 +49,7 @@ func (r *AccountRepository) Create(account *Models.Account) (*Models.Account, er
 }
 
 func (r *AccountRepository) Update(account *Models.Account, id string) (*Models.Account, error) {
-	if err := r.DB.Model(account).Where("id = ?", id).Updates(account).Error; err != nil {
+	if err := r.DB.Model(account).Where("id = ?", id).Updates(account).Update("status", account.Status).Error; err != nil {
 		return nil, err
 	}
 
@@ -69,18 +70,20 @@ func (r *AccountRepository) FindAll(companyID string, query *Common.Query) (acco
 		Helper.FilterStatus(query.Status),
 		Helper.FilterSearch(*query.Search),
 		Helper.FilterIslock(query.IsLocked),
-		Helper.FilterTypeAccount(query.TypeAccount)).
+		Helper.FilterTypeAccount(*query.TypeAccount)).
 		Find(&accounts).Error
 
 	if err != nil {
 		return nil, 0, err
 	}
 
+	fmt.Println(len(accounts))
+
 	err = r.DB.Model(&Models.Account{}).Scopes(Helper.FilterStatus(query.Status),
 		Helper.FilterCompanyID(companyID),
 		Helper.FilterSearch(*query.Search),
 		Helper.FilterIslock(query.IsLocked),
-		Helper.FilterTypeAccount(query.TypeAccount),
+		Helper.FilterTypeAccount(*query.TypeAccount),
 	).
 		Count(&totalData).Error
 
