@@ -34,12 +34,12 @@ func FilterStatus(status *bool) func(*gorm.DB) *gorm.DB {
 	}
 }
 
-func FilterTypeAccount(typeAccount *string) func(*gorm.DB) *gorm.DB {
+func FilterTypeAccount(typeAccount string) func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if typeAccount == nil {
+		if typeAccount == "" {
 			return db
 		}
-		return db.Where("type_account = ?", typeAccount)
+		return db.Where("type = ?", typeAccount)
 	}
 }
 

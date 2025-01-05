@@ -36,6 +36,12 @@ func (controller *AccountController) Create(c *gin.Context) {
 		Helper.SetValidationErrorResponse(c, err.Error())
 		return
 	}
+
+	if validationErrors := Utils.ValidateRequest(c, &request); validationErrors != nil {
+		Helper.SetValidationErrorResponse(c, validationErrors)
+		return
+	}
+
 	request.CompanyID = c.GetString("company_id")
 	res, err := controller.accountService.Create(&request)
 	if err != nil {
@@ -62,6 +68,12 @@ func (controller *AccountController) Update(c *gin.Context) {
 		Helper.SetValidationErrorResponse(c, err.Error())
 		return
 	}
+
+	if validationErrors := Utils.ValidateRequest(c, &request); validationErrors != nil {
+		Helper.SetValidationErrorResponse(c, validationErrors)
+		return
+	}
+
 	res, statusCode, err := controller.accountService.Update(&request, id)
 	if err != nil {
 		Helper.SetErrorResponse(c, err.Error(), statusCode)
