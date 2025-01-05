@@ -132,6 +132,9 @@ func (cotroller *AccountController) FindAll(c *gin.Context) {
 	}
 
 	res, meta, err := cotroller.accountService.FindAll(companyId, &query)
+
+	meta = Common.PaginateMetadata(c, meta.TotalData, meta.Limit, meta.Page)
+
 	if err != nil {
 		Helper.SetErrorResponse(c, err.Error(), http.StatusBadRequest)
 		return
