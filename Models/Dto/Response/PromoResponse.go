@@ -34,6 +34,7 @@ type PromoResponse struct {
 	StartDate string                 `json:"start_date"`
 	EndDate   string                 `json:"end_date"`
 	IsAll     bool                   `json:"is_all"`
+	Type      string                 `json:"type"`
 	CompanyID string                 `json:"company_id"`
 	Products  []productPromoResponse `json:"products"`
 }
@@ -55,6 +56,7 @@ func ToPromoResponse(productPromo Models.Promo) PromoResponse {
 			EndDate:   productPromo.EndDate,
 			IsAll:     productPromo.IsAll,
 			CompanyID: productPromo.CompanyID,
+			Type:      productPromo.Type,
 			Products:  toProductPromoResponseSlice(selabelProducts),
 		}
 	}
@@ -70,4 +72,12 @@ func ToPromoResponse(productPromo Models.Promo) PromoResponse {
 		CompanyID: productPromo.CompanyID,
 	}
 
+}
+
+func ToPromoResponseSlice(promos []Models.Promo) []PromoResponse {
+	promoResponses := []PromoResponse{}
+	for _, promo := range promos {
+		promoResponses = append(promoResponses, ToPromoResponse(promo))
+	}
+	return promoResponses
 }

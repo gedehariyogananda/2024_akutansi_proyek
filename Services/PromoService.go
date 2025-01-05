@@ -2,6 +2,7 @@ package Services
 
 import (
 	"2024_akutansi_project/Models"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
@@ -17,6 +18,7 @@ type (
 		FindByID(id string) (res Response.PromoResponse, statusCode int, err error)
 		Delete(id string) (statusCode int, err error)
 		Update(dto *Dto.UpdatePromoDto, id string) (res Response.PromoResponse, statusCode int, err error)
+		FindAll(companyID string, query Common.Query) (res []Response.PromoResponse, meta Common.Meta, err error)
 	}
 
 	PromoService struct {
@@ -149,4 +151,17 @@ func (s *PromoService) Update(dto *Dto.UpdatePromoDto, id string) (res Response.
 
 	return res, http.StatusOK, nil
 
+}
+
+func (s *PromoService) FindAll(companyID string, query Common.Query) (res []Response.PromoResponse, meta Common.Meta, err error) {
+	promos, total, err := s.PromoRepository.FindAll(companyID, query)
+
+	if err != nil {
+		return
+	}
+
+	res = Response.ToPromoResponseSlice(promos)
+	meta.TotalData = total
+
+	return res, meta, nil
 }

@@ -152,3 +152,12 @@ func FilterHistoryTransaction(query string) func(*gorm.DB) *gorm.DB {
 		return db
 	}
 }
+func FilterType(types string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if types == "" {
+			return db
+		}
+
+		return db.Where("type = ?", types)
+	}
+}

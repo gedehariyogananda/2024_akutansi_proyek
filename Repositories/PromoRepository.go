@@ -1,7 +1,10 @@
 package Repositories
 
 import (
+	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models"
+	"2024_akutansi_project/Models/Common"
+	"2024_akutansi_project/Utils"
 
 	"gorm.io/gorm"
 )
@@ -12,6 +15,7 @@ type (
 		FindById(id string) (*Models.Promo, error)
 		Delete(id string) error
 		Update(promo *Models.Promo, id string) (*Models.Promo, error)
+		FindAll(companyID string, query Common.Query) ([]Models.Promo, int64, error)
 	}
 
 	PromoRepository struct {
@@ -55,4 +59,27 @@ func (r *PromoRepository) Update(promo *Models.Promo, id string) (*Models.Promo,
 	}
 
 	return promo, nil
+}
+
+func (r *PromoRepository) FindAll(companyID string, query Common.Query) ([]Models.Promo, int64, error) {
+	var promos []Models.Promo
+	var total int64
+
+	if err := r.DB.Preload("PromoItems.SellableProduct.Category").
+		Scopes(Utils.Paginate(query.Page, query.Limit),
+			Helper.FilterCompanyID(companyID),
+			Helper.FilterSearch(*query.Search),
+			Helper.FilterType(*query.Type),
+		).Find(&promos).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := r.DB.Model(&Models.Promo{}).
+		Scopes(Helper.FilterCompanyID(companyID), Helper.FilterSearch(*query.Search), Helper.FilterType(*query.Type)).Count(&total).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return promos, total, nil
 }
