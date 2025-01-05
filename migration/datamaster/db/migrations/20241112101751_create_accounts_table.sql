@@ -8,6 +8,7 @@ CREATE TABLE accounts
     company_id VARCHAR(255)             NOT NULL,
     type       VARCHAR(255)             NOT NULL,
     code       VARCHAR(20)              NOT NULL,
+    is_lock   BOOLEAN                  NOT NULL,
     status     BOOLEAN                  NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     deleted_at TIMESTAMP WITH TIME ZONE,
