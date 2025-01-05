@@ -8,4 +8,5 @@ type Query struct {
 	Page       int     `json:"page"`
 	CompanyID  *string `json:"company_id"`
 	CategoryID *string `json:"category_id"`
+	Type       *string `json:"type"`
 }

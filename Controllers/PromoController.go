@@ -2,8 +2,11 @@ package Controllers
 
 import (
 	"2024_akutansi_project/Helper"
+	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
+	"2024_akutansi_project/Utils"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +18,7 @@ type (
 		FindByID(ctx *gin.Context)
 		Delete(ctx *gin.Context)
 		Update(ctx *gin.Context)
+		FindAll(ctx *gin.Context)
 	}
 
 	PromoController struct {
@@ -77,4 +81,32 @@ func (controller *PromoController) Update(ctx *gin.Context) {
 		return
 	}
 	Helper.SetSuccessResponse(ctx, "Success update promo", res, http.StatusOK)
+}
+
+func (controller *PromoController) FindAll(ctx *gin.Context) {
+	var query Common.Query
+
+	limit, page := Utils.GetPaginationParams(ctx, Common.DEFAULTLIMIT, Common.DEFAULTPAGE)
+
+	search := ctx.Query("search")
+	types := ctx.Query("type")
+
+	fmt.Println("types", types)
+	fmt.Println("search", search)
+
+	query.Limit = limit
+	query.Page = page
+	query.Search = &search
+	query.Type = &types
+
+	res, meta, err := controller.PromoService.FindAll(ctx.GetString("company_id"), query)
+
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	meta = Common.PaginateMetadata(ctx, meta.TotalData, query.Limit, query.Page)
+
+	Helper.SetPaginationResponse(ctx, "Success get all promo", res, meta, http.StatusOK)
 }

@@ -83,3 +83,13 @@ func FilterTransaksiLain(query *string) func(*gorm.DB) *gorm.DB {
 		return db.Where("title ILIKE ? OR payment_type ILIKE ? OR payment_method ILIKE ?", "%"+*query+"%", "%"+*query+"%", "%"+*query+"%")
 	}
 }
+
+func FilterType(types string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if types == "" {
+			return db
+		}
+
+		return db.Where("type = ?", types)
+	}
+}

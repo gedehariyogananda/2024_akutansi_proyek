@@ -22,4 +22,5 @@ func Promo(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	route.GET("/:id", PromoController.FindByID)
 	route.DELETE("/:id", PromoController.Delete)
 	route.PUT("/:id", PromoController.Update)
+	route.GET("/", PromoController.FindAll)
 }
