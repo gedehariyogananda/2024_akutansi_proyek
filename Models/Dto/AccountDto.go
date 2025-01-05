@@ -8,7 +8,6 @@ type CreateAccountDto struct {
 	Code      string             `json:"code" binding:"required"`
 	CompanyID string             `json:"-"`
 	Status    bool               `json:"status"`
-	IsLocked  bool               `json:"is_locked"`
 }
 
 type UpdateAccountDto struct {
@@ -17,5 +16,4 @@ type UpdateAccountDto struct {
 	Code      string             `json:"code"`
 	CompanyID string             `json:"-"`
 	Status    bool               `json:"status"`
-	IsLocked  bool               `json:"is_locked"`
 }
