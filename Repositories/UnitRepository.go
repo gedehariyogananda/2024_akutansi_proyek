@@ -37,7 +37,7 @@ func (r *UnitRepository) Create(unit *Models.Unit) (*Models.Unit, error) {
 }
 
 func (r *UnitRepository) Update(unit *Models.Unit, id string) (*Models.Unit, error) {
-	if err := r.DB.Where("id = ?", id).Updates(unit).Error; err != nil {
+	if err := r.DB.Where("id = ?", id).Updates(unit).Update("status", unit.Status).Error; err != nil {
 		return nil, err
 	}
 

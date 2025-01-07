@@ -36,10 +36,17 @@ func (controller *AccountController) Create(c *gin.Context) {
 		Helper.SetValidationErrorResponse(c, err.Error())
 		return
 	}
+
+	if validationErrors := Utils.ValidateRequest(c, &request); validationErrors != nil {
+		Helper.SetValidationErrorResponse(c, validationErrors)
+		return
+	}
+
 	request.CompanyID = c.GetString("company_id")
 	res, err := controller.accountService.Create(&request)
 	if err != nil {
 		Helper.SetErrorResponse(c, err.Error(), http.StatusBadRequest)
+		return
 	}
 	Helper.SetSuccessResponse(c, "Success create account", res, http.StatusCreated)
 }
@@ -61,6 +68,12 @@ func (controller *AccountController) Update(c *gin.Context) {
 		Helper.SetValidationErrorResponse(c, err.Error())
 		return
 	}
+
+	if validationErrors := Utils.ValidateRequest(c, &request); validationErrors != nil {
+		Helper.SetValidationErrorResponse(c, validationErrors)
+		return
+	}
+
 	res, statusCode, err := controller.accountService.Update(&request, id)
 	if err != nil {
 		Helper.SetErrorResponse(c, err.Error(), statusCode)
@@ -89,7 +102,9 @@ func (cotroller *AccountController) FindAll(c *gin.Context) {
 	query.Page = page
 
 	search := c.Query("search")
+	typeAccount := c.Query("type")
 
+	query.TypeAccount = &typeAccount
 	query.Search = &search
 
 	status := c.Query("status")
@@ -117,6 +132,9 @@ func (cotroller *AccountController) FindAll(c *gin.Context) {
 	}
 
 	res, meta, err := cotroller.accountService.FindAll(companyId, &query)
+
+	meta = Common.PaginateMetadata(c, meta.TotalData, meta.Limit, meta.Page)
+
 	if err != nil {
 		Helper.SetErrorResponse(c, err.Error(), http.StatusBadRequest)
 		return

@@ -36,18 +36,11 @@ func (c *UnitController) FindByID(ctx *gin.Context) {
 	res, statusCode, err := c.unitService.FindByID(id)
 
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success get unit",
-		"data":    res,
-	}, statusCode)
+	Helper.SetSuccessResponse(ctx, "Success het single satuan", res, http.StatusOK)
 }
 
 func (c *UnitController) Create(ctx *gin.Context) {
@@ -57,28 +50,22 @@ func (c *UnitController) Create(ctx *gin.Context) {
 	request.CompanyID = companyId
 
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+		Helper.SetErrorResponse(ctx, "Kesalahan input data", http.StatusBadRequest)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, request); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
 
 	res, err := c.unitService.Create(&request)
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"message": "Success create unit",
-		"success": true,
-		"data":    res,
-	}, http.StatusOK)
-
+	Helper.SetSuccessResponse(ctx, "Success create satuan", res, http.StatusOK)
 }
 
 func (c *UnitController) Update(ctx *gin.Context) {
@@ -89,28 +76,23 @@ func (c *UnitController) Update(ctx *gin.Context) {
 	request.CompanyID = companyId
 
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+		Helper.SetErrorResponse(ctx, "Kesalahan input data", http.StatusBadRequest)
+		return
+	}
+
+	if validatioErrors := Utils.ValidateRequest(ctx, request); validatioErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validatioErrors)
 		return
 	}
 
 	res, statusCode, err := c.unitService.Update(&request, id)
 
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success update unit",
-		"data":    res,
-	}, statusCode)
+	Helper.SetSuccessResponse(ctx, "Success update satuan", res, http.StatusOK)
 }
 
 func (c *UnitController) Delete(ctx *gin.Context) {
@@ -119,17 +101,11 @@ func (c *UnitController) Delete(ctx *gin.Context) {
 	err, statusCode := c.unitService.Delete(id)
 
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success delete unit",
-	}, statusCode)
+	Helper.SetSuccessResponse(ctx, "Success delete satuan", nil, http.StatusOK)
 }
 
 func (c *UnitController) FindAll(ctx *gin.Context) {
@@ -145,10 +121,7 @@ func (c *UnitController) FindAll(ctx *gin.Context) {
 		status, err := strconv.ParseBool(status)
 
 		if err != nil {
-			Helper.SetResponse(ctx, gin.H{
-				"success": false,
-				"message": "Invalid status",
-			}, http.StatusBadRequest)
+			Helper.SetErrorResponse(ctx, err.Error(), http.StatusUnprocessableEntity)
 			return
 		}
 
@@ -163,19 +136,11 @@ func (c *UnitController) FindAll(ctx *gin.Context) {
 	res, meta, err := c.unitService.FindAll(companyId, &query)
 
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	meta = Common.PaginateMetadata(ctx, meta.TotalData, limit, page)
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success get all unit",
-		"data":    res,
-		"meta":    meta,
-	}, http.StatusOK)
+	Helper.SetSuccessResponse(ctx, "Success get all data satuan", res, http.StatusOK)
 }

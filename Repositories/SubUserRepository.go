@@ -47,7 +47,7 @@ func (r *SubUserRepository) Create(subUser *Models.SubUser) (*Models.SubUser, er
 }
 
 func (r *SubUserRepository) Update(subUser *Models.SubUser, id string) (*Models.SubUser, error) {
-	if err := r.DB.Model(subUser).Where("id = ?", id).Updates(subUser).Error; err != nil {
+	if err := r.DB.Model(subUser).Where("id = ?", id).Updates(subUser).Update("status", subUser.Status).Error; err != nil {
 		return nil, err
 	}
 

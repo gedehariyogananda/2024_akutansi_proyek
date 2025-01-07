@@ -3,19 +3,17 @@ package Dto
 import "2024_akutansi_project/Models"
 
 type CreateAccountDto struct {
-	Name      string             `json:"name" binding:"required"`
-	Type      Models.TypeAccount `json:"type" binding:"required"`
-	Code      string             `json:"code" binding:"required"`
+	Name      string             `json:"name" validate:"required"`
+	Type      Models.TypeAccount `json:"type" validate:"required,oneof=ASSET LIABILITY EQUITY REVENUE EXPENSE"`
+	Code      string             `json:"code" validate:"required"`
 	CompanyID string             `json:"-"`
 	Status    bool               `json:"status"`
-	IsLocked  bool               `json:"is_locked"`
 }
 
 type UpdateAccountDto struct {
 	Name      string             `json:"name"`
-	Type      Models.TypeAccount `json:"type"`
+	Type      Models.TypeAccount `json:"type,omitempty" validate:"omitempty,oneof=ASSET LIABILITY EQUITY REVENUE EXPENSE"`
 	Code      string             `json:"code"`
 	CompanyID string             `json:"-"`
 	Status    bool               `json:"status"`
-	IsLocked  bool               `json:"is_locked"`
 }
