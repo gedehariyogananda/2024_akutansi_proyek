@@ -34,7 +34,7 @@ func (c *UnitService) FindByID(id string) (res *Response.Unit, statusCode int, e
 	unit, err := c.unitRepository.FindById(id)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, http.StatusBadRequest, err
+		return nil, http.StatusNotFound, err
 	}
 
 	if err != nil {
@@ -99,7 +99,7 @@ func (s *UnitService) Delete(id string) (err error, statusCode int) {
 	_, err = s.unitRepository.FindById(id)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return err, http.StatusBadRequest
+		return err, http.StatusNotFound
 	}
 
 	if err != nil {
