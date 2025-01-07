@@ -35,6 +35,7 @@ func (s *SubUserService) Create(subUserDto *Dto.CreateSubUserDto) (res *Response
 		EmployeeKey: subUserDto.EmployeeKey,
 		Status:      subUserDto.Status,
 		CompanyID:   subUserDto.CompanyID,
+		Password:    subUserDto.Password,
 	}
 
 	subUser, err = s.SubUserRepository.Create(subUser)
