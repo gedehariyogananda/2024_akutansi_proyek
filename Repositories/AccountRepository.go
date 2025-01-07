@@ -102,6 +102,7 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			CompanyID: companyID,
 			Code:      Models.AccountCashCode,
 			Status:    true,
+			IsLock:    true,
 		},
 		{
 			Name:      Models.AccountRevenue,
@@ -109,6 +110,7 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			CompanyID: companyID,
 			Code:      Models.AccountRevenueCode,
 			Status:    true,
+			IsLock:    true,
 		},
 		{
 			Name:      Models.AccountOutputTax,
@@ -116,6 +118,7 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			CompanyID: companyID,
 			Code:      Models.AccountOutputTaxCode,
 			Status:    true,
+			IsLock:    true,
 		},
 		{
 			Name:      Models.AccountInputTax,
@@ -123,6 +126,7 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			CompanyID: companyID,
 			Code:      Models.AccountInputTaxCode,
 			Status:    true,
+			IsLock:    true,
 		},
 		{
 			Name:      Models.AccountProductMaterial,
@@ -130,6 +134,7 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			CompanyID: companyID,
 			Code:      Models.AccountProductMaterialCode,
 			Status:    true,
+			IsLock:    true,
 		},
 		{
 			Name:      Models.AccountBusinessDebt,
@@ -137,6 +142,7 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			CompanyID: companyID,
 			Code:      Models.AccountBusinessDebtCode,
 			Status:    true,
+			IsLock:    true,
 		},
 		{
 			Name:      Models.AccountBusinessCapital,
@@ -144,6 +150,7 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			CompanyID: companyID,
 			Code:      Models.AccountBusinessCapitalCode,
 			Status:    true,
+			IsLock:    true,
 		},
 		{
 			Name:      Models.AccountReceivables,
@@ -151,6 +158,7 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			CompanyID: companyID,
 			Code:      Models.AccountReceivablesCode,
 			Status:    true,
+			IsLock:    true,
 		},
 		{
 			Name:      Models.AccountAssets,
@@ -158,6 +166,7 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			CompanyID: companyID,
 			Code:      Models.AccountAssetsCode,
 			Status:    true,
+			IsLock:    true,
 		},
 		{
 			Name:      Models.AccountCompanyExpense,
@@ -165,6 +174,7 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			CompanyID: companyID,
 			Code:      Models.AccountCompanyExpenseCode,
 			Status:    true,
+			IsLock:    true,
 		},
 		{
 			Name:      Models.AccountWithdrawal,
@@ -172,6 +182,7 @@ func (r *AccountRepository) InsertDefaultAccounts(companyID string) error {
 			CompanyID: companyID,
 			Code:      Models.AccountWithdrawalCode,
 			Status:    true,
+			IsLock:    true,
 		},
 	}
 
