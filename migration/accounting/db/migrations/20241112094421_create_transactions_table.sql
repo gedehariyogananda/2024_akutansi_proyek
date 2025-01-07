@@ -15,7 +15,8 @@ CREATE TABLE transactions
     payment_method           VARCHAR(255)             NOT NULL,
     payment_type            VARCHAR(255)             NOT NULL,
     amount                 NUMERIC(20, 2)           NOT NULL,
-    company_id          VARCHAR(100) NOT NULL
+    company_id          VARCHAR(100) NOT NULL,
+    created_at          TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 -- migrate:down
