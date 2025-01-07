@@ -48,6 +48,7 @@ type Account struct {
 	Type      TypeAccount `json:"type"`
 	CompanyID string      `json:"company_id"`
 	Code      string      `json:"code"`
+	IsLock    bool        `json:"is_lock"`
 	Status    bool        `json:"status"`
 	CreatedAt *time.Time  `json:"created_at"`
 	UpdatedAt time.Time   `json:"updated_at"`
