@@ -22,6 +22,6 @@ func CategoryRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	route.GET("/:id", CategoryController.FindByID)
 
 	route.POST("/", CategoryController.Create)
-	route.PATCH("/:id", CategoryController.Update)
+	route.PUT("/:id", CategoryController.Update)
 	route.DELETE("/:id", CategoryController.Delete)
 }
