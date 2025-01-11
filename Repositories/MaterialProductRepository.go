@@ -95,19 +95,25 @@ func (r *MaterialProductRepository) FindAll(companyID string, query *Common.Quer
 	var materialProducts []*Models.MaterialProduct
 	var total int64
 
-	err := r.DB.Preload("Unit").Preload("Category").Preload("MaterialConversions.Unit").Scopes(Utils.Paginate(query.Page, query.Limit),
+	fmt.Println("company_id", companyID)
+	fmt.Println("smallest unit id", query.SmallestUnitID)
+
+	err := r.DB.Preload("Unit").Preload("MaterialConversions.Unit").Scopes(Utils.Paginate(query.Page, query.Limit),
 		Helper.FilterCompanyID(companyID),
 		Helper.FilterStatus(query.Status),
 		Helper.FilterSearch(*query.Search),
+		Helper.FilterUnitID(query.SmallestUnitID),
 	).Find(&materialProducts).Error
 
 	if err != nil {
 		return nil, 0, fmt.Errorf("error when finding all material product: %w", err)
 	}
 
-	err = r.DB.Model(&Models.MaterialProduct{}).Scopes(Helper.FilterCompanyID(companyID),
+	err = r.DB.Model(&Models.MaterialProduct{}).Scopes(
+		Helper.FilterCompanyID(companyID),
 		Helper.FilterStatus(query.Status),
 		Helper.FilterSearch(*query.Search),
+		Helper.FilterUnitID(query.SmallestUnitID),
 	).Count(&total).Error
 
 	if err != nil {

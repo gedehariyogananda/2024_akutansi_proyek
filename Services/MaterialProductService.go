@@ -160,6 +160,8 @@ func (s *MaterialProductService) FindAll(companyID string, query *Common.Query) 
 	}
 
 	meta.TotalData = total
+	meta.Limit = query.Limit
+	meta.Page = query.Page
 
 	res = Response.ToMaterialProduckResponseSlice(materialProducts)
 
