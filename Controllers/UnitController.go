@@ -142,5 +142,5 @@ func (c *UnitController) FindAll(ctx *gin.Context) {
 
 	meta = Common.PaginateMetadata(ctx, meta.TotalData, limit, page)
 
-	Helper.SetSuccessResponse(ctx, "Success get all data satuan", res, http.StatusOK)
+	Helper.SetPaginationResponse(ctx, "Success get all data satuan", res, meta, http.StatusOK)
 }
