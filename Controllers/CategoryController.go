@@ -51,10 +51,7 @@ func (c *CategoryController) FindAll(ctx *gin.Context) {
 		status, err := strconv.ParseBool(status)
 
 		if err != nil {
-			Helper.SetResponse(ctx, gin.H{
-				"success": false,
-				"message": "Invalid status",
-			}, http.StatusBadRequest)
+			Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -64,31 +61,25 @@ func (c *CategoryController) FindAll(ctx *gin.Context) {
 	res, meta, err := c.CategoryService.FindAll(companyId, &query)
 
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusInternalServerError)
+		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	meta = Common.PaginateMetadata(ctx, meta.TotalData, limit, page)
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success get all category",
-		"data":    res,
-		"meta":    meta,
-	}, http.StatusOK)
+	Helper.SetPaginationResponse(ctx, "Success get all data kategory", res, meta, http.StatusOK)
 }
 
 func (c *CategoryController) Create(ctx *gin.Context) {
 	var createCategoryDto Dto.CreateCategory
 
 	if err := ctx.ShouldBindJSON(&createCategoryDto); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+		Helper.SetErrorResponse(ctx, "Kesalahan input data", http.StatusBadRequest)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, createCategoryDto); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
 
@@ -98,18 +89,11 @@ func (c *CategoryController) Create(ctx *gin.Context) {
 	category, statusCode, err := c.CategoryService.Create(&createCategoryDto, companyId)
 
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success create category",
-		"data":    category,
-	}, http.StatusOK)
+	Helper.SetSuccessResponse(ctx, "Success membuat kategori", category, http.StatusCreated)
 }
 
 func (c *CategoryController) Update(ctx *gin.Context) {
@@ -118,28 +102,23 @@ func (c *CategoryController) Update(ctx *gin.Context) {
 	var updateCategoryDto Dto.UpdateCategory
 
 	if err := ctx.ShouldBindJSON(&updateCategoryDto); err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, http.StatusBadRequest)
+		Helper.SetErrorResponse(ctx, "Kesalahan input data", http.StatusBadRequest)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, updateCategoryDto); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
 
 	category, statusCode, err := c.CategoryService.Update(&updateCategoryDto, id)
 
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success update category",
-		"data":    category,
-	}, statusCode)
+	Helper.SetSuccessResponse(ctx, "Success update category", category, http.StatusOK)
 }
 
 func (c *CategoryController) FindByID(ctx *gin.Context) {
@@ -149,18 +128,11 @@ func (c *CategoryController) FindByID(ctx *gin.Context) {
 	fmt.Println(err)
 
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": "Category not found",
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success get single category",
-		"data":    res,
-	}, statusCode)
+	Helper.SetSuccessResponse(ctx, "Success get single kategori", res, http.StatusOK)
 }
 
 func (c *CategoryController) Delete(ctx *gin.Context) {
@@ -169,15 +141,9 @@ func (c *CategoryController) Delete(ctx *gin.Context) {
 	statusCode, err := c.CategoryService.Delete(paramId)
 
 	if err != nil {
-		Helper.SetResponse(ctx, gin.H{
-			"success": false,
-			"message": err.Error(),
-		}, statusCode)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetResponse(ctx, gin.H{
-		"success": true,
-		"message": "Success delete category",
-	}, http.StatusOK)
+	Helper.SetSuccessResponse(ctx, "success delete kategori", nil, http.StatusOK)
 }
