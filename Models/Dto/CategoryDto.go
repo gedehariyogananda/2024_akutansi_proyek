@@ -1,9 +1,9 @@
 package Dto
 
 type CreateCategory struct {
-	Name      string `json:"name" binding:"required"`
-	Code      string `json:"code" binding:"required"`
-	Type      string `json:"type" binding:"required,oneof=Produk Bahan"`
+	Name      string `json:"name" validate:"required"`
+	Code      string `json:"code" validate:"required"`
+	Type      string `json:"type" validate:"required,oneof=Produk Bahan"`
 	Status    bool   `json:"status"`
 	CompanyID string `json:"-"`
 }

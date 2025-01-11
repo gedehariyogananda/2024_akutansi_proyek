@@ -62,7 +62,7 @@ func (r *CategoryRepository) Create(category *Models.Category) (*Models.Category
 }
 
 func (r *CategoryRepository) Update(category *Models.Category, id string) (*Models.Category, error) {
-	if err := r.DB.Where("id=?", id).Updates(category).Error; err != nil {
+	if err := r.DB.Where("id=?", id).Updates(category).Update("status", category.Status).Error; err != nil {
 		return nil, err
 	}
 
