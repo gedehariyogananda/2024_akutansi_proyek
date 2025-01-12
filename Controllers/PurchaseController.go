@@ -83,6 +83,8 @@ func (p *PurchaseController) GetAllWithStatistic(ctx *gin.Context) {
 		return
 	}
 
+	meta = Common.PaginateMetadata(ctx, meta.TotalData, meta.Limit, meta.Page)
+
 	Helper.SetPaginationResponse(ctx, "Get all purchases success", res, meta, 200)
 }
 

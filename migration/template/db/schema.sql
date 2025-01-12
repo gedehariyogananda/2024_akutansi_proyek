@@ -9,6 +9,16 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: journal_entries_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.journal_entries_type AS ENUM (
+    'DEBIT',
+    'CREDIT'
+);
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -23,8 +33,8 @@ CREATE TABLE public.accounts (
     company_id character varying(255) NOT NULL,
     type character varying(255) NOT NULL,
     code character varying(20) NOT NULL,
+    is_lock boolean NOT NULL,
     status boolean NOT NULL,
-    is_locked boolean NOT NULL,
     created_at timestamp with time zone NOT NULL,
     deleted_at timestamp with time zone,
     updated_at timestamp with time zone
@@ -85,6 +95,24 @@ CREATE TABLE public.invoices (
     created_at timestamp with time zone,
     updated_at timestamp with time zone,
     refund_at timestamp with time zone
+);
+
+
+--
+-- Name: journal_entries; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.journal_entries (
+    id character varying(100) NOT NULL,
+    amount numeric(20,2),
+    account_id character varying(50) NOT NULL,
+    company_id character varying(50) NOT NULL,
+    type public.journal_entries_type NOT NULL,
+    additional_data jsonb,
+    note character varying(255),
+    date timestamp with time zone NOT NULL,
+    transaction_code character varying(255),
+    created_at timestamp with time zone NOT NULL
 );
 
 
@@ -209,6 +237,7 @@ CREATE TABLE public.sellable_products (
     smallest_unit_id character varying(255) NOT NULL,
     category_id character varying(255) NOT NULL,
     image character varying(255) NOT NULL,
+    sku character varying(255) NOT NULL,
     description character varying(255) NOT NULL,
     status boolean NOT NULL,
     has_receipt boolean NOT NULL,
@@ -266,7 +295,8 @@ CREATE TABLE public.transactions (
     payment_method character varying(255) NOT NULL,
     payment_type character varying(255) NOT NULL,
     amount numeric(20,2) NOT NULL,
-    company_id character varying(100) NOT NULL
+    company_id character varying(100) NOT NULL,
+    created_at timestamp with time zone NOT NULL
 );
 
 
@@ -316,6 +346,14 @@ ALTER TABLE ONLY public.geographies
 
 ALTER TABLE ONLY public.invoices
     ADD CONSTRAINT invoices_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journal_entries journal_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.journal_entries
+    ADD CONSTRAINT journal_entries_pkey PRIMARY KEY (id);
 
 
 --
@@ -434,6 +472,7 @@ ALTER TABLE ONLY public.units
 INSERT INTO public.schema_migrations (version) VALUES
     ('20241109151256'),
     ('20241112094421'),
+    ('20241112095711'),
     ('20241112101144'),
     ('20241112101751'),
     ('20241112102007'),

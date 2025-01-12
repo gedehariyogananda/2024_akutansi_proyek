@@ -95,9 +95,6 @@ func (r *MaterialProductRepository) FindAll(companyID string, query *Common.Quer
 	var materialProducts []*Models.MaterialProduct
 	var total int64
 
-	fmt.Println("company_id", companyID)
-	fmt.Println("smallest unit id", query.SmallestUnitID)
-
 	err := r.DB.Preload("Unit").Preload("MaterialConversions.Unit").Scopes(Utils.Paginate(query.Page, query.Limit),
 		Helper.FilterCompanyID(companyID),
 		Helper.FilterStatus(query.Status),
