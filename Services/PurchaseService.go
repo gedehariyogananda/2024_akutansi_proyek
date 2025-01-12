@@ -1,7 +1,6 @@
 package Services
 
 import (
-	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
@@ -99,8 +98,6 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 		IsDiscountPercent:   dto.IsDiscountPercent,
 	}
 
-	fmt.Println(dueDate)
-
 	purchase, err := p.purchaseRepository.Create(&puchase)
 
 	if err != nil {
@@ -109,7 +106,8 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 
 	for _, product := range dto.Purchases {
 		if product.Type == "product" {
-			expDate, err := Helper.FormatDate(product.ExpDate)
+			formatedDate := Utils.ParseDateStringToDate(product.ExpDate, nil)
+			expDate := &formatedDate
 
 			if err != nil {
 				return err
@@ -141,7 +139,8 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 				return err
 			}
 		} else {
-			expDate, err := Helper.FormatDate(product.ExpDate)
+			fomateddate := Utils.ParseDateStringToDate(product.ExpDate, nil)
+			expDate := &fomateddate
 
 			if err != nil {
 				return err
