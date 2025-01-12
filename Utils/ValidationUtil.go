@@ -2,6 +2,7 @@ package Utils
 
 import (
 	"2024_akutansi_project/Helper"
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,12 @@ var Validator *validator.Validate
 
 func InitValidator() {
 	Validator = validator.New()
+
+	err := Validator.RegisterValidation("date", Helper.DateFormat)
+	if err != nil {
+		fmt.Println("Error registering custom validation:", err)
+		return
+	}
 }
 
 func ValidateRequest(ctx *gin.Context, data interface{}) []Helper.ErrorFieldsResponse {

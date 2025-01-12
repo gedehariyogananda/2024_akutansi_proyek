@@ -112,6 +112,9 @@ func (controller *MaterialProductController) FindAll(ctx *gin.Context) {
 	query.Limit = limit
 
 	status := ctx.Query("status")
+	unitId := ctx.Query("smallest_unit_id")
+
+	query.SmallestUnitID = unitId
 
 	if status != "" {
 		statusBool, err := strconv.ParseBool(status)

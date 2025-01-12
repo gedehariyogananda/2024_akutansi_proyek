@@ -19,8 +19,7 @@ type (
 		Create(sellableProduct *Models.SellableProduct) (*Models.SellableProduct, error)
 		Delete(id string) error
 		FindByID(id string) (*Models.SellableProduct, error)
-
-		// FindAll(companyID string, query *Common.Query) ([]*Models.SellableProduct, int64, error)
+		FindAllFilterReceipt(companyId string, HasReceipt bool) (sellableProducts []*Models.SellableProduct, err error)
 	}
 
 	SellableProductRepository struct {
@@ -136,35 +135,12 @@ func (sellableProductRepository *SellableProductRepository) FindByID(id string) 
 
 	return &sellableProduct, nil
 }
+func (sellableProductRepository SellableProductRepository) FindAllFilterReceipt(companyId string, HasReceipt bool) (sellableProducts []*Models.SellableProduct, err error) {
+	if err := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
+		Where("has_receipt = ?", HasReceipt).
+		Find(&sellableProducts).Error; err != nil {
+		return nil, err
+	}
 
-// func (sellableProductRepository *SellableProductRepository) FindAll(companyID string, query *Common.Query) ([]*Models.SellableProduct, int64, error) {
-// 	var sellableProducts []*Models.SellableProduct
-// 	var totalData int64
-
-// 	err := sellableProductRepository.DB.Scopes(
-// 		Utils.Paginate(query.Page, query.Limit),
-// 		Helper.FilterCompanyID(companyID),
-// 		Helper.FilterSearch(*query.Search),
-// 		Helper.FilterStatus(query.Status),
-// 		Helper.FilterCategory(*query.CategoryID),
-// 	).
-// 		Preload("Unit").Preload("Category").Preload("Receipts.MaterialProduct.Unit").
-// 		Find(&sellableProducts).Error
-
-// 	if err != nil {
-// 		return nil, 0, err
-// 	}
-
-// 	err = sellableProductRepository.DB.Model(&Models.SellableProduct{}).Scopes(
-// 		Helper.FilterCompanyID(companyID),
-// 		Helper.FilterSearch(*query.Search),
-// 		Helper.FilterStatus(query.Status),
-// 		Helper.FilterCategory(*query.CategoryID),
-// 	).Count(&totalData).Error
-
-// 	if err != nil {
-// 		return nil, 0, err
-// 	}
-
-// 	return sellableProducts, totalData, nil
-// }
+	return sellableProducts, nil
+}

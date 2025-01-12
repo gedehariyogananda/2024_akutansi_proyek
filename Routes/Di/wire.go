@@ -303,3 +303,26 @@ func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
 
 	return &Controllers.JournalEntriesController{}
 }
+func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.SellableProductRepositoryProvider,
+		Repositories.MaterialProductRepositoryProvider,
+		Repositories.PurchaseRepositoryProvider,
+		Repositories.PurchaseSellableProductRepositoryProvider,
+		Repositories.PurchaseMaterialProductRepositoryProvider,
+		Repositories.MaterialStockRepositoryProvider, // Menambahkan provider untuk MaterialStockRepository
+		Repositories.SellableStockRepositoryProvider, // Menambahkan provider untuk SellableStockRepository
+		Services.PurchaseServiceProvider,
+		Controllers.PurchaseControllerProvider,
+
+		wire.Bind(new(Controllers.IPurchaseController), new(*Controllers.PurchaseController)),
+		wire.Bind(new(Services.IPurchaseService), new(*Services.PurchaseService)),
+		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
+		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
+		wire.Bind(new(Repositories.IPurchaseRepository), new(*Repositories.PurchaseRepository)),
+		wire.Bind(new(Repositories.IPurchaseSellableProductRepository), new(*Repositories.PurchaseSellableProductRepository)),
+		wire.Bind(new(Repositories.IPurchaseMaterialProductRepository), new(*Repositories.PurchaseMaterialProductRepository)),
+		wire.Bind(new(Repositories.IMaterialStockRepository), new(*Repositories.MaterialStockRepository)),
+		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
+	)))
+}
