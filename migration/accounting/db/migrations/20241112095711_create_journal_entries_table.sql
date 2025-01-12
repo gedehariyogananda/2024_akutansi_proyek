@@ -12,6 +12,8 @@ CREATE TABLE journal_entries
     note             VARCHAR(255),
     date             TIMESTAMP WITH TIME ZONE NOT NULL,
     transaction_code VARCHAR(255),
+    credit_at NUMERIC(20, 2),
+    debit_at NUMERIC(20, 2),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 

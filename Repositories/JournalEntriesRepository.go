@@ -10,7 +10,7 @@ import (
 
 type (
 	IJournalEntriesRepository interface {
-		FindAll(request Dto.GetJournalRequest) ([]*Models.JournalEntry, int64, error)
+		FindAll(request Dto.GetJournalRequest, selectedFields *[]string, isFinancialReport bool) ([]*Models.JournalEntry, int64, error)
 		FindByCompanyID(companyID string) (journalEntry *Models.JournalEntry, err error)
 		CalculateAmountByType(companyID string, prefixType Models.JournalType) (countAmount float64, err error)
 		CheckupUnbalance(companyID string) (bool, error)
@@ -26,29 +26,49 @@ func JournalEntriesProvider(db *gorm.DB) *JournalEntriesRepository {
 	return &JournalEntriesRepository{DB: db}
 }
 
-func (repository *JournalEntriesRepository) FindAll(request Dto.GetJournalRequest) ([]*Models.JournalEntry, int64, error) {
+func (repository *JournalEntriesRepository) FindAll(request Dto.GetJournalRequest, selectedFields *[]string, isFinancialReport bool) ([]*Models.JournalEntry, int64, error) {
 	var journalEntries []*Models.JournalEntry
 	var totalData int64
 
-	query := repository.DB.Model(&Models.JournalEntry{}).Preload("Account")
+	query := repository.DB.Model(&Models.JournalEntry{}).
+		Where("journal_entries.company_id = ?", request.CompanyID).
+		Joins("LEFT JOIN accounts ON journal_entries.account_id = accounts.id")
+
+	if isFinancialReport {
+		query = query.Where("accounts.type IN ?", []string{
+			string(Models.ASSET), string(Models.LIABILITY), string(Models.EQUITY),
+		})
+	}
+
+	if selectedFields != nil {
+		query = query.Select(*selectedFields)
+	}
+
+	query = query.Preload("Account", func(accPayload *gorm.DB) *gorm.DB {
+		return accPayload.Select("id", "name", "type")
+	})
 
 	if request.AccountID != "" {
-		query = query.Where("account_id = ?", request.AccountID)
+		query = query.Where("journal_entries.account_id = ?", request.AccountID)
 	}
 
 	if request.StartDate != "" {
-		query = query.Where("date >= ?", request.StartDate)
+		query = query.Where("DATE(journal_entries.date) >= ?", request.StartDate)
 	}
 
 	if request.EndDate != "" {
-		query = query.Where("date <= ?", request.EndDate)
+		query = query.Where("DATE(journal_entries.date) <= ?", request.EndDate)
+	}
+
+	if request.PeriodDate != "" {
+		query = query.Where("DATE(journal_entries.date) <= ?", request.PeriodDate)
 	}
 
 	query.Count(&totalData)
 
 	query = query.Scopes(
 		Utils.Paginate(request.Page, request.Limit)).
-		Order("date desc")
+		Order("journal_entries.date desc")
 
 	if err := query.Find(&journalEntries).Error; err != nil {
 		return nil, 0, err

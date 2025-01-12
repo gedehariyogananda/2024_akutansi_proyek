@@ -43,15 +43,14 @@ const (
 )
 
 type Account struct {
-	ID        string      `json:"id"`
-	Name      string      `json:"name"`
-	Type      TypeAccount `json:"type"`
-	CompanyID string      `json:"company_id"`
-	Code      string      `json:"code"`
-	IsLock    bool        `json:"is_lock"`
-	Status    bool        `json:"status"`
-	CreatedAt *time.Time  `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
+	ID        string      `json:"id,omitempty"`
+	Name      string      `json:"name,omitempty"`
+	Type      TypeAccount `json:"type,omitempty"`
+	CompanyID string      `json:"company_id,omitempty"`
+	Code      string      `json:"code,omitempty"`
+	Status    bool        `json:"statusm,omitempty"`
+	CreatedAt *time.Time  `json:"created_at,omitempty"`
+	UpdatedAt time.Time   `json:"updated_at,omitempty"`
 	DeletedAt gorm.DeletedAt
 }
 

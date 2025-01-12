@@ -38,3 +38,7 @@ func SeperateDate(date string) (options *Seperation) {
 		Day:   func() *int { day, _ := strconv.Atoi(dateParse[2]); return &day }(),
 	}
 }
+
+func ShiftDate(input time.Time, days int) time.Time {
+	return input.AddDate(0, 0, days)
+}
