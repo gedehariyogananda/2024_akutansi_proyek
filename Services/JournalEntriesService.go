@@ -19,7 +19,7 @@ type (
 	IJournalEntriesService interface {
 		FindAll(request Dto.GetJournalRequest, key *Consts.JournalEntriesType) (res []*Models.JournalEntry, meta Common.Meta, err error)
 		InsertJournalCashier(params Common.JournalEntryParams, isPaid bool, trx *gorm.DB) (err error)
-		InsertJournalPurchase(params Common.JournalEntryParams, isPaid bool, trx *gorm.DB) (err error)
+		InsertJournalPurchase(ctx context.Context) (err error)
 		InsertJournalOtherTransaction(ctx context.Context) (err error)
 	}
 
@@ -27,14 +27,16 @@ type (
 		JournalEntriesRepository Repositories.IJournalEntriesRepository
 		AccountRepository        Repositories.IAccountRepository
 		TransactionRepository    Repositories.ITransactionRepository
+		PurchaseRepository       Repositories.IPurchaseRepository
 	}
 )
 
-func JournalEntriesProvider(journalRepo Repositories.IJournalEntriesRepository, accountRepo Repositories.IAccountRepository, transactionRepo Repositories.ITransactionRepository) *JournalEntriesService {
+func JournalEntriesProvider(journalRepo Repositories.IJournalEntriesRepository, accountRepo Repositories.IAccountRepository, transactionRepo Repositories.ITransactionRepository, purchaseRepository Repositories.IPurchaseRepository) *JournalEntriesService {
 	return &JournalEntriesService{
 		JournalEntriesRepository: journalRepo,
 		AccountRepository:        accountRepo,
 		TransactionRepository:    transactionRepo,
+		PurchaseRepository:       purchaseRepository,
 	}
 }
 
@@ -101,40 +103,48 @@ func (service *JournalEntriesService) InsertJournalCashier(params Common.Journal
 	return nil
 }
 
-func (service *JournalEntriesService) InsertJournalPurchase(params Common.JournalEntryParams, isPaid bool, trx *gorm.DB) (err error) {
+func (service *JournalEntriesService) InsertJournalPurchase(ctx context.Context) (err error) {
+	now := time.Now()
+	currentDate := now.Format("2006-01-02")
 
-	isContinued, err := service.unbalanceCheckup(params.CompanyID)
+	purchaseds, err := service.PurchaseRepository.GetByDate(currentDate)
 	if err != nil {
 		return err
 	}
 
-	if !isContinued {
-		return err
-	}
+	for _, p := range purchaseds {
+		note := p.PurchaseNumber + "_" + p.Payment
+		params := Common.JournalEntryParams{
+			CompanyID: p.CompanyID,
+			Note:      note,
+			SubTotal:  float64(p.TotalPurchaseAmount),
+			Tax:       float64(p.Tax),
+		}
 
-	acc, err := service.allAccountCompanyUser(params.CompanyID)
-	if err != nil {
-		return err
-	}
+		acc, err := service.allAccountCompanyUser(p.CompanyID)
+		if err != nil {
+			return err
+		}
 
-	productMaterialType := Models.DEBIT
-	inputTaxType := Models.DEBIT
-	cashType := Models.CREDIT
-	bussinessDebtType := Models.CREDIT
+		productMaterialType := Models.DEBIT
+		inputTaxType := Models.DEBIT
+		cashType := Models.CREDIT
+		bussinessDebtType := Models.CREDIT
 
-	res := []Models.JournalEntry{
-		service.createJournalEntry(acc[Models.AccountProductMaterialCode].ID, params, productMaterialType, params.SubTotal), // bahan produk
-		service.createJournalEntry(acc[Models.AccountInputTaxCode].ID, params, inputTaxType, params.Tax),                    // pajak masukan
-	}
+		res := []Models.JournalEntry{
+			service.createJournalEntry(acc[Models.AccountProductMaterialCode].ID, params, productMaterialType, params.SubTotal), // bahan produk
+			service.createJournalEntry(acc[Models.AccountInputTaxCode].ID, params, inputTaxType, params.Tax),                    // pajak masukan
+		}
 
-	if isPaid {
-		res = append(res, service.createJournalEntry(acc[Models.AccountCashCode].ID, params, cashType, params.SubTotal+params.Tax)) // kas
-	} else {
-		res = append(res, service.createJournalEntry(acc[Models.AccountBusinessDebtCode].ID, params, bussinessDebtType, params.SubTotal+params.Tax)) // hutang usaha
-	}
+		if p.Payment == "lunas" {
+			res = append(res, service.createJournalEntry(acc[Models.AccountCashCode].ID, params, cashType, params.SubTotal+params.Tax)) // kas
+		} else {
+			res = append(res, service.createJournalEntry(acc[Models.AccountBusinessDebtCode].ID, params, bussinessDebtType, params.SubTotal+params.Tax)) // hutang usaha
+		}
 
-	if err := service.JournalEntriesRepository.Insert(res, trx); err != nil {
-		return err
+		if err := service.JournalEntriesRepository.Insert(res, nil); err != nil {
+			return err
+		}
 	}
 
 	return nil
