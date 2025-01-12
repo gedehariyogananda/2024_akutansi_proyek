@@ -73,6 +73,16 @@ func FilterCategoryID(categoryID *string) func(*gorm.DB) *gorm.DB {
 	}
 }
 
+func FilterUnitID(unitID string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if unitID == "" {
+			return db
+		}
+
+		return db.Where("smallest_unit_id = ?", unitID)
+	}
+}
+
 func FilterSearchProduct(query *string) func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		if query == nil {

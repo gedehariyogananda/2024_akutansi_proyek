@@ -14,6 +14,7 @@ type (
 		UpdateCurrent(trx *gorm.DB, materialStockID string, qtyClient int) error
 		FetchMaterialStockToPushNotification(ctx context.Context) []*Models.MaterialStock
 		GetAvailableStock(companyId string) (materialStock []*Models.MaterialStock, err error)
+		Create(materialStock *Models.MaterialStock) (*Models.MaterialStock, error)
 	}
 
 	MaterialStockRepository struct {
@@ -72,6 +73,14 @@ func (r *MaterialStockRepository) GetAvailableStock(companyId string) (materialS
 		Where("company_id = ?", companyId).
 		Find(&materialStock).Error; err != nil {
 		return nil, fmt.Errorf("error when getting available stock: %w", err)
+	}
+
+	return materialStock, nil
+}
+
+func (r *MaterialStockRepository) Create(materialStock *Models.MaterialStock) (*Models.MaterialStock, error) {
+	if err := r.DB.Create(materialStock).Error; err != nil {
+		return nil, fmt.Errorf("error when creating material stock: %w", err)
 	}
 
 	return materialStock, nil
