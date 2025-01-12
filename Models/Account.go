@@ -49,6 +49,7 @@ type Account struct {
 	CompanyID string      `json:"company_id,omitempty"`
 	Code      string      `json:"code,omitempty"`
 	Status    bool        `json:"statusm,omitempty"`
+	IsLock    bool        `json:"is_lock"`
 	CreatedAt *time.Time  `json:"created_at,omitempty"`
 	UpdatedAt time.Time   `json:"updated_at,omitempty"`
 	DeletedAt gorm.DeletedAt
