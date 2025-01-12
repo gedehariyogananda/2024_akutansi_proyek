@@ -7,13 +7,14 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
+	"2024_akutansi_project/Utils"
 	"fmt"
 	"time"
 )
 
 type (
 	IPurchaseService interface {
-		GetDropdown(companyID string) (res Response.DropDwonPurchase, err error)
+		GetDropdown(companyID string) (res Response.DropDownPurchase, err error)
 		Create(dto Dto.CreatePurchasesDto) (err error)
 		GetAllPurchaseWithStatistic(companyID string, query *Common.Query) (res Response.PurchasesWithStatisticResponse, meta Common.Meta, err error)
 		Delete(id string) (err error)
@@ -50,7 +51,7 @@ func PurchaseServiceProvider(
 	}
 }
 
-func (p *PurchaseService) GetDropdown(companyID string) (res Response.DropDwonPurchase, err error) {
+func (p *PurchaseService) GetDropdown(companyID string) (res Response.DropDownPurchase, err error) {
 	products, err := p.ProductRepository.GetProductWhithoutReceipt(companyID)
 	if err != nil {
 		return res, err
@@ -80,7 +81,8 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 	var dueDate *time.Time
 
 	if dto.DueDate != "" {
-		dueDate, err = Helper.FormatDate(dto.DueDate)
+		fomatedDate := Utils.ParseDateStringToDate(dto.DueDate, nil)
+		dueDate = &fomatedDate
 	}
 
 	if err != nil {
