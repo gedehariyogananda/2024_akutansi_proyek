@@ -17,12 +17,11 @@ import (
 type (
 	ISellableProductController interface {
 		GetAllSellableProduct(ctx *gin.Context)
-		GetActiveSellableProduct(ctx *gin.Context)
 		UpdateSellableProduct(ctx *gin.Context)
 		Create(ctx *gin.Context)
 		AssignMaterial(ctx *gin.Context)
 		UnAssignMAterial(ctx *gin.Context)
-		FindById(ctx *gin.Context)
+		FindByIdSetMaterial(ctx *gin.Context)
 		FindByIdSetStock(ctx *gin.Context)
 		Delete(ctx *gin.Context)
 		Update(ctx *gin.Context)
