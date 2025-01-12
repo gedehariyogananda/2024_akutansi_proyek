@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type DropDwonPurchase struct {
+type DropDownPurchase struct {
 	Products  []productResponse  `json:"products"`
 	Materials []materialResponse `json:"materials"`
 }
@@ -42,8 +42,8 @@ func toMaterialResponseSlice(material []Models.MaterialProduct) []materialRespon
 	return materialResponses
 }
 
-func ToDropDownPurchase(products []Models.SellableProduct, materials []Models.MaterialProduct) DropDwonPurchase {
-	return DropDwonPurchase{
+func ToDropDownPurchase(products []Models.SellableProduct, materials []Models.MaterialProduct) DropDownPurchase {
+	return DropDownPurchase{
 		Products:  toProductResponseSlice(products),
 		Materials: toMaterialResponseSlice(materials),
 	}
