@@ -302,6 +302,7 @@ func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
 	))
 
 	return &Controllers.JournalEntriesController{}
+}
 func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.SellableProductRepositoryProvider,
