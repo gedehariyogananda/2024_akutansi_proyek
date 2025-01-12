@@ -55,9 +55,17 @@ func (controller *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 }
 
 func (controller *InvoiceController) GetSalesHistory(ctx *gin.Context) {
+	var request Dto.GetHistoryInvoice
 	query := Utils.InsertParams(ctx)
 
-	invoices, meta, statusCode, err := controller.InvoiceService.GetAllByCompany(ctx.GetString("company_id"), &query)
+	startDateParams := ctx.Query("start_date")
+	endDateParams := ctx.Query("end_date")
+
+	request.StartDate = &startDateParams
+	request.EndDate = &endDateParams
+	request.Query = query
+
+	invoices, meta, statusCode, err := controller.InvoiceService.GetAllByCompany(ctx.GetString("company_id"), &request)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return

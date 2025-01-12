@@ -3,7 +3,7 @@ package Repositories
 import (
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models"
-	"2024_akutansi_project/Models/Common"
+	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Utils"
 
 	"gorm.io/gorm"
@@ -14,7 +14,7 @@ type (
 		Store(trx *gorm.DB, invoice *Models.Invoice) (*Models.Invoice, error)
 		FindByID(id string, companyID string) (invoice *Models.Invoice, err error)
 		Update(id string, invoice *Models.Invoice) (err error)
-		GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, totalData int64, err error)
+		GetAllByCompany(companyID string, query *Dto.GetHistoryInvoice) (invoices []*Models.Invoice, totalData int64, err error)
 		GetByInvoiceID(companyID string, invoiceID string) (invoice *Models.Invoice, err error)
 		SumSalesByDate(companyID string, date string) (totalSales float64, err error)
 		SumSalesByYearMonth(companyID string, year int, month int) (totalSales float64, err error)
@@ -54,9 +54,12 @@ func (r *InvoiceRepository) Update(id string, invoice *Models.Invoice) (err erro
 	return nil
 }
 
-func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Common.Query) (invoices []*Models.Invoice, totalData int64, err error) {
+func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Dto.GetHistoryInvoice) (invoices []*Models.Invoice, totalData int64, err error) {
 	if err := r.DB.Model(&Models.Invoice{}).
-		Scopes(Helper.FilterSearchRiwayatTransaction(query.Search)).
+		Scopes(
+			Helper.FilterSearchRiwayatTransaction(query.Search),
+			Helper.FilterDateInvoice(*query.StartDate, *query.EndDate),
+			Helper.FilterStatus(query.Status)).
 		Count(&totalData).Error; err != nil {
 		return nil, 0, err
 	}
@@ -69,7 +72,9 @@ func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Common.Quer
 		}).
 		Scopes(
 			Utils.Paginate(query.Page, query.Limit),
-			Helper.FilterSearchRiwayatTransaction(query.Search)).
+			Helper.FilterSearchRiwayatTransaction(query.Search),
+			Helper.FilterDateInvoice(*query.StartDate, *query.EndDate),
+			Helper.FilterStatus(query.Status)).
 		Order("created_at desc").
 		Find(&invoices).Error; err != nil {
 		return nil, 0, err

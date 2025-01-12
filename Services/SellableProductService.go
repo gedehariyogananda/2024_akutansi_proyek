@@ -18,10 +18,10 @@ type (
 	ISellableProductService interface {
 		Create(request *Dto.CreateSellableProductDTO) (res *Response.SellableResponse, err error)
 		// CreateWithAsignMaterial(request *Dto.CreateSellableProductWithAssignMaterialDTO) (res *Response.SellableResponse, err error)
-		GetAll(companyID string, query *Common.Query, onlyActive bool) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error)
+		GetAll(companyID string, query *Dto.GetSellableProduct) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error)
 		AssignMaterial(request *Dto.AssignMaterialDtos) (statusCode int, err error)
 		UnAssignMaterial(request *Dto.UnAssignMaterialDto) (statusCode int, err error)
-		FindById(id string) (res *Response.SellableResponse, statusCode int, err error)
+		FindById(id string, setWithMaterial bool) (res *Response.SellableResponse, statusCode int, err error)
 		Delete(id string) (statusCode int, err error)
 		Update(request *Dto.UpdateSellableProductDTO, id string) (statusCode int, err error)
 		UpdateStock(id string, request *Dto.SellableProductDTO) (statusCode int, err error)
@@ -45,8 +45,8 @@ func SellableProductServiceProvider(sellableProductRepository Repositories.ISell
 	}
 }
 
-func (service *SellableProductService) GetAll(companyID string, query *Common.Query, onlyActive bool) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
-	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, onlyActive, query)
+func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSellableProduct) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
+	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, query)
 	if err != nil {
 		return nil, Common.Meta{}, http.StatusInternalServerError, err
 	}
@@ -63,39 +63,21 @@ func (service *SellableProductService) GetAll(companyID string, query *Common.Qu
 			status = "Non-Aktif"
 		}
 
-		if onlyActive {
-			res = append(res, &Response.SellableResponse{
-				ID:              sellableProduct.ID,
-				Name:            &sellableProduct.Name,
-				Image:           &sellableProduct.Image,
-				Description:     &sellableProduct.Description,
-				CurrentQuantity: &sellableProduct.CurrentQuantity,
-				Price:           &sellableProduct.Price,
-			})
-			continue
-		} else {
-			res = append(res, &Response.SellableResponse{
-				ID:              sellableProduct.ID,
-				Name:            &sellableProduct.Name,
-				CompanyID:       &sellableProduct.CompanyID,
-				SmallestUnitID:  &sellableProduct.SmallestUnitID,
-				CategoryID:      &sellableProduct.CategoryID,
-				Image:           &sellableProduct.Image,
-				Description:     &sellableProduct.Description,
-				Status:          sellableProduct.Status,
-				StatusDisplay:   &status,
-				HasReceipt:      &sellableProduct.HasReceipt,
-				CurrentQuantity: &sellableProduct.CurrentQuantity,
-				Price:           &sellableProduct.Price,
-				CreatedAt:       sellableProduct.CreatedAt,
-				UpdatedAt:       sellableProduct.UpdatedAt,
-				DeletedAt:       sellableProduct.DeletedAt,
-				Unit:            sellableProduct.Unit,
-				Category:        sellableProduct.Category,
-				PromoItems:      sellableProduct.PromoItems,
-			})
-
+		var promo *Models.Promo
+		if len(sellableProduct.PromoItems) > 0 {
+			promo = sellableProduct.PromoItems[0].Promo
 		}
+
+		res = append(res, &Response.SellableResponse{
+			ID:              sellableProduct.ID,
+			Name:            &sellableProduct.Name,
+			Image:           &sellableProduct.Image,
+			CurrentQuantity: &sellableProduct.CurrentQuantity,
+			Price:           &sellableProduct.Price,
+			Category:        sellableProduct.Category,
+			StatusDisplay:   &status,
+			Promo:           promo,
+		})
 	}
 
 	meta = Common.PaginateMetadata(nil, totalData, query.Limit, query.Page)
@@ -281,7 +263,7 @@ func (service *SellableProductService) UnAssignMaterial(request *Dto.UnAssignMat
 	return http.StatusOK, nil
 }
 
-func (s *SellableProductService) FindById(id string) (res *Response.SellableResponse, statusCode int, err error) {
+func (s *SellableProductService) FindById(id string, setWithMaterial bool) (res *Response.SellableResponse, statusCode int, err error) {
 	sellableProduct, err := s.SellableProductRepository.FindByID(id)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -292,11 +274,22 @@ func (s *SellableProductService) FindById(id string) (res *Response.SellableResp
 		return nil, http.StatusInternalServerError, err
 	}
 
-	fmt.Println(sellableProduct.Category.Name)
+	if setWithMaterial {
+		res = Response.ToSellableResponse(sellableProduct)
+	} else {
+		res = &Response.SellableResponse{
+			ID:              sellableProduct.ID,
+			Name:            &sellableProduct.Name,
+			Image:           &sellableProduct.Image,
+			CurrentQuantity: &sellableProduct.CurrentQuantity,
+			Description:     &sellableProduct.Description,
+			PromoItems:      sellableProduct.PromoItems,
+			Category:        sellableProduct.Category,
+			HasReceipt: 	&sellableProduct.HasReceipt,
+		}
+	}
 
-	response := Response.ToSellableResponse(sellableProduct)
-
-	return response, http.StatusOK, nil
+	return res, http.StatusOK, nil
 }
 
 func (s *SellableProductService) Delete(id string) (statusCode int, err error) {

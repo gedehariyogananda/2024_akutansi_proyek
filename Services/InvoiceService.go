@@ -19,7 +19,7 @@ import (
 type (
 	IInvoiceService interface {
 		CreateInvoicePurchased(requestClient *Dto.InvoiceRequestDTO, companyID string) (invoice *Models.Invoice, statusCode int, err error)
-		GetAllByCompany(companyID string, query *Common.Query) (response []Response.InvoiceResponse, meta Common.Meta, statusCode int, err error)
+		GetAllByCompany(companyID string, query *Dto.GetHistoryInvoice) (response []Response.InvoiceResponse, meta Common.Meta, statusCode int, err error)
 		GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.InvoiceResponse, statusCode int, err error)
 		UpdateRefund(companyID string, id string) (statusCode int, err error)
 		StatisticSales(companyID string, date string) (data interface{}, statusCode int, err error)
@@ -274,7 +274,7 @@ func (invoiceService *InvoiceService) handleSellableStocks(trx *gorm.DB, sellabl
 	return nil
 }
 
-func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *Common.Query) (response []Response.InvoiceResponse, meta Common.Meta, statusCode int, err error) {
+func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *Dto.GetHistoryInvoice) (response []Response.InvoiceResponse, meta Common.Meta, statusCode int, err error) {
 	invoices, totalData, err := invoiceService.invoiceRepository.GetAllByCompany(companyID, query)
 
 	if err != nil {
@@ -303,7 +303,7 @@ func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *C
 			InvoiceNumber: invoice.InvoiceNumber,
 			SubTotal:      invoice.SubTotal,
 			Status:        &status,
-			CreatedAt:     invoice.CreatedAt.Format("02/01/2006"),
+			CreatedAt:     invoice.CreatedAt.Format("2006-01-02 15:04:05"),
 			CountSale:     &total,
 		})
 

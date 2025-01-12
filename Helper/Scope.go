@@ -102,3 +102,33 @@ func FilterTransaksiLain(query *string) func(*gorm.DB) *gorm.DB {
 		return db.Where("title ILIKE ? OR payment_type ILIKE ? OR payment_method ILIKE ?", "%"+*query+"%", "%"+*query+"%", "%"+*query+"%")
 	}
 }
+
+func FilterManagementStock(query string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if query == "" {
+			return db
+		}
+
+		if query == "active" {
+			db = db.Where("status = ?", true)
+		} else if query == "inactive" {
+			db = db.Where("status = ?", false)
+		} else if query == "empty" {
+			db = db.Where("current_quantity = ?", 0)
+		} else {
+			db = db.Where("status = ?", true)
+		}
+
+		return db
+	}
+}
+
+func FilterDateInvoice(startDate string, endDate string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if startDate == "" || endDate == "" {
+			return db
+		}
+
+		return db.Where("DATE(created_at) BETWEEN ? AND ?", startDate, endDate)
+	}
+}

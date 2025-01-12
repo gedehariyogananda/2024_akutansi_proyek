@@ -17,12 +17,13 @@ func SellableProductRoutes(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client)
 
 	SellableController := Di.DISellableProduct(db)
 
+	route.GET("", SellableController.GetAllSellableProduct)
+	route.GET("/:id/stock", SellableController.FindByIdSetStock)
 	route.POST("/", SellableController.Create)
 	route.DELETE("/", SellableController.UnAssignMAterial)
 	route.POST("/assign-material", SellableController.AssignMaterial)
-	route.GET("/", SellableController.GetAllSellableProduct)
 	route.PUT("/:id/stock", SellableController.UpdateSellableProduct)
-	route.GET("/:id", SellableController.FindById)
+	route.GET("/:id", SellableController.FindByIdSetMaterial)
 	route.DELETE("/:id", SellableController.Delete)
 	route.PUT("/:id", SellableController.Update)
 }
