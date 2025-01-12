@@ -51,7 +51,7 @@ func PurchaseServiceProvider(
 }
 
 func (p *PurchaseService) GetDropdown(companyID string) (res Response.DropDownPurchase, err error) {
-	products, err := p.ProductRepository.GetProductWhithoutReceipt(companyID)
+	products, err := p.ProductRepository.FindAllFilterReceipt(companyID, false)
 	if err != nil {
 		return res, err
 	}

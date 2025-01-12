@@ -19,7 +19,7 @@ type (
 		Create(sellableProduct *Models.SellableProduct) (*Models.SellableProduct, error)
 		Delete(id string) error
 		FindByID(id string) (*Models.SellableProduct, error)
-		GetProductWhithoutReceipt(companyId string) (sellableProducts []*Models.SellableProduct, err error)
+		FindAllFilterReceipt(companyId string, HasReceipt bool) (sellableProducts []*Models.SellableProduct, err error)
 	}
 
 	SellableProductRepository struct {
@@ -135,9 +135,9 @@ func (sellableProductRepository *SellableProductRepository) FindByID(id string) 
 
 	return &sellableProduct, nil
 }
-func (sellableProductRepository SellableProductRepository) GetProductWhithoutReceipt(companyId string) (sellableProducts []*Models.SellableProduct, err error) {
+func (sellableProductRepository SellableProductRepository) FindAllFilterReceipt(companyId string, HasReceipt bool) (sellableProducts []*Models.SellableProduct, err error) {
 	if err := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
-		Where("has_receipt = ?", false).
+		Where("has_receipt = ?", HasReceipt).
 		Find(&sellableProducts).Error; err != nil {
 		return nil, err
 	}
