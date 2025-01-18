@@ -13,6 +13,7 @@ import (
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
 	"firebase.google.com/go/messaging"
+	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
@@ -115,12 +116,13 @@ func DIAccount(db *gorm.DB) *Controllers.AccountController {
 	return accountController
 }
 
-func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
+func DISellableProduct(db *gorm.DB, minio2 *minio.Client) *Controllers.SellableProductController {
 	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
 	promoItemRepository := Repositories.PromoItemRepositoryProvider(db)
 	receiptRepository := Repositories.ReceiptRepositoryProvider(db)
 	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository, receiptRepository, db)
-	sellableProductController := Controllers.SellableProductControllerProvider(sellableProductService)
+	storageService := Services.StorageServiceProvider(minio2)
+	sellableProductController := Controllers.SellableProductControllerProvider(sellableProductService, storageService)
 	return sellableProductController
 }
 

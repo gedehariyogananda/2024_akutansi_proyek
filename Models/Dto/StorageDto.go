@@ -1,0 +1,10 @@
+package Dto
+
+import "mime/multipart"
+
+type (
+	StorageRequest struct {
+		File      *multipart.FileHeader
+		ObjectKey string
+	}
+)

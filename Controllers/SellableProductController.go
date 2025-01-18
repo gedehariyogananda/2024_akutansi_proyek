@@ -29,12 +29,14 @@ type (
 
 	SellableProductController struct {
 		SellableProductService Services.ISellableProductService
+		StorageService         Services.IStorageService
 	}
 )
 
-func SellableProductControllerProvider(SellableProductService Services.ISellableProductService) *SellableProductController {
+func SellableProductControllerProvider(SellableProductService Services.ISellableProductService, StorageService Services.IStorageService) *SellableProductController {
 	return &SellableProductController{
 		SellableProductService: SellableProductService,
+		StorageService:         StorageService,
 	}
 }
 

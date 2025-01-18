@@ -16,7 +16,7 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	ProfileRoute(apiPrefix, deps.DB, deps.Mongo)
 	Unit(apiPrefix, deps.DB, deps.Redis)
 	TaxRoute(apiPrefix, deps.DB, deps.Redis)
-	SellableProductRoutes(apiPrefix, deps.DB, deps.Redis)
+	SellableProductRoutes(apiPrefix, deps.DB, deps.Redis, deps.Minio)
 	MaterialProduct(apiPrefix, deps.DB, deps.Redis)
 	Account(apiPrefix, deps.DB, deps.Redis)
 	StockOpnameRoutes(apiPrefix, deps.DB, deps.Redis)
