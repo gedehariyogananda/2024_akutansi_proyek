@@ -29,6 +29,10 @@ func StorageServiceProvider(minio *minio.Client) *StorageService {
 	}
 }
 
+func (s *StorageService) setFilePath(objectKey string) string {
+	return Consts.URL_MINIO + "/" + Consts.BUCKET_NAME + "/" + objectKey
+}
+
 func (s *StorageService) UploadFile(req Dto.StorageRequest, hashed bool) (path string, err error) {
 	file, err := req.File.Open()
 	if err != nil {
@@ -38,19 +42,19 @@ func (s *StorageService) UploadFile(req Dto.StorageRequest, hashed bool) (path s
 	defer file.Close()
 
 	if hashed {
-		req.ObjectKey = filepath.Join(req.ObjectKey, Utils.GenerateUniqueFileName(req.File.Filename))
+		req.ObjectKey = filepath.ToSlash(filepath.Join(req.ObjectKey, Utils.GenerateUniqueFileName(req.File.Filename)))
 	} else {
-		req.ObjectKey = filepath.Join(req.ObjectKey, req.File.Filename)
+		req.ObjectKey = filepath.ToSlash(filepath.Join(req.ObjectKey, req.File.Filename))
 	}
 
-	log.Println(req.ObjectKey)
+	_, err = s.minio.PutObject(context.Background(), Consts.BUCKET_NAME, req.ObjectKey, file, req.File.Size, minio.PutObjectOptions{
+		ContentType: req.File.Header.Get("Content-Type"),
+	})
 
-	_, err = s.minio.PutObject(context.Background(), Consts.BUCKET_NAME, req.ObjectKey, file, req.File.Size, minio.PutObjectOptions{})
 	if err != nil {
 		return "", err
 	}
 
-	log.Printf("Successfully uploaded file to %s/%s\n", Consts.BUCKET_NAME, req.ObjectKey)
 	return s.setFilePath(req.ObjectKey), nil
 }
 
@@ -75,8 +79,4 @@ func (s *StorageService) FileExists(req Dto.StorageRequest) (exist bool, err err
 	}
 
 	return true, nil
-}
-
-func (s *StorageService) setFilePath(objectKey string) string {
-	return filepath.Join(Consts.URL_MINIO + objectKey)
 }

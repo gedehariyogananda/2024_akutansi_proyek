@@ -119,13 +119,23 @@ func (controller *SellableProductController) Create(ctx *gin.Context) {
 	}
 	// VALIDATION SECTION END
 
-	image, err := Utils.UploadFile(ctx, "image", fmt.Sprintf("%s/%s", os.Getenv("UPLOAD_DIR"), "products"))
+	image, err := ctx.FormFile("image")
 	if err != nil {
-		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
 		return
 	}
 
-	createSellableProduct.Image = image
+	filePath, err := controller.StorageService.UploadFile(Dto.StorageRequest{
+		File:      image,
+		ObjectKey: "products",
+	}, true)
+
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), 400)
+		return
+	}
+
+	createSellableProduct.Image = filePath
 
 	createSellableProduct.CompanyID = ctx.GetString("company_id")
 

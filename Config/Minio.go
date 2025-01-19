@@ -24,6 +24,7 @@ func InitMinio() *minio.Client {
 		log.Fatalln("Error connected Minio: ", err)
 	}
 
-	log.Printf("Connect to Minio")
+	log.Println("Connected to Minio server")
+
 	return minioClient
 }
