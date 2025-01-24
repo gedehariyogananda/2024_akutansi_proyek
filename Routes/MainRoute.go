@@ -24,4 +24,5 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	SubUserRoute(apiPrefix, deps.DB, deps.Redis)
 	JournalEntriesRoutes(apiPrefix, deps.DB, deps.Redis)
 	PurchaseRoute(apiPrefix, deps.DB, deps.Redis)
+	StorageRoute(apiPrefix, deps.DB, deps.Redis, deps.Minio)
 }

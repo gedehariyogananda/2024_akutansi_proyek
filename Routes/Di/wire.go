@@ -310,6 +310,20 @@ func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
 
 	return &Controllers.JournalEntriesController{}
 }
+
+func DIStorage(minio *minio.Client) *Controllers.StorageController {
+	panic(wire.Build(wire.NewSet(
+		Services.StorageServiceProvider,
+		Controllers.StorageControllerProvider,
+
+		wire.Bind(new(Services.IStorageService), new(*Services.StorageService)),
+		wire.Bind(new(Controllers.IStorageController), new(*Controllers.StorageController)),
+	),
+	))
+
+	return &Controllers.StorageController{}
+}
+
 func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.SellableProductRepositoryProvider,

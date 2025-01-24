@@ -5,8 +5,8 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Utils"
 	"context"
-	"log"
 	"path/filepath"
+	"time"
 
 	"github.com/minio/minio-go/v7"
 )
@@ -16,6 +16,7 @@ type (
 		UploadFile(req Dto.StorageRequest, hashed bool) (path string, err error)
 		DeleteFile(req Dto.StorageRequest) (err error)
 		FileExists(req Dto.StorageRequest) (exist bool, err error)
+		SignedUrl(req Dto.StorageRequest) (url string, err error)
 	}
 
 	StorageService struct {
@@ -55,7 +56,7 @@ func (s *StorageService) UploadFile(req Dto.StorageRequest, hashed bool) (path s
 		return "", err
 	}
 
-	return s.setFilePath(req.ObjectKey), nil
+	return req.ObjectKey, nil
 }
 
 func (s *StorageService) DeleteFile(req Dto.StorageRequest) (err error) {
@@ -63,8 +64,6 @@ func (s *StorageService) DeleteFile(req Dto.StorageRequest) (err error) {
 	if err != nil {
 		return err
 	}
-
-	log.Printf("Successfully deleted file to %s/%s\n", Consts.BUCKET_NAME, req.ObjectKey)
 
 	return nil
 }
@@ -79,4 +78,20 @@ func (s *StorageService) FileExists(req Dto.StorageRequest) (exist bool, err err
 	}
 
 	return true, nil
+}
+
+func (s *StorageService) SignedUrl(req Dto.StorageRequest) (url string, err error) {
+	signedUrl, err := s.minio.PresignedGetObject(
+		context.Background(),
+		Consts.BUCKET_NAME,
+		req.ObjectKey,
+		5*time.Minute,
+		nil,
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	return signedUrl.String(), nil
 }

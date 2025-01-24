@@ -160,6 +160,12 @@ func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
 	return journalEntriesController
 }
 
+func DIStorage(minio2 *minio.Client) *Controllers.StorageController {
+	storageService := Services.StorageServiceProvider(minio2)
+	storageController := Controllers.StorageControllerProvider(storageService)
+	return storageController
+}
+
 func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
 	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
 	materialProductRepository := Repositories.MaterialProductRepositoryProvider(db)

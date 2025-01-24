@@ -5,6 +5,6 @@ import "mime/multipart"
 type (
 	StorageRequest struct {
 		File      *multipart.FileHeader
-		ObjectKey string
+		ObjectKey string `json:"object_key" validate:"required"`
 	}
 )
