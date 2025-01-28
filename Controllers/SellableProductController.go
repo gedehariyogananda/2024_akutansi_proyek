@@ -6,8 +6,6 @@ import (
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
 	"encoding/json"
-	"fmt"
-	"os"
 
 	"net/http"
 
@@ -221,10 +219,18 @@ func (controller *SellableProductController) FindByIdSetStock(ctx *gin.Context) 
 func (controller *SellableProductController) Delete(ctx *gin.Context) {
 	id := ctx.Param("id")
 
-	statusCode, err := controller.SellableProductService.Delete(id)
+	statusCode, objectKey, err := controller.SellableProductService.Delete(id)
 
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	// delete image from minio
+	if err = controller.StorageService.DeleteFile(Dto.StorageRequest{
+		ObjectKey: objectKey,
+	}); err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -246,19 +252,37 @@ func (controller *SellableProductController) Update(ctx *gin.Context) {
 
 	id := ctx.Param("id")
 
-	image, err := Utils.UploadFile(ctx, "image", fmt.Sprintf("%s/%s", os.Getenv("UPLOAD_DIR"), "products"))
+	image, err := ctx.FormFile("image")
+	if err != nil {
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
+		return
+	}
+
+	filePath, err := controller.StorageService.UploadFile(Dto.StorageRequest{
+		File:      image,
+		ObjectKey: "products",
+	}, true)
 
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	updateSellableProduct.Image = image
+	updateSellableProduct.Image = filePath
 
-	statusCode, err := controller.SellableProductService.Update(&updateSellableProduct, id)
+	statusCode, oldImage, err := controller.SellableProductService.Update(&updateSellableProduct, id)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
+	}
+
+	if oldImage != "" {
+		if err = controller.StorageService.DeleteFile(Dto.StorageRequest{
+			ObjectKey: oldImage,
+		}); err != nil {
+			Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	Helper.SetSuccessResponse(ctx, "Berhasil mengupdate sellable product", nil, statusCode)
