@@ -128,6 +128,11 @@ func InitScheduler(deps *Dependencies.Dependency) {
 					return
 				}
 
+				if err := service.JournalEntriesService.InsertJournalPurchase(ctx); err != nil {
+					fmt.Printf("Failed [JOB] :: Process Journal Purchase, got err := %v\n", err)
+					return
+				}
+
 				fmt.Println("Success [JOB] :: Process Journal Entries")
 			}
 

@@ -1,5 +1,7 @@
 package Dto
 
+import "2024_akutansi_project/Models/Common"
+
 type SellableProductDTO struct {
 	PromoID           *string `json:"promo_id"`
 	Description       *string `json:"description"`
@@ -51,4 +53,8 @@ type UpdateSellableProductDTO struct {
 	Image          string  `form:"-"`
 	Price          float64 `form:"price"`
 	HasReceipt     bool    `form:"has_receipt"`
+}
+type GetSellableProduct struct {
+	Common.Query
+	InStatus *string `json:"in_status"`
 }

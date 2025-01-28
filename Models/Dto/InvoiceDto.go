@@ -1,5 +1,7 @@
 package Dto
 
+import "2024_akutansi_project/Models/Common"
+
 type PurchasedItem struct {
 	ID          string  `json:"id" validate:"required"`
 	Qty         int     `json:"qty" validate:"required"`
@@ -19,4 +21,10 @@ type InvoiceRequestDTO struct {
 	Tax           float64         `json:"tax" validate:"gte=0"`
 	Status        bool            `json:"status" validate:"required"`
 	Purchaseds    []PurchasedItem `json:"purchaseds" validate:"required,dive"`
+}
+
+type GetHistoryInvoice struct {
+	Common.Query
+	StartDate *string `json:"start_date"`
+	EndDate   *string `json:"end_date"`
 }

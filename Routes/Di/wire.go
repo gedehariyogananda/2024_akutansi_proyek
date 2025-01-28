@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/google/wire"
+	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
@@ -71,6 +72,7 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 		Repositories.JournalEntriesProvider,
 		Repositories.TransactionRepositoryProvider,
 		Services.JournalEntriesProvider,
+		Repositories.PurchaseRepositoryProvider,
 
 		wire.Bind(new(Controllers.IInvoiceController), new(*Controllers.InvoiceController)),
 		wire.Bind(new(Services.IInvoiceService), new(*Services.InvoiceService)),
@@ -85,6 +87,7 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
 		wire.Bind(new(Services.IJournalEntriesService), new(*Services.JournalEntriesService)),
 		wire.Bind(new(Repositories.ITransactionRepository), new(*Repositories.TransactionRepository)),
+		wire.Bind(new(Repositories.IPurchaseRepository), new(*Repositories.PurchaseRepository)),
 	),
 	))
 
@@ -214,12 +217,13 @@ func DIAccount(db *gorm.DB) *Controllers.AccountController {
 	return &Controllers.AccountController{}
 }
 
-func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
+func DISellableProduct(db *gorm.DB, minio *minio.Client) *Controllers.SellableProductController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.SellableProductRepositoryProvider,
 		Repositories.PromoItemRepositoryProvider,
 		Repositories.ReceiptRepositoryProvider,
 		Services.SellableProductServiceProvider,
+		Services.StorageServiceProvider,
 		Controllers.SellableProductControllerProvider,
 
 		// Bind interfaces ke implementasinya
@@ -227,6 +231,7 @@ func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
 		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
 		wire.Bind(new(Repositories.IReceiptRepository), new(*Repositories.ReceiptRepository)),
 		wire.Bind(new(Services.ISellableProductService), new(*Services.SellableProductService)),
+		wire.Bind(new(Services.IStorageService), new(*Services.StorageService)),
 		wire.Bind(new(Controllers.ISellableProductController), new(*Controllers.SellableProductController)),
 	),
 	))
@@ -292,17 +297,33 @@ func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
 		Controllers.JournalEntriesProvider,
 		Repositories.AccountProvider,
 		Repositories.TransactionRepositoryProvider,
+		Repositories.PurchaseRepositoryProvider,
 
 		wire.Bind(new(Controllers.IJournalEntriesController), new(*Controllers.JournalEntriesController)),
 		wire.Bind(new(Services.IJournalEntriesService), new(*Services.JournalEntriesService)),
 		wire.Bind(new(Repositories.IJournalEntriesRepository), new(*Repositories.JournalEntriesRepository)),
 		wire.Bind(new(Repositories.IAccountRepository), new(*Repositories.AccountRepository)),
 		wire.Bind(new(Repositories.ITransactionRepository), new(*Repositories.TransactionRepository)),
+		wire.Bind(new(Repositories.IPurchaseRepository), new(*Repositories.PurchaseRepository)),
 	),
 	))
 
 	return &Controllers.JournalEntriesController{}
 }
+
+func DIStorage(minio *minio.Client) *Controllers.StorageController {
+	panic(wire.Build(wire.NewSet(
+		Services.StorageServiceProvider,
+		Controllers.StorageControllerProvider,
+
+		wire.Bind(new(Services.IStorageService), new(*Services.StorageService)),
+		wire.Bind(new(Controllers.IStorageController), new(*Controllers.StorageController)),
+	),
+	))
+
+	return &Controllers.StorageController{}
+}
+
 func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.SellableProductRepositoryProvider,

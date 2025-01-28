@@ -17,31 +17,38 @@ import (
 type (
 	ISellableProductController interface {
 		GetAllSellableProduct(ctx *gin.Context)
-		GetActiveSellableProduct(ctx *gin.Context)
 		UpdateSellableProduct(ctx *gin.Context)
 		Create(ctx *gin.Context)
 		AssignMaterial(ctx *gin.Context)
 		UnAssignMAterial(ctx *gin.Context)
-		FindById(ctx *gin.Context)
+		FindByIdSetMaterial(ctx *gin.Context)
+		FindByIdSetStock(ctx *gin.Context)
 		Delete(ctx *gin.Context)
 		Update(ctx *gin.Context)
 	}
 
 	SellableProductController struct {
 		SellableProductService Services.ISellableProductService
+		StorageService         Services.IStorageService
 	}
 )
 
-func SellableProductControllerProvider(SellableProductService Services.ISellableProductService) *SellableProductController {
+func SellableProductControllerProvider(SellableProductService Services.ISellableProductService, StorageService Services.IStorageService) *SellableProductController {
 	return &SellableProductController{
 		SellableProductService: SellableProductService,
+		StorageService:         StorageService,
 	}
 }
 
 func (controller *SellableProductController) GetAllSellableProduct(ctx *gin.Context) {
+	var request Dto.GetSellableProduct
 	query := Utils.InsertParams(ctx)
+	inStatus := ctx.Query("in_status")
+	request.InStatus = &inStatus
 
-	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &query, false)
+	request.Query = query
+
+	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &request)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
@@ -49,22 +56,6 @@ func (controller *SellableProductController) GetAllSellableProduct(ctx *gin.Cont
 
 	Helper.SetPaginationResponse(ctx,
 		"Berhasil mendapatkan data sellable product",
-		sellableProducts,
-		meta,
-		statusCode)
-}
-
-func (controller *SellableProductController) GetActiveSellableProduct(ctx *gin.Context) {
-	query := Utils.InsertParams(ctx)
-
-	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &query, true)
-	if err != nil {
-		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
-		return
-	}
-
-	Helper.SetPaginationResponse(ctx,
-		"Berhasil mendapatkan data sellable product active",
 		sellableProducts,
 		meta,
 		statusCode)
@@ -128,13 +119,23 @@ func (controller *SellableProductController) Create(ctx *gin.Context) {
 	}
 	// VALIDATION SECTION END
 
-	image, err := Utils.UploadFile(ctx, "image", fmt.Sprintf("%s/%s", os.Getenv("UPLOAD_DIR"), "products"))
+	image, err := ctx.FormFile("image")
 	if err != nil {
-		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
 		return
 	}
 
-	createSellableProduct.Image = image
+	filePath, err := controller.StorageService.UploadFile(Dto.StorageRequest{
+		File:      image,
+		ObjectKey: "products",
+	}, true)
+
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), 400)
+		return
+	}
+
+	createSellableProduct.Image = filePath
 
 	createSellableProduct.CompanyID = ctx.GetString("company_id")
 
@@ -191,10 +192,10 @@ func (controller *SellableProductController) UnAssignMAterial(ctx *gin.Context) 
 	Helper.SetSuccessResponse(ctx, "Berhasil menghapus material", nil, statusCode)
 }
 
-func (controller *SellableProductController) FindById(ctx *gin.Context) {
+func (controller *SellableProductController) FindByIdSetMaterial(ctx *gin.Context) {
 	id := ctx.Param("id")
 
-	res, statusCode, err := controller.SellableProductService.FindById(id)
+	res, statusCode, err := controller.SellableProductService.FindById(id, true)
 
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
@@ -202,7 +203,19 @@ func (controller *SellableProductController) FindById(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data sellable product", res, statusCode)
+}
 
+func (controller *SellableProductController) FindByIdSetStock(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	res, statusCode, err := controller.SellableProductService.FindById(id, false)
+
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data sellable product", res, statusCode)
 }
 
 func (controller *SellableProductController) Delete(ctx *gin.Context) {

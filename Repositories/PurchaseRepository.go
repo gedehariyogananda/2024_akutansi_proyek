@@ -15,6 +15,7 @@ type (
 		FindAll(companyID string, query *Common.Query) ([]*Models.Purchase, int, error)
 		GetTotalPurchaseMonth(companyID string) (float32, error)
 		Delete(id string) error
+		GetByDate(date string) (purchaseds []*Models.Purchase, err error)
 	}
 
 	PurchaseRepository struct {
@@ -68,4 +69,16 @@ func (r *PurchaseRepository) Delete(id string) error {
 	}
 
 	return nil
+}
+
+func (r *PurchaseRepository) GetByDate(date string) (purchaseds []*Models.Purchase, err error) {
+
+	query := r.DB.Model(&Models.Purchase{}).
+		Where("DATE(created_at) = ?", date)
+
+	if err := query.Find(&purchaseds).Error; err != nil {
+		return nil, err
+	}
+
+	return purchaseds, nil
 }

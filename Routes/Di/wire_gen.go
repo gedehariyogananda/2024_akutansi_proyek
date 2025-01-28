@@ -13,6 +13,7 @@ import (
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Services"
 	"firebase.google.com/go/messaging"
+	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
@@ -48,7 +49,8 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 	journalEntriesRepository := Repositories.JournalEntriesProvider(db)
 	accountRepository := Repositories.AccountProvider(db)
 	transactionRepository := Repositories.TransactionRepositoryProvider(db)
-	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository, transactionRepository)
+	purchaseRepository := Repositories.PurchaseRepositoryProvider(db)
+	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository, transactionRepository, purchaseRepository)
 	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, sellableStockRepository, materialStockRepository, journalEntriesRepository, accountRepository, journalEntriesService, db)
 	invoiceController := Controllers.InvoiceControllerProvider(invoiceService)
 	return invoiceController
@@ -114,12 +116,13 @@ func DIAccount(db *gorm.DB) *Controllers.AccountController {
 	return accountController
 }
 
-func DISellableProduct(db *gorm.DB) *Controllers.SellableProductController {
+func DISellableProduct(db *gorm.DB, minio2 *minio.Client) *Controllers.SellableProductController {
 	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
 	promoItemRepository := Repositories.PromoItemRepositoryProvider(db)
 	receiptRepository := Repositories.ReceiptRepositoryProvider(db)
 	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository, receiptRepository, db)
-	sellableProductController := Controllers.SellableProductControllerProvider(sellableProductService)
+	storageService := Services.StorageServiceProvider(minio2)
+	sellableProductController := Controllers.SellableProductControllerProvider(sellableProductService, storageService)
 	return sellableProductController
 }
 
@@ -151,9 +154,16 @@ func DIJournalEntries(db *gorm.DB) *Controllers.JournalEntriesController {
 	journalEntriesRepository := Repositories.JournalEntriesProvider(db)
 	accountRepository := Repositories.AccountProvider(db)
 	transactionRepository := Repositories.TransactionRepositoryProvider(db)
-	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository, transactionRepository)
+	purchaseRepository := Repositories.PurchaseRepositoryProvider(db)
+	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository, transactionRepository, purchaseRepository)
 	journalEntriesController := Controllers.JournalEntriesProvider(journalEntriesService)
 	return journalEntriesController
+}
+
+func DIStorage(minio2 *minio.Client) *Controllers.StorageController {
+	storageService := Services.StorageServiceProvider(minio2)
+	storageController := Controllers.StorageControllerProvider(storageService)
+	return storageController
 }
 
 func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {

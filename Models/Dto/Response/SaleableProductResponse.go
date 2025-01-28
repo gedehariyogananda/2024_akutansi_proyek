@@ -13,7 +13,7 @@ type SellableResponse struct {
 	CompanyID       *string                    `json:"company_id,omitempty"`
 	SmallestUnitID  *string                    `json:"smallest_unit_id,omitempty"`
 	CategoryID      *string                    `json:"category_id,omitempty"`
-	Sku             *string                    `json:"sku"`
+	Sku             *string                    `json:"sku,omitempty"`
 	Image           *string                    `json:"image,omitempty"`
 	Description     *string                    `json:"description,omitempty"`
 	Status          *bool                      `json:"status,omitempty"`
@@ -28,6 +28,7 @@ type SellableResponse struct {
 	Category        *Models.Category           `json:"category,omitempty"`
 	PromoItems      []*Models.PromoItem        `json:"promo_items,omitempty"`
 	Materials       []*MaterialProduckResponse `json:"materials,omitempty"`
+	Promo           *Models.Promo              `json:"promo,omitempty"`
 }
 
 func ToSellableResponse(sellableProduct *Models.SellableProduct) *SellableResponse {
