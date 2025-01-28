@@ -3,6 +3,7 @@ package Dependencies
 import (
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
+	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
@@ -14,6 +15,7 @@ type Dependency struct {
 	Redis     *redis.Client
 	Firebase  *firebase.App
 	Messaging *messaging.Client
+	Minio     *minio.Client
 }
 
 func InitDependencies(options ...Option) *Dependency {

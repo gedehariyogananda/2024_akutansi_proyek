@@ -38,3 +38,9 @@ func WithMessagingClient() Option {
 		deps.Messaging = Config.InitMessagingClient(deps.Firebase)
 	}
 }
+
+func WithMinio() Option {
+	return func(deps *Dependency) {
+		deps.Minio = Config.InitMinio()
+	}
+}
