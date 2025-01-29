@@ -9,6 +9,7 @@ import (
 	"2024_akutansi_project/Utils"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -45,6 +46,7 @@ func SellableProductServiceProvider(sellableProductRepository Repositories.ISell
 
 func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSellableProduct) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
 	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, query)
+	log.Printf("sellableProducts", sellableProducts)
 	if err != nil {
 		return nil, Common.Meta{}, http.StatusInternalServerError, err
 	}
