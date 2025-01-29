@@ -19,7 +19,7 @@ type InvoiceRequestDTO struct {
 	InvoiceNumber string          `json:"invoice_number" validate:"required"`
 	TaxID         string          `json:"tax_id" validate:"omitempty"`
 	Tax           float64         `json:"tax" validate:"gte=0"`
-	Status        bool            `json:"status" validate:"required"`
+	Status        bool            `json:"status"`
 	Purchaseds    []PurchasedItem `json:"purchaseds" validate:"required,dive"`
 }
 

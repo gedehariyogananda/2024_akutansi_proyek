@@ -9,7 +9,8 @@ CREATE TABLE sellable_stocks
     quantity            INT                      NOT NULL,
     current_quantity    INT                      NOT NULL,
     expired_date        TIMESTAMP WITH TIME ZONE NOT NULL,
-    company_id          VARCHAR(255)             NOT NULL
+    company_id          VARCHAR(255)             NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE
 );
 
 -- migrate:down

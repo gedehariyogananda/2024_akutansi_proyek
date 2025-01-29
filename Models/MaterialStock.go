@@ -16,11 +16,17 @@ type MaterialStock struct {
 	ExpiredDate       time.Time       `json:"expired_date"`
 	CompanyID         string          `json:"company_id"`
 	MaterialProduct   MaterialProduct `json:"material_product"`
+	CreatedAt         *time.Time      `json:"created_at"`
 }
 
 func (u *MaterialStock) BeforeCreate(tx *gorm.DB) (err error) {
 	if u.ID == "" {
 		u.ID = uuid.New().String()
+	}
+
+	if u.CreatedAt == nil {
+		now := time.Now()
+		u.CreatedAt = &now
 	}
 
 	return
