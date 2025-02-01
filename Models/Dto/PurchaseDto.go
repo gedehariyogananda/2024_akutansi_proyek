@@ -17,4 +17,5 @@ type CreatePurchasesDto struct {
 	DueDate             string              `json:"due_date,omitempty" validate:"omitempty,date"`
 	CompanyID           string              `json:"-"`
 	TotalPurchaseAmount float32             `json:"total_purchase_amount" validate:"required"`
+	Note                *string             `json:"note"`
 }

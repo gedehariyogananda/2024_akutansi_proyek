@@ -96,6 +96,7 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 		Payment:             dto.Payment,
 		DueDate:             dueDate,
 		IsDiscountPercent:   dto.IsDiscountPercent,
+		Note:                dto.Note,
 	}
 
 	purchase, err := p.purchaseRepository.Create(&puchase)

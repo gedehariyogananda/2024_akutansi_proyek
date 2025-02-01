@@ -89,6 +89,8 @@ CREATE TABLE public.journal_entries (
     note character varying(255),
     date timestamp with time zone NOT NULL,
     transaction_code character varying(255),
+    credit_at numeric(20,2),
+    debit_at numeric(20,2),
     created_at timestamp with time zone NOT NULL
 );
 
@@ -136,7 +138,8 @@ CREATE TABLE public.material_stocks (
     quantity integer NOT NULL,
     current_quantity integer NOT NULL,
     expired_date timestamp with time zone NOT NULL,
-    company_id character varying(255) NOT NULL
+    company_id character varying(255) NOT NULL,
+    created_at timestamp with time zone
 );
 
 
@@ -237,7 +240,8 @@ CREATE TABLE public.sellable_stocks (
     quantity integer NOT NULL,
     current_quantity integer NOT NULL,
     expired_date timestamp with time zone NOT NULL,
-    company_id character varying(255) NOT NULL
+    company_id character varying(255) NOT NULL,
+    created_at timestamp with time zone
 );
 
 

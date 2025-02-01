@@ -56,7 +56,7 @@ func (r *PurchaseRepository) GetTotalPurchaseMonth(companyID string) (float32, e
 	var total float32
 
 	if err := r.DB.Model(&Models.Purchase{}).Where("company_id = ?", companyID).Where("created_at BETWEEN ? AND ?", startOfMonth, endOfMonth).
-		Select("SUM(total_purchase_amount)").Scan(&total).Error; err != nil {
+		Select("COALESCE(SUM(total_purchase_amount),0)").Scan(&total).Error; err != nil {
 		return 0, err
 	}
 
