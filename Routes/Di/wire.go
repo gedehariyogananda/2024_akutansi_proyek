@@ -347,3 +347,17 @@ func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
 		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
 	)))
 }
+
+func DiUser(db *gorm.DB, minio *minio.Client) *Controllers.UserController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.UserRepositoryProvider,
+		Services.UserServiceProvider,
+		Controllers.UserControllerProvider,
+		Services.StorageServiceProvider,
+
+		wire.Bind(new(Controllers.IUserController), new(*Controllers.UserController)),
+		wire.Bind(new(Services.IUserService), new(*Services.UserService)),
+		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
+		wire.Bind(new(Services.IStorageService), new(*Services.StorageService)),
+	)))
+}

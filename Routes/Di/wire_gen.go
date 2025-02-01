@@ -178,3 +178,11 @@ func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
 	purchaseController := Controllers.PurchaseControllerProvider(purchaseService)
 	return purchaseController
 }
+
+func DiUser(db *gorm.DB, minio2 *minio.Client) *Controllers.UserController {
+	userRepository := Repositories.UserRepositoryProvider(db)
+	userService := Services.UserServiceProvider(userRepository)
+	storageService := Services.StorageServiceProvider(minio2)
+	userController := Controllers.UserControllerProvider(userService, storageService)
+	return userController
+}
