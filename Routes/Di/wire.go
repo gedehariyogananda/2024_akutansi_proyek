@@ -226,7 +226,6 @@ func DISellableProduct(db *gorm.DB, minio *minio.Client) *Controllers.SellablePr
 		Services.StorageServiceProvider,
 		Controllers.SellableProductControllerProvider,
 
-		// Bind interfaces ke implementasinya
 		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
 		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
 		wire.Bind(new(Repositories.IReceiptRepository), new(*Repositories.ReceiptRepository)),
