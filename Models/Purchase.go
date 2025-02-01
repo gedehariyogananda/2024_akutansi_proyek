@@ -33,6 +33,7 @@ type Purchase struct {
 	IsDiscountPercent   bool       `json:"is_discount_percent"`
 	Payment             string     `json:"payment_type"`
 	DueDate             *time.Time `json:"due_date"`
+	Note                *string    `json:"note"`
 	CreatedAt           time.Time  `json:"created_at"`
 }
 

@@ -9,7 +9,6 @@ import (
 	"2024_akutansi_project/Utils"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -31,22 +30,36 @@ type (
 		SellableProductRepository Repositories.ISellableProductRepository
 		PromoItemRepository       Repositories.IPromoItemRepository
 		ReceiptRepository         Repositories.IReceiptRepository
+		StorageService            IStorageService
 		DB                        *gorm.DB
 	}
 )
 
-func SellableProductServiceProvider(sellableProductRepository Repositories.ISellableProductRepository, promoItemRepository Repositories.IPromoItemRepository, receiptRepository Repositories.IReceiptRepository, DB *gorm.DB) *SellableProductService {
+func SellableProductServiceProvider(sellableProductRepository Repositories.ISellableProductRepository, promoItemRepository Repositories.IPromoItemRepository, receiptRepository Repositories.IReceiptRepository, DB *gorm.DB, storageService IStorageService) *SellableProductService {
 	return &SellableProductService{
 		SellableProductRepository: sellableProductRepository,
 		PromoItemRepository:       promoItemRepository,
+		StorageService:            storageService,
 		ReceiptRepository:         receiptRepository,
 		DB:                        DB,
 	}
 }
 
+func (service *SellableProductService) presignedURL(objectKey string) (string, error) {
+	presignedURL, err := service.StorageService.SignedUrl(Dto.StorageRequest{
+		ObjectKey: objectKey,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return presignedURL, nil
+}
+
 func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSellableProduct) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
 	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, query)
-	log.Printf("sellableProducts", sellableProducts)
+
 	if err != nil {
 		return nil, Common.Meta{}, http.StatusInternalServerError, err
 	}
@@ -68,10 +81,15 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 			promo = sellableProduct.PromoItems[0].Promo
 		}
 
+		presignedURL, err := service.presignedURL(sellableProduct.Image)
+		if err != nil {
+			return nil, Common.Meta{}, http.StatusInternalServerError, err
+		}
+
 		res = append(res, &Response.SellableResponse{
 			ID:              sellableProduct.ID,
 			Name:            &sellableProduct.Name,
-			Image:           &sellableProduct.Image,
+			Image:           &presignedURL,
 			CurrentQuantity: &sellableProduct.CurrentQuantity,
 			Price:           &sellableProduct.Price,
 			Category:        sellableProduct.Category,
@@ -234,13 +252,18 @@ func (s *SellableProductService) FindById(id string, setWithMaterial bool) (res 
 		return nil, http.StatusInternalServerError, err
 	}
 
+	presignedURL, err := s.presignedURL(sellableProduct.Image)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
 	if setWithMaterial {
 		res = Response.ToSellableResponse(sellableProduct)
 	} else {
 		res = &Response.SellableResponse{
 			ID:              sellableProduct.ID,
 			Name:            &sellableProduct.Name,
-			Image:           &sellableProduct.Image,
+			Image:           &presignedURL,
 			CurrentQuantity: &sellableProduct.CurrentQuantity,
 			Description:     &sellableProduct.Description,
 			PromoItems:      sellableProduct.PromoItems,

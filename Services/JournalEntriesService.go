@@ -5,6 +5,7 @@ import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
+	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
 	"2024_akutansi_project/Utils"
 	"context"
@@ -21,6 +22,7 @@ type (
 		InsertJournalCashier(params Common.JournalEntryParams, isPaid bool, trx *gorm.DB) (err error)
 		InsertJournalPurchase(ctx context.Context) (err error)
 		InsertJournalOtherTransaction(ctx context.Context) (err error)
+		ProfitLossReport(year int) (res Response.ProfitlLossResponse, err error)
 	}
 
 	JournalEntriesService struct {
@@ -327,4 +329,28 @@ func (service *JournalEntriesService) unbalanceCheckup(companyID string) (isCont
 	}
 
 	return true, nil
+}
+
+func (service *JournalEntriesService) ProfitLossReport(year int) (res Response.ProfitlLossResponse, err error) {
+
+	journalEntries, err := service.JournalEntriesRepository.FindByPeriode(year)
+	if err != nil {
+		return res, err
+	}
+
+	revenue, err := service.JournalEntriesRepository.GetIncomeOrExpenseYear(year, "REVENUE")
+
+	if err != nil {
+		return res, err
+	}
+
+	expense, err := service.JournalEntriesRepository.GetIncomeOrExpenseYear(year, "EXPENSE")
+
+	if err != nil {
+		return res, err
+	}
+
+	res = Response.ToProfilLossResponse(journalEntries, revenue, expense)
+
+	return res, nil
 }
