@@ -198,3 +198,10 @@ func DiUser(db *gorm.DB, minio2 *minio.Client) *Controllers.UserController {
 	userController := Controllers.UserControllerProvider(userService, storageService)
 	return userController
 }
+
+func DiCompany(db *gorm.DB) *Controllers.CompanyController {
+	companyRepository := Repositories.CompanyRepositoryProvider(db)
+	companyService := Services.CompanyServiceProvider(companyRepository)
+	companyController := Controllers.CompanyControllerProvider(companyService)
+	return companyController
+}

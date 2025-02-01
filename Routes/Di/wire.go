@@ -384,3 +384,15 @@ func DiUser(db *gorm.DB, minio *minio.Client) *Controllers.UserController {
 		wire.Bind(new(Services.IStorageService), new(*Services.StorageService)),
 	)))
 }
+
+func DiCompany(db *gorm.DB) *Controllers.CompanyController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.CompanyRepositoryProvider,
+		Services.CompanyServiceProvider,
+		Controllers.CompanyControllerProvider,
+
+		wire.Bind(new(Controllers.ICompanyController), new(*Controllers.CompanyController)),
+		wire.Bind(new(Services.ICompanyService), new(*Services.CompanyService)),
+		wire.Bind(new(Repositories.ICompanyRepository), new(*Repositories.CompanyRepository)),
+	)))
+}
