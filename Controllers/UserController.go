@@ -12,6 +12,7 @@ import (
 type (
 	IUserController interface {
 		UploadAvatar(ctx *gin.Context)
+		GetCurrentUser(ctx *gin.Context)
 	}
 
 	UserController struct {
@@ -59,4 +60,16 @@ func (c *UserController) UploadAvatar(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Upload Avatar Berhasil!", nil, 200)
+}
+
+func (c *UserController) GetCurrentUser(ctx *gin.Context) {
+	userID := ctx.GetString("id")
+
+	user, err := c.userService.GetCurrentUser(userID)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), 500)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data user", user, 200)
 }
