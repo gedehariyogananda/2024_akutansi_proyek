@@ -10,7 +10,7 @@ CREATE TABLE invoice_items
     company_id          VARCHAR(255)             NOT NULL,
     price               DECIMAL(15, 2)           NOT NULL,
     promo_id            VARCHAR(255),
-    promo_amount        INT DEFAULT 0,
+    promo_amount        INT DEFAULT 0
 );
 
 -- migrate:down

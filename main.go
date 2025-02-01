@@ -31,6 +31,7 @@ func main() {
 	deps := Dependencies.InitDependencies(
 		Dependencies.WithDB(),
 		Dependencies.WithRedis(),
+		Dependencies.WithMinio(),
 		// Dependencies.WithMongo(),
 		// Dependencies.WithFirebase(),
 		// Dependencies.WithMessagingClient(),
@@ -64,6 +65,7 @@ func main() {
 	})
 
 	server := Config.GetServerAddress()
+	Config.InitMinio()
 	if err := setup.Run(server); err != nil {
 		panic("Failed to run server!")
 	}
