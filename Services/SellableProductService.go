@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -23,11 +24,12 @@ type (
 		FindById(id string, setWithMaterial bool) (res *Response.SellableResponse, statusCode int, err error)
 		Delete(id string) (statusCode int, objectKey string, err error)
 		Update(request *Dto.UpdateSellableProductDTO, id string) (statusCode int, oldImage string, err error)
-		UpdateStock(id string, request *Dto.SellableProductDTO) (statusCode int, err error)
+		UpdateStock(id string, request *Dto.SellableProductDTO, companyID string) (statusCode int, err error)
 	}
 
 	SellableProductService struct {
 		SellableProductRepository Repositories.ISellableProductRepository
+		SellableStockRepository   Repositories.ISellableStockRepository
 		PromoItemRepository       Repositories.IPromoItemRepository
 		ReceiptRepository         Repositories.IReceiptRepository
 		StorageService            IStorageService
@@ -35,12 +37,13 @@ type (
 	}
 )
 
-func SellableProductServiceProvider(sellableProductRepository Repositories.ISellableProductRepository, promoItemRepository Repositories.IPromoItemRepository, receiptRepository Repositories.IReceiptRepository, DB *gorm.DB, storageService IStorageService) *SellableProductService {
+func SellableProductServiceProvider(sellableProductRepository Repositories.ISellableProductRepository, promoItemRepository Repositories.IPromoItemRepository, receiptRepository Repositories.IReceiptRepository, sellableStockRepository Repositories.ISellableStockRepository, DB *gorm.DB, storageService IStorageService) *SellableProductService {
 	return &SellableProductService{
 		SellableProductRepository: sellableProductRepository,
 		PromoItemRepository:       promoItemRepository,
 		StorageService:            storageService,
 		ReceiptRepository:         receiptRepository,
+		SellableStockRepository:   sellableStockRepository,
 		DB:                        DB,
 	}
 }
@@ -68,9 +71,9 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 
 	for _, sellableProduct := range sellableProducts {
 		status := ""
-		if *sellableProduct.Status {
+		if *sellableProduct.Status && sellableProduct.CurrentQuantity > 0 {
 			status = "Aktif"
-		} else if !*sellableProduct.Status && sellableProduct.CurrentQuantity <= 0 {
+		} else if sellableProduct.CurrentQuantity == 0 {
 			status = "Habis"
 		} else {
 			status = "Non-Aktif"
@@ -103,53 +106,88 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 	return res, meta, http.StatusOK, nil
 }
 
-func (service *SellableProductService) UpdateStock(id string, request *Dto.SellableProductDTO) (statusCode int, err error) {
+func (service *SellableProductService) UpdateStock(id string, request *Dto.SellableProductDTO, companyID string) (statusCode int, err error) {
 
-	if request.PrefixDeletePromo != nil && *request.PrefixDeletePromo {
-		result, err := service.PromoItemRepository.DeleteBySellableProductID(id)
-		if err != nil {
-			return http.StatusInternalServerError, err
-		}
-
-		if result.RowsAffected == 0 {
-			return http.StatusNotFound, nil
-		}
-
-		return http.StatusOK, nil
+	product, err := service.SellableProductRepository.FindByID(id, false)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return http.StatusNotFound, err
 	}
 
-	if request.PromoID != nil && *request.PromoID != "" {
-		promoItems := &Models.PromoItem{}
-		if request.PromoID != nil {
-			promoItems.SellableProductID = id
-			promoItems.PromoID = *request.PromoID
-		}
+	if product.HasReceipt {
+		return http.StatusBadRequest, errors.New("produk ini memiliki receipt, tidak bisa diupdate stock")
+	}
 
-		_, result, err := service.PromoItemRepository.UpdateOrCreate(promoItems)
+	if request.PromoID == nil {
+		_, isExist, _ := service.PromoItemRepository.FindBySellableID(id)
 
-		if err != nil {
-			return http.StatusInternalServerError, err
-		}
-
-		if result.RowsAffected == 0 {
-			return http.StatusNotFound, nil
+		if isExist {
+			if err := service.PromoItemRepository.DeleteBySellableProductID(id); err != nil {
+				return http.StatusInternalServerError, err
+			}
 		}
 	}
 
-	sellableProduct := &Models.SellableProduct{}
-
-	if request.CurrentQuantity != nil {
-		sellableProduct.CurrentQuantity = *request.CurrentQuantity
-	}
-	if request.Status != nil {
-		sellableProduct.Status = request.Status
-	}
-	if request.Description != nil {
-		sellableProduct.Description = *request.Description
+	promoItems := &Models.PromoItem{
+		SellableProductID: id,
 	}
 
-	if err = service.SellableProductRepository.Update(id, sellableProduct); err != nil {
+	if request.PromoID != nil {
+		promoItems.PromoID = *request.PromoID
+	}
+
+	_, _, err = service.PromoItemRepository.UpdateOrCreate(promoItems)
+
+	if err != nil {
 		return http.StatusInternalServerError, err
+	}
+
+	status := *request.Status
+
+	if err = service.SellableProductRepository.Update(id,
+		&Models.SellableProduct{
+			CurrentQuantity: *request.CurrentQuantity,
+			Status:          &status,
+			Description:     product.Description,
+		}); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	var dateExpiredClient time.Time
+
+	if request.ExpiredDate != nil {
+		formatNedded := "2006-01-02 15:04:05"
+		dateExpiredClient = Utils.ParseDateStringToDate(*request.ExpiredDate, &formatNedded)
+	}
+
+	if product.CurrentQuantity != *request.CurrentQuantity {
+		if *request.CurrentQuantity > product.CurrentQuantity {
+			_, err := service.SellableStockRepository.Create(&Models.SellableStock{
+				SellableProductID: id,
+				ProductType:       product.Category.Name,
+				Quantity:          *request.CurrentQuantity - product.CurrentQuantity,
+				CurrentQuantity:   *request.CurrentQuantity - product.CurrentQuantity,
+				ExpiredDate:       dateExpiredClient,
+			})
+
+			if err != nil {
+				return http.StatusInternalServerError, err
+			}
+
+		} else if *request.CurrentQuantity < product.CurrentQuantity {
+			data, err := service.SellableStockRepository.FindByLatestNotExp(companyID)
+
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return http.StatusBadRequest, errors.New("ada kesalahan manajemen stock")
+			}
+
+			if err = service.SellableStockRepository.Update(data.ID, &Models.SellableStock{
+				CurrentQuantity: data.CurrentQuantity - (product.CurrentQuantity - *request.CurrentQuantity),
+				Quantity:        data.Quantity - (product.CurrentQuantity - *request.CurrentQuantity),
+			}); err != nil {
+				return http.StatusInternalServerError, err
+			}
+		}
+
 	}
 
 	return http.StatusOK, nil
@@ -242,7 +280,7 @@ func (service *SellableProductService) UnAssignMaterial(request *Dto.UnAssignMat
 }
 
 func (s *SellableProductService) FindById(id string, setWithMaterial bool) (res *Response.SellableResponse, statusCode int, err error) {
-	sellableProduct, err := s.SellableProductRepository.FindByID(id)
+	sellableProduct, err := s.SellableProductRepository.FindByID(id, setWithMaterial)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, http.StatusNotFound, err
@@ -255,6 +293,12 @@ func (s *SellableProductService) FindById(id string, setWithMaterial bool) (res 
 	presignedURL, err := s.presignedURL(sellableProduct.Image)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
+
+	}
+
+	var promo string
+	if len(sellableProduct.PromoItems) > 0 {
+		promo = sellableProduct.PromoItems[0].PromoID
 	}
 
 	if setWithMaterial {
@@ -264,11 +308,15 @@ func (s *SellableProductService) FindById(id string, setWithMaterial bool) (res 
 			ID:              sellableProduct.ID,
 			Name:            &sellableProduct.Name,
 			Image:           &presignedURL,
+			Status:          sellableProduct.Status,
 			CurrentQuantity: &sellableProduct.CurrentQuantity,
 			Description:     &sellableProduct.Description,
-			PromoItems:      sellableProduct.PromoItems,
 			Category:        sellableProduct.Category,
 			HasReceipt:      &sellableProduct.HasReceipt,
+		}
+
+		if promo != "" {
+			res.PromoID = &promo
 		}
 	}
 
@@ -293,7 +341,7 @@ func (s *SellableProductService) Delete(id string) (statusCode int, objectKey st
 		}
 	}()
 
-	data, err := s.SellableProductRepository.FindByID(id)
+	data, err := s.SellableProductRepository.FindByID(id, false)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return http.StatusBadRequest, "", err
@@ -319,7 +367,7 @@ func (s *SellableProductService) Delete(id string) (statusCode int, objectKey st
 }
 
 func (s *SellableProductService) Update(dto *Dto.UpdateSellableProductDTO, id string) (statusCode int, oldImage string, err error) {
-	product, err := s.SellableProductRepository.FindByID(id)
+	product, err := s.SellableProductRepository.FindByID(id, false)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return http.StatusBadRequest, "", err

@@ -19,7 +19,7 @@ type (
 		UpdateCurrent(trx *gorm.DB, sellableProductID string, QtyClient int) error
 		Create(sellableProduct *Models.SellableProduct) (*Models.SellableProduct, error)
 		Delete(id string) error
-		FindByID(id string) (*Models.SellableProduct, error)
+		FindByID(id string, setWithMaterial bool) (*Models.SellableProduct, error)
 		FindAllFilterReceipt(companyId string, HasReceipt bool) (sellableProducts []*Models.SellableProduct, err error)
 	}
 
@@ -122,13 +122,20 @@ func (sellableProductRepository *SellableProductRepository) Delete(id string) er
 	return nil
 }
 
-func (sellableProductRepository *SellableProductRepository) FindByID(id string) (*Models.SellableProduct, error) {
+func (sellableProductRepository *SellableProductRepository) FindByID(id string, setWithMaterial bool) (*Models.SellableProduct, error) {
 	var sellableProduct Models.SellableProduct
 
-	if err := sellableProductRepository.DB.Where("id = ?", id).Preload("Unit").Preload("Category", func(categoryPayload *gorm.DB) *gorm.DB {
+	db := sellableProductRepository.DB.Where("id = ?", id).Preload("Category", func(categoryPayload *gorm.DB) *gorm.DB {
 		return categoryPayload.Select("id, name")
-	}).Preload("Receipts.MaterialProduct.Unit").Preload("PromoItems").
-		First(&sellableProduct).Error; err != nil {
+	})
+
+	if !setWithMaterial {
+		db = db.Preload("PromoItems")
+	} else {
+		db = db.Preload("Receipts.MaterialProduct.Unit").Preload("Unit")
+	}
+
+	if err := db.First(&sellableProduct).Error; err != nil {
 		return nil, fmt.Errorf("sellable product not found: %w", err)
 	}
 

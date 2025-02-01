@@ -72,7 +72,7 @@ func (controller *SellableProductController) UpdateSellableProduct(ctx *gin.Cont
 		return
 	}
 
-	statusCode, err := controller.SellableProductService.UpdateStock(ctx.Param("id"), &updateSellableDTO)
+	statusCode, err := controller.SellableProductService.UpdateStock(ctx.Param("id"), &updateSellableDTO, ctx.GetString("company_id"))
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return

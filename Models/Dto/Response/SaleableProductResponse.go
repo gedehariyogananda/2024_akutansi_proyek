@@ -24,6 +24,7 @@ type SellableResponse struct {
 	CreatedAt       *time.Time                 `json:"created_at,omitempty"`
 	UpdatedAt       *time.Time                 `json:"updated_at,omitempty"`
 	DeletedAt       gorm.DeletedAt             `json:"deleted_at,omitempty"`
+	PromoID         *string                    `json:"promo_id,omitempty"`
 	Unit            *Models.Unit               `json:"unit,omitempty" gorm:"foreignKey:SmallestUnitID"`
 	Category        *Models.Category           `json:"category,omitempty"`
 	PromoItems      []*Models.PromoItem        `json:"promo_items,omitempty"`
