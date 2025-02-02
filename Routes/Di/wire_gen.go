@@ -205,3 +205,10 @@ func DiCompany(db *gorm.DB) *Controllers.CompanyController {
 	companyController := Controllers.CompanyControllerProvider(companyService)
 	return companyController
 }
+
+func DiLogActivity(db *gorm.DB) *Controllers.LogActivityController {
+	logActivityRepository := Repositories.LogActivityRepositoryProvider(db)
+	logActivityService := Services.LogActivityServiceProvider(logActivityRepository)
+	logActivityController := Controllers.LogActivityControllerProvider(logActivityService)
+	return logActivityController
+}

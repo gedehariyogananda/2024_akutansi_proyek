@@ -396,3 +396,15 @@ func DiCompany(db *gorm.DB) *Controllers.CompanyController {
 		wire.Bind(new(Repositories.ICompanyRepository), new(*Repositories.CompanyRepository)),
 	)))
 }
+
+func DiLogActivity(db *gorm.DB) *Controllers.LogActivityController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.LogActivityRepositoryProvider,
+		Services.LogActivityServiceProvider,
+		Controllers.LogActivityControllerProvider,
+
+		wire.Bind(new(Controllers.ILogActivityController), new(*Controllers.LogActivityController)),
+		wire.Bind(new(Services.ILogActivityService), new(*Services.LogActivityService)),
+		wire.Bind(new(Repositories.ILogActivityRepository), new(*Repositories.LogActivityRepository)),
+	)))
+}

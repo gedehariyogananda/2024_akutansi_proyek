@@ -5,7 +5,6 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -90,7 +89,6 @@ func (c *UserController) ChangePassword(ctx *gin.Context) {
 	}
 
 	userID := ctx.GetString("id")
-	fmt.Println(userID)
 	statusCode, err := c.userService.ChangePassword(userID, changePasswordDto)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
