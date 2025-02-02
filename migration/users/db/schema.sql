@@ -152,6 +152,20 @@ CREATE TABLE public.journal_entries (
 
 
 --
+-- Name: log_activities; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.log_activities (
+    id character varying(100) NOT NULL,
+    user_id character varying(100) NOT NULL,
+    name character varying(255) NOT NULL,
+    device character varying(255) NOT NULL,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone
+);
+
+
+--
 -- Name: material_conversions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -520,6 +534,14 @@ ALTER TABLE ONLY public.journal_entries
 
 
 --
+-- Name: log_activities log_activities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.log_activities
+    ADD CONSTRAINT log_activities_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: material_conversions material_conversions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -717,4 +739,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20241112144543'),
     ('20241112144808'),
     ('20241113074549'),
-    ('20241113074956');
+    ('20241113074956'),
+    ('20250202035430');

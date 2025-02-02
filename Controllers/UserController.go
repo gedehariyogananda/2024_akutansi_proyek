@@ -5,6 +5,7 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +14,7 @@ type (
 	IUserController interface {
 		UploadAvatar(ctx *gin.Context)
 		GetCurrentUser(ctx *gin.Context)
+		ChangePassword(ctx *gin.Context)
 	}
 
 	UserController struct {
@@ -72,4 +74,28 @@ func (c *UserController) GetCurrentUser(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data user", user, 200)
+}
+
+func (c *UserController) ChangePassword(ctx *gin.Context) {
+	var changePasswordDto Dto.ChangePasswordDto
+
+	if err := ctx.ShouldBind(&changePasswordDto); err != nil {
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, &changePasswordDto); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
+		return
+	}
+
+	userID := ctx.GetString("id")
+	fmt.Println(userID)
+	statusCode, err := c.userService.ChangePassword(userID, changePasswordDto)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mengubah password", nil, 200)
 }
