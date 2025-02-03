@@ -11,7 +11,6 @@ type (
 		FindBySellableID(sellableProductID string) (*Models.PromoItem, bool, error)
 		UpdateOrCreate(promoItem *Models.PromoItem) (*Models.PromoItem, *gorm.DB, error)
 		DeleteBySellableProductID(sellableProductID string) error
-		IsExist(id string) bool
 	}
 
 	PromoItemRepository struct {
@@ -59,12 +58,4 @@ func (promoItemRepository *PromoItemRepository) DeleteBySellableProductID(sellab
 	}
 
 	return nil
-}
-
-func (promoItemRepository *PromoItemRepository) IsExist(id string) bool {
-	if err := promoItemRepository.DB.Where("sellable_product_id = ?", id).Find(&Models.PromoItem{}); err != nil {
-		return false
-	}
-
-	return true
 }
