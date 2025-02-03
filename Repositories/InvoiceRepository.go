@@ -86,9 +86,10 @@ func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Dto.GetHist
 func (r *InvoiceRepository) GetByInvoiceID(companyID string, invoiceID string) (invoice *Models.Invoice, err error) {
 	if err := r.DB.
 		Where("company_id = ?", companyID).
+		Where("id = ?", invoiceID).
 		Preload("InvoiceItems", func(invItemPayload *gorm.DB) *gorm.DB {
-			return invItemPayload.Where("invoice_id = ?", invoiceID).
-				Select("invoice_id", "sellable_product_id", "quantity").
+			return invItemPayload.
+				Select("invoice_id", "sellable_product_id", "quantity", "promo_id", "promo_amount").
 				Preload("SellableProduct", func(spPayload *gorm.DB) *gorm.DB {
 					return spPayload.Select("id", "name", "price")
 				})

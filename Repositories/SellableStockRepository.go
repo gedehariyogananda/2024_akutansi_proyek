@@ -14,7 +14,6 @@ type (
 		SumCurrentQuantity(sellableStockID string) (total int, err error)
 		GetAvailableStock(companyId string) (sellableStock []*Models.SellableStock, err error)
 		Create(sellableStock *Models.SellableStock) (*Models.SellableStock, error)
-		Update(id string, sellableStock *Models.SellableStock) error
 	}
 
 	SellableStockRepository struct {
@@ -97,15 +96,4 @@ func (r *SellableStockRepository) Create(sellableStock *Models.SellableStock) (*
 	}
 
 	return sellableStock, nil
-}
-
-func (r *SellableStockRepository) Update(id string, sellableStock *Models.SellableStock) error {
-	if err := r.DB.
-		Model(&Models.SellableStock{}).
-		Where("id = ?", id).
-		Updates(sellableStock).Error; err != nil {
-		return err
-	}
-
-	return nil
 }

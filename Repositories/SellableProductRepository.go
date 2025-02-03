@@ -63,7 +63,7 @@ func (sellableProductRepository *SellableProductRepository) GetAll(companyID str
 		Helper.FilterSearchProduct(query.Search),
 		Helper.FilterCategoryID(query.CategoryID),
 		Helper.FilterManagementStock(*query.InStatus),
-	).Find(&sellableProducts).Error; err != nil {
+	).Order("created_at desc").Find(&sellableProducts).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -130,7 +130,7 @@ func (sellableProductRepository *SellableProductRepository) FindByID(id string, 
 	})
 
 	if !setWithMaterial {
-		db = db.Preload("PromoItems")
+		db = db.Preload("PromoItems.Promo")
 	} else {
 		db = db.Preload("Receipts.MaterialProduct.Unit").Preload("Unit")
 	}

@@ -24,7 +24,7 @@ type (
 		FindById(id string, setWithMaterial bool) (res *Response.SellableResponse, statusCode int, err error)
 		Delete(id string) (statusCode int, objectKey string, err error)
 		Update(request *Dto.UpdateSellableProductDTO, id string) (statusCode int, oldImage string, err error)
-		UpdateStock(id string, request *Dto.SellableProductDTO, companyID string) (statusCode int, err error)
+		UpdateStock(id string, request *Dto.SellableProductDTO, companyID string) (statusCode int, addMessage *string, err error)
 	}
 
 	SellableProductService struct {
@@ -106,15 +106,22 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 	return res, meta, http.StatusOK, nil
 }
 
-func (service *SellableProductService) UpdateStock(id string, request *Dto.SellableProductDTO, companyID string) (statusCode int, err error) {
+func (service *SellableProductService) UpdateStock(id string, request *Dto.SellableProductDTO, companyID string) (statusCode int, addMessage *string, err error) {
+	var status bool
 
 	product, err := service.SellableProductRepository.FindByID(id, false)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return http.StatusNotFound, err
+		return http.StatusNotFound, nil, err
 	}
 
-	if product.HasReceipt {
-		return http.StatusBadRequest, errors.New("produk ini memiliki receipt, tidak bisa diupdate stock")
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	if !product.HasReceipt {
+		if request.CurrentQuantity != nil && product.CurrentQuantity != *request.CurrentQuantity {
+			return http.StatusBadRequest, nil, errors.New("product tidak bisa diupdate, harus melakukan pembelian terlebih dahulu")
+		}
 	}
 
 	if request.PromoID == nil {
@@ -122,75 +129,52 @@ func (service *SellableProductService) UpdateStock(id string, request *Dto.Sella
 
 		if isExist {
 			if err := service.PromoItemRepository.DeleteBySellableProductID(id); err != nil {
-				return http.StatusInternalServerError, err
+				return http.StatusInternalServerError, nil, err
 			}
+		}
+	} else {
+		promoItems := &Models.PromoItem{
+			SellableProductID: id,
+		}
+
+		if request.PromoID != nil {
+			promoItems.PromoID = *request.PromoID
+		}
+
+		_, _, err = service.PromoItemRepository.UpdateOrCreate(promoItems)
+
+		if err != nil {
+			return http.StatusInternalServerError, nil, err
+		}
+
+		promoItem, _, err := service.PromoItemRepository.FindBySellableID(id)
+		if err != nil {
+			return http.StatusInternalServerError, nil, err
+		}
+
+		if time.Now().After(promoItem.Promo.EndDate) {
+			prefMessage := "Promo yang anda masukkan sudah berakhir di tanggal " + promoItem.Promo.EndDate.Format("02-01-2006") + ", Promo tidak akan tampil di layar kasir."
+			addMessage = &prefMessage
+		} else if time.Now().Before(promoItem.Promo.StartDate) {
+			prefMessage := "Promo yang anda masukkan belum dimulai!, Promo akan bisa dipakai dan ditampilkan di kasir di tanggal " + promoItem.Promo.StartDate.Format("02-01-2006")
+			addMessage = &prefMessage
 		}
 	}
 
-	promoItems := &Models.PromoItem{
-		SellableProductID: id,
+	if request.Status != nil {
+		status = *request.Status
 	}
-
-	if request.PromoID != nil {
-		promoItems.PromoID = *request.PromoID
-	}
-
-	_, _, err = service.PromoItemRepository.UpdateOrCreate(promoItems)
-
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
-
-	status := *request.Status
 
 	if err = service.SellableProductRepository.Update(id,
 		&Models.SellableProduct{
 			CurrentQuantity: *request.CurrentQuantity,
 			Status:          &status,
-			Description:     product.Description,
+			Description:     *request.Description,
 		}); err != nil {
-		return http.StatusInternalServerError, err
+		return http.StatusInternalServerError, nil, err
 	}
 
-	var dateExpiredClient time.Time
-
-	if request.ExpiredDate != nil {
-		formatNedded := "2006-01-02 15:04:05"
-		dateExpiredClient = Utils.ParseDateStringToDate(*request.ExpiredDate, &formatNedded)
-	}
-
-	if product.CurrentQuantity != *request.CurrentQuantity {
-		if *request.CurrentQuantity > product.CurrentQuantity {
-			_, err := service.SellableStockRepository.Create(&Models.SellableStock{
-				SellableProductID: id,
-				ProductType:       product.Category.Name,
-				Quantity:          *request.CurrentQuantity - product.CurrentQuantity,
-				CurrentQuantity:   *request.CurrentQuantity - product.CurrentQuantity,
-				ExpiredDate:       dateExpiredClient,
-			})
-
-			if err != nil {
-				return http.StatusInternalServerError, err
-			}
-
-		} else if *request.CurrentQuantity < product.CurrentQuantity {
-			data, err := service.SellableStockRepository.FindByLatestNotExp(companyID)
-
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return http.StatusBadRequest, errors.New("ada kesalahan manajemen stock")
-			}
-
-			if err = service.SellableStockRepository.Update(data.ID, &Models.SellableStock{
-				CurrentQuantity: data.CurrentQuantity - (product.CurrentQuantity - *request.CurrentQuantity),
-				Quantity:        data.Quantity - (product.CurrentQuantity - *request.CurrentQuantity),
-			}); err != nil {
-				return http.StatusInternalServerError, err
-			}
-		}
-
-	}
-
-	return http.StatusOK, nil
+	return http.StatusOK, addMessage, nil
 }
 
 func (service *SellableProductService) Create(request *Dto.CreateSellableProductDTO) (res *Response.SellableResponse, err error) {
@@ -301,6 +285,11 @@ func (s *SellableProductService) FindById(id string, setWithMaterial bool) (res 
 		promo = sellableProduct.PromoItems[0].PromoID
 	}
 
+	isExpired := false
+	if time.Now().After(sellableProduct.PromoItems[0].Promo.EndDate) {
+		isExpired = true
+	}
+
 	if setWithMaterial {
 		res = Response.ToSellableResponse(sellableProduct)
 	} else {
@@ -313,6 +302,7 @@ func (s *SellableProductService) FindById(id string, setWithMaterial bool) (res 
 			Description:     &sellableProduct.Description,
 			Category:        sellableProduct.Category,
 			HasReceipt:      &sellableProduct.HasReceipt,
+			IsExpiredPromo:  &isExpired,
 		}
 
 		if promo != "" {

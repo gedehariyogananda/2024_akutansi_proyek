@@ -27,6 +27,7 @@ func (promoItemRepository *PromoItemRepository) FindBySellableID(sellableProduct
 	promoItem := &Models.PromoItem{}
 	if err := promoItemRepository.DB.
 		Where("sellable_product_id = ?", sellableProductID).
+		Preload("Promo").
 		First(&promoItem).Error; err != nil {
 		return nil, false, err
 	}

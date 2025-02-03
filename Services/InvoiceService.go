@@ -20,7 +20,7 @@ type (
 	IInvoiceService interface {
 		CreateInvoicePurchased(requestClient *Dto.InvoiceRequestDTO, companyID string) (invoice *Models.Invoice, statusCode int, err error)
 		GetAllByCompany(companyID string, query *Dto.GetHistoryInvoice) (response []Response.InvoiceResponse, meta Common.Meta, statusCode int, err error)
-		GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.InvoiceResponse, statusCode int, err error)
+		GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.CoreInvoiceRes, statusCode int, err error)
 		UpdateRefund(companyID string, id string) (statusCode int, err error)
 		StatisticSales(companyID string, date string) (data interface{}, statusCode int, err error)
 	}
@@ -125,8 +125,8 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 			Quantity:          purchasedItem.Qty,
 			CompanyID:         companyID,
 			Price:             purchasedItem.PriceAll,
-			PromoID:           &purchasedItem.PromoID,
-			PromoAmount:       &purchasedItem.PromoAmount,
+			PromoID:           purchasedItem.PromoID,
+			PromoAmount:       purchasedItem.PromoAmount,
 		}
 
 		if err = invoiceService.invoiceItemRepository.Store(trx, invoiceItem); err != nil {
@@ -314,10 +314,15 @@ func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *D
 	return res, meta, http.StatusOK, nil
 }
 
-func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.InvoiceResponse, statusCode int, err error) {
-	invoice, _ := invoiceService.invoiceRepository.GetByInvoiceID(companyID, invoiceID)
+func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.CoreInvoiceRes, statusCode int, err error) {
+	invoice, err := invoiceService.invoiceRepository.GetByInvoiceID(companyID, invoiceID)
 
-	status := ""
+	if err != nil {
+		return Response.CoreInvoiceRes{}, http.StatusNotFound, err
+	}
+
+	var status string
+	var total int
 
 	if invoice.Status {
 		status = "Lunas"
@@ -325,13 +330,31 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 		status = "Belum Lunas"
 	}
 
-	total := 0
+	var invItemRes []Response.InvItemRes
 
 	for _, item := range invoice.InvoiceItems {
+
 		total += item.Quantity
+
+		resultTotal := float64(item.Quantity) * item.SellableProduct.Price
+
+		var promoAmount *float64
+		if item.PromoID != nil {
+			resultTotal -= *item.PromoAmount
+			promoAmount = item.PromoAmount
+		}
+
+		invItemRes = append(invItemRes, Response.InvItemRes{
+			SellableProductID: item.SellableProductID,
+			Quantity:          item.Quantity,
+			Name:              item.SellableProduct.Name,
+			Price:             item.SellableProduct.Price,
+			ResultTotal:       &resultTotal,
+			PromoAmount:       promoAmount,
+		})
 	}
 
-	res := Response.InvoiceResponse{
+	res := Response.CoreInvoiceRes{
 		ID:           invoice.ID,
 		CustomerName: invoice.CustomerName,
 		PhoneNumber:  invoice.PhoneNumber,
@@ -340,8 +363,8 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 		Note:         &invoice.Note,
 		SubTotal:     invoice.SubTotal,
 		Tax:          &invoice.Tax,
-		CountSale:    &total,
-		InvoiceItems: &invoice.InvoiceItems,
+		CountSale:    total,
+		InvoiceItems: invItemRes,
 	}
 
 	return res, http.StatusOK, nil

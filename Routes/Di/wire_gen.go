@@ -120,8 +120,9 @@ func DISellableProduct(db *gorm.DB, minio2 *minio.Client) *Controllers.SellableP
 	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
 	promoItemRepository := Repositories.PromoItemRepositoryProvider(db)
 	receiptRepository := Repositories.ReceiptRepositoryProvider(db)
+	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
 	storageService := Services.StorageServiceProvider(minio2)
-	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository, receiptRepository, db, storageService)
+	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository, receiptRepository, sellableStockRepository, db, storageService)
 	sellableProductController := Controllers.SellableProductControllerProvider(sellableProductService, storageService)
 	return sellableProductController
 }
