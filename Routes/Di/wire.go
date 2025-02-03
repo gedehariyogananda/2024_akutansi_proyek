@@ -225,12 +225,16 @@ func DISellableProduct(db *gorm.DB, minio *minio.Client) *Controllers.SellablePr
 		Services.SellableProductServiceProvider,
 		Services.StorageServiceProvider,
 		Controllers.SellableProductControllerProvider,
+		Repositories.SellableStockRepositoryProvider,
+		Repositories.PromoRepositoryProvider,
 
 		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
 		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
 		wire.Bind(new(Repositories.IReceiptRepository), new(*Repositories.ReceiptRepository)),
 		wire.Bind(new(Services.ISellableProductService), new(*Services.SellableProductService)),
 		wire.Bind(new(Services.IStorageService), new(*Services.StorageService)),
+		wire.Bind(new(Repositories.IPromoRepository), new(*Repositories.PromoRepository)),
+		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
 		wire.Bind(new(Controllers.ISellableProductController), new(*Controllers.SellableProductController)),
 	),
 	))

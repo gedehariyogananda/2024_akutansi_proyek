@@ -3,11 +3,11 @@ package Dto
 import "2024_akutansi_project/Models/Common"
 
 type PurchasedItem struct {
-	ID          string  `json:"id" validate:"required"`
-	Qty         int     `json:"qty" validate:"required"`
-	PriceAll    float64 `json:"price_all" validate:"required"`
-	PromoID     string  `json:"promo_id" validate:"omitempty"`
-	PromoAmount int     `json:"promo_amount" validate:"omitempty"`
+	ID          string   `json:"id" validate:"required"`
+	Qty         int      `json:"qty" validate:"required"`
+	PriceAll    float64  `json:"price_all" validate:"required"`
+	PromoID     *string  `json:"promo_id" validate:"omitempty"`
+	PromoAmount *float64 `json:"promo_amount" validate:"omitempty"`
 }
 
 type InvoiceRequestDTO struct {

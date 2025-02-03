@@ -1,8 +1,6 @@
 package Helper
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -47,7 +45,6 @@ func SetValidationErrorResponse(ctx *gin.Context, errors interface{}) {
 }
 
 func SetPaginationResponse(ctx *gin.Context, message string, payload interface{}, meta interface{}, statusCode int) {
-	fmt.Println("meta", meta)
 	responseBody := Response{
 		Message: message,
 		Payload: payload,
