@@ -11,7 +11,7 @@ type Invoice struct {
 	ID            string         `json:"id"`
 	CustomerName  string         `json:"customer_name,omitempty"`
 	PhoneNumber   *string        `json:"phone_number,omitempty"`
-	Note          string         `json:"note,omitempty"`
+	Note          *string        `json:"note,omitempty"`
 	TaxID         string         `json:"tax_id,omitempty"`
 	PaymentMethod string         `json:"payment_method,omitempty"`
 	InvoiceNumber string         `json:"invoice_number,omitempty"`
