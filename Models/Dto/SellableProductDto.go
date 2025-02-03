@@ -1,13 +1,14 @@
 package Dto
 
-import "2024_akutansi_project/Models/Common"
+import (
+	"2024_akutansi_project/Models/Common"
+)
 
 type SellableProductDTO struct {
-	PromoID           *string `json:"promo_id"`
-	Description       *string `json:"description"`
-	Status            *bool   `json:"status"`
-	CurrentQuantity   *int    `json:"current_quantity"`
-	PrefixDeletePromo *bool   `json:"prefix_delete_promo" `
+	PromoID         *string `json:"promo_id"`
+	Description     *string `json:"description"`
+	Status          *bool   `json:"status"`
+	CurrentQuantity *int    `json:"current_quantity"`
 }
 
 type ReceiptMaterialDto struct {
