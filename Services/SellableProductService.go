@@ -33,17 +33,19 @@ type (
 		PromoItemRepository       Repositories.IPromoItemRepository
 		ReceiptRepository         Repositories.IReceiptRepository
 		StorageService            IStorageService
+		PromoRepository           Repositories.IPromoRepository
 		DB                        *gorm.DB
 	}
 )
 
-func SellableProductServiceProvider(sellableProductRepository Repositories.ISellableProductRepository, promoItemRepository Repositories.IPromoItemRepository, receiptRepository Repositories.IReceiptRepository, sellableStockRepository Repositories.ISellableStockRepository, DB *gorm.DB, storageService IStorageService) *SellableProductService {
+func SellableProductServiceProvider(sellableProductRepository Repositories.ISellableProductRepository, promoItemRepository Repositories.IPromoItemRepository, receiptRepository Repositories.IReceiptRepository, sellableStockRepository Repositories.ISellableStockRepository, DB *gorm.DB, storageService IStorageService, promoRepository Repositories.IPromoRepository) *SellableProductService {
 	return &SellableProductService{
 		SellableProductRepository: sellableProductRepository,
 		PromoItemRepository:       promoItemRepository,
 		StorageService:            storageService,
 		ReceiptRepository:         receiptRepository,
 		SellableStockRepository:   sellableStockRepository,
+		PromoRepository:           promoRepository,
 		DB:                        DB,
 	}
 }
@@ -70,7 +72,7 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 	var res []*Response.SellableResponse
 
 	for _, sellableProduct := range sellableProducts {
-		status := ""
+		var status := ""
 		if *sellableProduct.Status && sellableProduct.CurrentQuantity > 0 {
 			status = "Aktif"
 		} else if sellableProduct.CurrentQuantity == 0 {
@@ -108,6 +110,17 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 
 func (service *SellableProductService) UpdateStock(id string, request *Dto.SellableProductDTO, companyID string) (statusCode int, addMessage *string, err error) {
 	var status bool
+
+	if request.PromoID != nil {
+		_, err := service.PromoRepository.FindByID(*request.PromoID)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return http.StatusNotFound, nil, fmt.Errorf("promo dengan id %s tidak ditemukan", *request.PromoID)
+		}
+
+		if err != nil {
+			return http.StatusInternalServerError, nil, err
+		}
+	}
 
 	product, err := service.SellableProductRepository.FindByID(id, false)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
