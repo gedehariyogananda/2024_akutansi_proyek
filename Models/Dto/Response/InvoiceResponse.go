@@ -18,6 +18,7 @@ type InvoiceResponse struct {
 	SubTotal      float64               `json:"sub_total,omitempty"`
 	CreatedAt     string                `json:"created_at,omitempty"`
 	CountSale     *int                  `json:"count_sale,omitempty"`
+	RefundAt      *string               `json:"refund_at,omitempty"`
 	InvoiceItems  *[]Models.InvoiceItem `json:"invoice_items,omitempty"`
 }
 
@@ -45,6 +46,7 @@ type CoreInvoiceRes struct {
 	SubTotal      float64      `json:"sub_total,omitempty"`
 	CreatedAt     string       `json:"created_at,omitempty"`
 	CountSale     int          `json:"count_sale,omitempty"`
+	RefundAt      *string      `json:"refund_at,omitempty"`
 	InvoiceItems  []InvItemRes `json:"invoice_items"`
 }
 

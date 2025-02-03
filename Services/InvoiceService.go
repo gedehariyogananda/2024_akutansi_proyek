@@ -36,11 +36,12 @@ type (
 		journalEntriesRepository  Repositories.IJournalEntriesRepository
 		accountRepository         Repositories.IAccountRepository
 		journalEntriesService     IJournalEntriesService
+		promoRepository           Repositories.IPromoRepository
 		DB                        *gorm.DB
 	}
 )
 
-func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceItemRepository Repositories.IInvoiceItemRepository, sellableProductRepository Repositories.ISellableProductRepository, receiptProductRepository Repositories.IReceiptRepository, materialProductRepository Repositories.IMaterialProductRepository, sellableStockRepository Repositories.ISellableStockRepository, materialStockRepository Repositories.IMaterialStockRepository, journalEntries Repositories.IJournalEntriesRepository, accountRepository Repositories.IAccountRepository, journalEntriesService IJournalEntriesService, DB *gorm.DB) *InvoiceService {
+func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceItemRepository Repositories.IInvoiceItemRepository, sellableProductRepository Repositories.ISellableProductRepository, receiptProductRepository Repositories.IReceiptRepository, materialProductRepository Repositories.IMaterialProductRepository, sellableStockRepository Repositories.ISellableStockRepository, materialStockRepository Repositories.IMaterialStockRepository, journalEntries Repositories.IJournalEntriesRepository, accountRepository Repositories.IAccountRepository, journalEntriesService IJournalEntriesService, DB *gorm.DB, promoRepository Repositories.IPromoRepository) *InvoiceService {
 	return &InvoiceService{
 		invoiceRepository:         invoiceRepository,
 		invoiceItemRepository:     invoiceItemRepository,
@@ -52,6 +53,7 @@ func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, i
 		journalEntriesRepository:  journalEntries,
 		accountRepository:         accountRepository,
 		journalEntriesService:     journalEntriesService,
+		promoRepository:           promoRepository,
 		DB:                        DB,
 	}
 }
@@ -75,7 +77,7 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 
 	invoiceDataClient := &Models.Invoice{
 		CustomerName:  requestClient.CustomerName,
-		PhoneNumber:   &requestClient.PhoneNumber,
+		PhoneNumber:   requestClient.PhoneNumber,
 		Note:          requestClient.Notes,
 		TaxID:         requestClient.TaxID,
 		PaymentMethod: requestClient.PaymentMethod,
@@ -106,6 +108,10 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 			return nil, http.StatusForbidden, errors.New("FORBIDDEN_ACCESS")
 		}
 
+		if !*sellableProduct.Status {
+			return nil, http.StatusBadRequest, fmt.Errorf("produk %s tidak aktif, tidak dapat dipesan!", sellableProduct.Name)
+		}
+
 		// check stock availability
 		if sellableProduct.CurrentQuantity < purchasedItem.Qty {
 			lowStockErrors = append(lowStockErrors, fmt.Sprintf("stok produk %s tidak mencukupi (tersedia: %d %s, dibutuhkan: %d %s)",
@@ -119,14 +125,31 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 		}
 
 		// add invoice item
+		var promoAmount *float64
+		if purchasedItem.PromoID != nil {
+			promo, err := invoiceService.promoRepository.FindByID(*purchasedItem.PromoID)
+			if err != nil {
+				return nil, http.StatusNotFound, fmt.Errorf("promo tidak ditemukan: %s", *purchasedItem.PromoID)
+			}
+
+			amount := promo.Amount * float64(purchasedItem.Qty)
+			promoAmount = &amount
+		}
+
+		priceAll := sellableProduct.Price * float64(purchasedItem.Qty)
+
+		if promoAmount != nil {
+			priceAll -= *promoAmount
+		}
+
 		invoiceItem := &Models.InvoiceItem{
 			InvoiceID:         invoice.ID,
 			SellableProductID: sellableProduct.ID,
 			Quantity:          purchasedItem.Qty,
 			CompanyID:         companyID,
-			Price:             purchasedItem.PriceAll,
+			Price:             priceAll,
 			PromoID:           purchasedItem.PromoID,
-			PromoAmount:       purchasedItem.PromoAmount,
+			PromoAmount:       promoAmount,
 		}
 
 		if err = invoiceService.invoiceItemRepository.Store(trx, invoiceItem); err != nil {
@@ -291,10 +314,18 @@ func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *D
 
 		status := ""
 
-		if invoice.Status {
+		if invoice.RefundAt != nil {
+			status = "Refund"
+		} else if invoice.Status {
 			status = "Lunas"
 		} else {
 			status = "Belum Lunas"
+		}
+
+		var refundAt *string
+		if invoice.RefundAt != nil {
+			refundData := invoice.RefundAt.Format("2006-01-02 15:04:05")
+			refundAt = &refundData
 		}
 
 		res = append(res, Response.InvoiceResponse{
@@ -305,6 +336,7 @@ func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *D
 			Status:        &status,
 			CreatedAt:     invoice.CreatedAt.Format("2006-01-02 15:04:05"),
 			CountSale:     &total,
+			RefundAt:      refundAt,
 		})
 
 	}
@@ -324,10 +356,17 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 	var status string
 	var total int
 
-	if invoice.Status {
+	if invoice.RefundAt != nil {
+		status = "Refund"
+	} else if invoice.Status {
 		status = "Lunas"
 	} else {
 		status = "Belum Lunas"
+	}
+
+	refundAt := ""
+	if invoice.RefundAt != nil {
+		refundAt = invoice.RefundAt.Format("2006-01-02 15:04:05")
 	}
 
 	var invItemRes []Response.InvItemRes
@@ -360,11 +399,12 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 		PhoneNumber:  invoice.PhoneNumber,
 		CreatedAt:    invoice.CreatedAt.Format("02/01/2006"),
 		Status:       &status,
-		Note:         &invoice.Note,
+		Note:         invoice.Note,
 		SubTotal:     invoice.SubTotal,
 		Tax:          &invoice.Tax,
 		CountSale:    total,
 		InvoiceItems: invItemRes,
+		RefundAt:     &refundAt,
 	}
 
 	return res, http.StatusOK, nil
