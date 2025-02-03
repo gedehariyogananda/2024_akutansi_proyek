@@ -72,7 +72,7 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 	var res []*Response.SellableResponse
 
 	for _, sellableProduct := range sellableProducts {
-		var status := ""
+		status := ""
 		if *sellableProduct.Status && sellableProduct.CurrentQuantity > 0 {
 			status = "Aktif"
 		} else if sellableProduct.CurrentQuantity == 0 {
