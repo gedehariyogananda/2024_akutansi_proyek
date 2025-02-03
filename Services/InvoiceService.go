@@ -364,23 +364,20 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 		status = "Belum Lunas"
 	}
 
-	refundAt := ""
+	var refundAt *string
 	if invoice.RefundAt != nil {
-		refundAt = invoice.RefundAt.Format("2006-01-02 15:04:05")
+		refundDate := invoice.RefundAt.Format("2006-01-02 15:05:05")
+		refundAt = &refundDate
 	}
 
 	var invItemRes []Response.InvItemRes
 
 	for _, item := range invoice.InvoiceItems {
-
 		total += item.Quantity
-
 		resultTotal := float64(item.Quantity) * item.SellableProduct.Price
 
-		var promoAmount *float64
 		if item.PromoID != nil {
 			resultTotal -= *item.PromoAmount
-			promoAmount = item.PromoAmount
 		}
 
 		invItemRes = append(invItemRes, Response.InvItemRes{
@@ -389,7 +386,7 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 			Name:              item.SellableProduct.Name,
 			Price:             item.SellableProduct.Price,
 			ResultTotal:       &resultTotal,
-			PromoAmount:       promoAmount,
+			PromoAmount:       item.PromoAmount,
 		})
 	}
 
@@ -404,7 +401,7 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 		Tax:          &invoice.Tax,
 		CountSale:    total,
 		InvoiceItems: invItemRes,
-		RefundAt:     &refundAt,
+		RefundAt:     refundAt,
 	}
 
 	return res, http.StatusOK, nil
