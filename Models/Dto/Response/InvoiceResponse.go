@@ -39,7 +39,7 @@ type CoreInvoiceRes struct {
 	Note          *string      `json:"note,omitempty"`
 	TaxID         *string      `json:"tax_id,omitempty"`
 	PaymentMethod *string      `json:"payment_method,omitempty"`
-	InvoiceNumber string       `json:"invoice_number,omitempty"`
+	InvoiceNumber string       `json:"invoice_number"`
 	CompanyID     *string      `json:"company_id,omitempty"`
 	Status        *string      `json:"status,omitempty"`
 	Tax           *float64     `json:"tax,omitempty"`

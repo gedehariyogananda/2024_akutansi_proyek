@@ -99,6 +99,7 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 			Price:           &sellableProduct.Price,
 			Category:        sellableProduct.Category,
 			StatusDisplay:   &status,
+			Description:     &sellableProduct.Description,
 			Promo:           promo,
 		})
 	}

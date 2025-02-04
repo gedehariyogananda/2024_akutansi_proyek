@@ -391,17 +391,18 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 	}
 
 	res := Response.CoreInvoiceRes{
-		ID:           invoice.ID,
-		CustomerName: invoice.CustomerName,
-		PhoneNumber:  invoice.PhoneNumber,
-		CreatedAt:    invoice.CreatedAt.Format("02/01/2006"),
-		Status:       &status,
-		Note:         invoice.Note,
-		SubTotal:     invoice.SubTotal,
-		Tax:          &invoice.Tax,
-		CountSale:    total,
-		InvoiceItems: invItemRes,
-		RefundAt:     refundAt,
+		ID:            invoice.ID,
+		CustomerName:  invoice.CustomerName,
+		PhoneNumber:   invoice.PhoneNumber,
+		CreatedAt:     invoice.CreatedAt.Format("02/01/2006"),
+		Status:        &status,
+		Note:          invoice.Note,
+		SubTotal:      invoice.SubTotal,
+		Tax:           &invoice.Tax,
+		CountSale:     total,
+		InvoiceItems:  invItemRes,
+		InvoiceNumber: invoice.InvoiceNumber,
+		RefundAt:      refundAt,
 	}
 
 	return res, http.StatusOK, nil
