@@ -373,11 +373,20 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 	var invItemRes []Response.InvItemRes
 
 	for _, item := range invoice.InvoiceItems {
+		var promoAmount *float64
+
 		total += item.Quantity
 		resultTotal := float64(item.Quantity) * item.SellableProduct.Price
 
 		if item.PromoID != nil {
 			resultTotal -= *item.PromoAmount
+
+			promo, err := invoiceService.promoRepository.FindByID(*item.PromoID)
+			if err != nil {
+				return Response.CoreInvoiceRes{}, http.StatusNotFound, err
+			}
+
+			promoAmount = &promo.Amount
 		}
 
 		invItemRes = append(invItemRes, Response.InvItemRes{
@@ -386,7 +395,7 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 			Name:              item.SellableProduct.Name,
 			Price:             item.SellableProduct.Price,
 			ResultTotal:       &resultTotal,
-			PromoAmount:       item.PromoAmount,
+			PromoAmount:       promoAmount,
 		})
 	}
 
