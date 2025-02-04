@@ -60,9 +60,11 @@ func (controller *InvoiceController) GetSalesHistory(ctx *gin.Context) {
 
 	startDateParams := ctx.Query("start_date")
 	endDateParams := ctx.Query("end_date")
+	inStatus := ctx.Query("in_status")
 
 	request.StartDate = &startDateParams
 	request.EndDate = &endDateParams
+	request.InStatus = &inStatus
 	request.Query = query
 
 	invoices, meta, statusCode, err := controller.InvoiceService.GetAllByCompany(ctx.GetString("company_id"), &request)

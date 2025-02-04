@@ -59,13 +59,13 @@ func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Dto.GetHist
 		Scopes(
 			Helper.FilterSearchRiwayatTransaction(query.Search),
 			Helper.FilterDateInvoice(*query.StartDate, *query.EndDate),
-			Helper.FilterStatus(query.Status)).
+			Helper.FilterHistoryTransaction(*query.InStatus)).
 		Count(&totalData).Error; err != nil {
 		return nil, 0, err
 	}
 
 	if err := r.DB.
-		Select("id", "customer_name", "invoice_number", "status", "sub_total", "created_at", "refund_at","tax").
+		Select("id", "customer_name", "invoice_number", "status", "sub_total", "created_at", "refund_at", "tax").
 		Where("company_id = ?", companyID).
 		Preload("InvoiceItems", func(invItemPayload *gorm.DB) *gorm.DB {
 			return invItemPayload.Select("invoice_id", "quantity")
@@ -74,7 +74,7 @@ func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Dto.GetHist
 			Utils.Paginate(query.Page, query.Limit),
 			Helper.FilterSearchRiwayatTransaction(query.Search),
 			Helper.FilterDateInvoice(*query.StartDate, *query.EndDate),
-			Helper.FilterStatus(query.Status)).
+			Helper.FilterHistoryTransaction(*query.InStatus)).
 		Order("created_at desc").
 		Find(&invoices).Error; err != nil {
 		return nil, 0, err
