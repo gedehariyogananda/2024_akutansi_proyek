@@ -65,7 +65,7 @@ func (r *InvoiceRepository) GetAllByCompany(companyID string, query *Dto.GetHist
 	}
 
 	if err := r.DB.
-		Select("id", "customer_name", "invoice_number", "status", "sub_total", "created_at", "refund_at").
+		Select("id", "customer_name", "invoice_number", "status", "sub_total", "created_at", "refund_at","tax").
 		Where("company_id = ?", companyID).
 		Preload("InvoiceItems", func(invItemPayload *gorm.DB) *gorm.DB {
 			return invItemPayload.Select("invoice_id", "quantity")
