@@ -332,7 +332,7 @@ func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *D
 			ID:            invoice.ID,
 			CustomerName:  invoice.CustomerName,
 			InvoiceNumber: invoice.InvoiceNumber,
-			SubTotal:      invoice.SubTotal,
+			SubTotal:      invoice.SubTotal + invoice.Tax,
 			Status:        &status,
 			CreatedAt:     invoice.CreatedAt.Format("2006-01-02 15:04:05"),
 			CountSale:     &total,
