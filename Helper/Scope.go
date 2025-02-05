@@ -110,11 +110,13 @@ func FilterManagementStock(query string) func(*gorm.DB) *gorm.DB {
 		}
 
 		if query == "active" {
-			db = db.Where("status = ?", true)
-		} else if query == "inactive" {
-			db = db.Where("status = ?", false)
-		} else if query == "empty" {
-			db = db.Where("current_quantity = ?", 0)
+			return db.Where("status = ?", true)
+		}
+		if query == "inactive" {
+			return db.Where("status = ?", false)
+		}
+		if query == "empty" {
+			return db.Where("current_quantity = ?", 0)
 		}
 
 		return db
