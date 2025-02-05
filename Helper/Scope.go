@@ -110,11 +110,13 @@ func FilterManagementStock(query string) func(*gorm.DB) *gorm.DB {
 		}
 
 		if query == "active" {
-			db = db.Where("status = ?", true)
-		} else if query == "inactive" {
-			db = db.Where("status = ?", false)
-		} else if query == "empty" {
-			db = db.Where("current_quantity = ?", 0)
+			return db.Where("status = ?", true)
+		}
+		if query == "inactive" {
+			return db.Where("status = ?", false)
+		}
+		if query == "empty" {
+			return db.Where("current_quantity = ?", 0)
 		}
 
 		return db
@@ -144,7 +146,7 @@ func FilterHistoryTransaction(query string) func(*gorm.DB) *gorm.DB {
 			return db.Where("refund_at IS NOT NULL AND status = ?", false)
 		}
 		if query == "unpaid" {
-			return db.Where("status = ?", false)
+			return db.Where("refund_at IS NULL AND status = ?", false)
 		}
 
 		return db
