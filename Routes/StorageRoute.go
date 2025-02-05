@@ -14,7 +14,7 @@ func StorageRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client, minio *m
 
 	m := Di.DICommonMiddleware(db, redis)
 
-	route.Use(m.IsAuthenticate)
+	route.Use(m.RolesAll)
 
 	StorageController := Di.DIStorage(minio)
 

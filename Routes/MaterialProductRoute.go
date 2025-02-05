@@ -14,7 +14,7 @@ func MaterialProduct(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	m := Di.DICommonMiddleware(db, redis)
 
 	// open use authenticate
-	route.Use(m.IsAuthenticate)
+	route.Use(m.RolesAll)
 
 	MaterialProductController := Di.DIMaterialProduct(db)
 

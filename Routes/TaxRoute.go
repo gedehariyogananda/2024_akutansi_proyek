@@ -12,7 +12,7 @@ func TaxRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	route := c.Group("/tax")
 	m := Di.DICommonMiddleware(db, redis)
 
-	route.Use(m.IsAuthenticate)
+	route.Use(m.RolesAll)
 
 	TaxController := Di.DITax(db)
 
