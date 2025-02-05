@@ -14,12 +14,12 @@ func CategoryRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	m := Di.DICommonMiddleware(db, redis)
 
 	// open use authenticate
-	// route.Use(m.IsAuthenticate)
+	route.Use(m.RolesAll)
 
 	CategoryController := Di.DICategory(db)
 
-	route.GET("/", m.RoleOwner, CategoryController.FindAll)
-	route.GET("/:id", m.RolesAll, CategoryController.FindByID)
+	route.GET("/", CategoryController.FindAll)
+	route.GET("/:id", CategoryController.FindByID)
 	route.POST("/", CategoryController.Create)
 	route.PUT("/:id", CategoryController.Update)
 	route.DELETE("/:id", CategoryController.Delete)

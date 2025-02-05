@@ -14,7 +14,6 @@ import (
 
 type (
 	ICommonMiddleware interface {
-		IsAuthenticate(ctx *gin.Context)
 		RolesAll(ctx *gin.Context)
 		RoleEmployee(ctx *gin.Context)
 		RoleOwner(ctx *gin.Context)
@@ -39,23 +38,6 @@ type Claims struct {
 	Name        string
 	IsEmployee  bool
 	CompanyCode string
-}
-
-func (m *CommondMiddleware) IsAuthenticate(ctx *gin.Context) {
-	claims, err := m.extractClaims(ctx)
-	if err != nil {
-		Helper.SetErrorResponse(ctx, err.Error(), http.StatusUnauthorized)
-		ctx.Abort()
-		return
-	}
-
-	ctx.Set("id", claims.Key)
-	ctx.Set("company_id", claims.CompanyID)
-	ctx.Set("is_employee", claims.IsEmployee)
-	ctx.Set("company_code", claims.CompanyCode)
-	ctx.Set("name", claims.Name)
-
-	ctx.Next()
 }
 
 func (m *CommondMiddleware) RolesAll(ctx *gin.Context) {
