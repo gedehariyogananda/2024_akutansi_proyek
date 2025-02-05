@@ -16,7 +16,7 @@ type Invoice struct {
 	PaymentMethod string         `json:"payment_method,omitempty"`
 	InvoiceNumber string         `json:"invoice_number,omitempty"`
 	CompanyID     string         `json:"company_id,omitempty"`
-	Status        bool           `json:"status,omitempty"`
+	Status        *bool          `json:"status,omitempty"`
 	Tax           float64        `json:"tax,omitempty"`
 	SubTotal      float64        `json:"sub_total,omitempty"`
 	CreatedAt     time.Time      `json:"created_at,omitempty"`
