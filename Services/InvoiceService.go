@@ -83,7 +83,7 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 		PaymentMethod: requestClient.PaymentMethod,
 		InvoiceNumber: requestClient.InvoiceNumber,
 		CompanyID:     companyID,
-		Status:        requestClient.Status,
+		Status:        &requestClient.Status,
 		Tax:           requestClient.Tax,
 		SubTotal:      requestClient.SubTotal,
 		CreatedAt:     time.Now(),
@@ -174,7 +174,7 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 	}
 
 	// true === lunas
-	if invoiceDataClient.Status {
+	if *invoiceDataClient.Status {
 		// insert journal entry
 		note := "pembayaran transaksi kasir"
 		if err := invoiceService.journalEntriesService.InsertJournalCashier(Common.JournalEntryParams{
@@ -316,7 +316,7 @@ func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *D
 
 		if invoice.RefundAt != nil {
 			status = "Refund"
-		} else if invoice.Status {
+		} else if *invoice.Status {
 			status = "Lunas"
 		} else {
 			status = "Belum Lunas"
@@ -358,7 +358,7 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 
 	if invoice.RefundAt != nil {
 		status = "Refund"
-	} else if invoice.Status {
+	} else if *invoice.Status {
 		status = "Lunas"
 	} else {
 		status = "Belum Lunas"
@@ -424,9 +424,15 @@ func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) 
 		return http.StatusNotFound, err
 	}
 
+	var status *bool
+	if *invoice.Status {
+		inStatus := false
+		status = &inStatus
+	}
+
 	if invoice.RefundAt != nil {
 		return http.StatusBadRequest, errors.New("invoice sudah di refund")
-	} else if !invoice.Status {
+	} else if !*invoice.Status {
 		return http.StatusBadRequest, errors.New("invoice belum lunas, tidak bisa di refund")
 	}
 
@@ -435,6 +441,7 @@ func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) 
 			now := time.Now()
 			return &now
 		}(),
+		Status: status,
 	}); err != nil {
 		return http.StatusInternalServerError, err
 	}

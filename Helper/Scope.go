@@ -138,7 +138,7 @@ func FilterHistoryTransaction(query string) func(*gorm.DB) *gorm.DB {
 		}
 
 		if query == "refund" {
-			db = db.Where("refund_at IS NOT NULL")
+			db = db.Where("refund_at IS NOT NULL AND status = ?", false)
 		} else if query == "paid" {
 			db = db.Where("status = ?", true)
 		} else if query == "unpaid" {
