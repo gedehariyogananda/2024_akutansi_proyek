@@ -27,4 +27,5 @@ type GetHistoryInvoice struct {
 	Common.Query
 	StartDate *string `json:"start_date"`
 	EndDate   *string `json:"end_date"`
+	InStatus  *string `json:"in_status"`
 }

@@ -423,8 +423,11 @@ func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) 
 	if err != nil {
 		return http.StatusNotFound, err
 	}
+
 	if invoice.RefundAt != nil {
 		return http.StatusBadRequest, errors.New("invoice sudah di refund")
+	} else if !invoice.Status {
+		return http.StatusBadRequest, errors.New("invoice belum lunas, tidak bisa di refund")
 	}
 
 	if err = invoiceService.invoiceRepository.Update(id, &Models.Invoice{
