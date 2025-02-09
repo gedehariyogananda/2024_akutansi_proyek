@@ -12,7 +12,7 @@ func InvoiceRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	route := c.Group("/invoice")
 	m := Di.DICommonMiddleware(db, redis)
 
-	route.Use(m.IsAuthenticate)
+	route.Use(m.RolesAll)
 	InvoiceController := Di.DIInvoice(db)
 
 	route.GET("/checked", func(ctx *gin.Context) {

@@ -73,6 +73,7 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 		Repositories.TransactionRepositoryProvider,
 		Services.JournalEntriesProvider,
 		Repositories.PurchaseRepositoryProvider,
+		Repositories.PromoRepositoryProvider,
 
 		wire.Bind(new(Controllers.IInvoiceController), new(*Controllers.InvoiceController)),
 		wire.Bind(new(Services.IInvoiceService), new(*Services.InvoiceService)),
@@ -86,6 +87,7 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 		wire.Bind(new(Repositories.IJournalEntriesRepository), new(*Repositories.JournalEntriesRepository)),
 		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
 		wire.Bind(new(Services.IJournalEntriesService), new(*Services.JournalEntriesService)),
+		wire.Bind(new(Repositories.IPromoRepository), new(*Repositories.PromoRepository)),
 		wire.Bind(new(Repositories.ITransactionRepository), new(*Repositories.TransactionRepository)),
 		wire.Bind(new(Repositories.IPurchaseRepository), new(*Repositories.PurchaseRepository)),
 	),
@@ -225,13 +227,16 @@ func DISellableProduct(db *gorm.DB, minio *minio.Client) *Controllers.SellablePr
 		Services.SellableProductServiceProvider,
 		Services.StorageServiceProvider,
 		Controllers.SellableProductControllerProvider,
+		Repositories.SellableStockRepositoryProvider,
+		Repositories.PromoRepositoryProvider,
 
-		// Bind interfaces ke implementasinya
 		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
 		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
 		wire.Bind(new(Repositories.IReceiptRepository), new(*Repositories.ReceiptRepository)),
 		wire.Bind(new(Services.ISellableProductService), new(*Services.SellableProductService)),
 		wire.Bind(new(Services.IStorageService), new(*Services.StorageService)),
+		wire.Bind(new(Repositories.IPromoRepository), new(*Repositories.PromoRepository)),
+		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
 		wire.Bind(new(Controllers.ISellableProductController), new(*Controllers.SellableProductController)),
 	),
 	))

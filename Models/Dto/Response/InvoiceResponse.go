@@ -1,6 +1,8 @@
 package Response
 
-import "2024_akutansi_project/Models"
+import (
+	"2024_akutansi_project/Models"
+)
 
 type InvoiceResponse struct {
 	ID            string                `json:"id"`
@@ -16,6 +18,7 @@ type InvoiceResponse struct {
 	SubTotal      float64               `json:"sub_total,omitempty"`
 	CreatedAt     string                `json:"created_at,omitempty"`
 	CountSale     *int                  `json:"count_sale,omitempty"`
+	RefundAt      *string               `json:"refund_at,omitempty"`
 	InvoiceItems  *[]Models.InvoiceItem `json:"invoice_items,omitempty"`
 }
 
@@ -27,4 +30,31 @@ type InvoiceItemResponse struct {
 }
 
 type StatisticResponse struct {
+}
+
+type CoreInvoiceRes struct {
+	ID            string       `json:"id"`
+	CustomerName  string       `json:"customer_name,omitempty"`
+	PhoneNumber   *string      `json:"phone_number,omitempty"`
+	Note          *string      `json:"note,omitempty"`
+	TaxID         *string      `json:"tax_id,omitempty"`
+	PaymentMethod *string      `json:"payment_method,omitempty"`
+	InvoiceNumber string       `json:"invoice_number"`
+	CompanyID     *string      `json:"company_id,omitempty"`
+	Status        *string      `json:"status,omitempty"`
+	Tax           *float64     `json:"tax,omitempty"`
+	SubTotal      float64      `json:"sub_total,omitempty"`
+	CreatedAt     string       `json:"created_at,omitempty"`
+	CountSale     int          `json:"count_sale,omitempty"`
+	RefundAt      *string      `json:"refund_at,omitempty"`
+	InvoiceItems  []InvItemRes `json:"invoice_items"`
+}
+
+type InvItemRes struct {
+	SellableProductID string   `json:"sellable_product_id"`
+	Quantity          int      `json:"quantity"`
+	Name              string   `json:"name"`
+	Price             float64  `json:"price"`
+	ResultTotal       *float64 `json:"result_total,omitempty"`
+	PromoAmount       *float64 `json:"promo_amount,omitempty"`
 }

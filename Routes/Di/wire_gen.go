@@ -51,7 +51,8 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 	transactionRepository := Repositories.TransactionRepositoryProvider(db)
 	purchaseRepository := Repositories.PurchaseRepositoryProvider(db)
 	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository, transactionRepository, purchaseRepository)
-	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, sellableStockRepository, materialStockRepository, journalEntriesRepository, accountRepository, journalEntriesService, db)
+	promoRepository := Repositories.PromoRepositoryProvider(db)
+	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, sellableStockRepository, materialStockRepository, journalEntriesRepository, accountRepository, journalEntriesService, db, promoRepository)
 	invoiceController := Controllers.InvoiceControllerProvider(invoiceService)
 	return invoiceController
 }
@@ -120,8 +121,10 @@ func DISellableProduct(db *gorm.DB, minio2 *minio.Client) *Controllers.SellableP
 	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
 	promoItemRepository := Repositories.PromoItemRepositoryProvider(db)
 	receiptRepository := Repositories.ReceiptRepositoryProvider(db)
-	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository, receiptRepository, db)
+	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
 	storageService := Services.StorageServiceProvider(minio2)
+	promoRepository := Repositories.PromoRepositoryProvider(db)
+	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository, receiptRepository, sellableStockRepository, db, storageService, promoRepository)
 	sellableProductController := Controllers.SellableProductControllerProvider(sellableProductService, storageService)
 	return sellableProductController
 }
