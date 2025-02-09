@@ -250,7 +250,7 @@ CREATE TABLE public.purchases (
     company_id character varying(255) NOT NULL,
     discount numeric(15,2) NOT NULL,
     is_discount_percent boolean NOT NULL,
-    tax numeric(15,2) NOT NULL,
+    tax_id character varying(255) NOT NULL,
     payment character varying(255) NOT NULL,
     note character varying(255),
     due_date timestamp with time zone,

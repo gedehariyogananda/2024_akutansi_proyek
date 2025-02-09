@@ -8,8 +8,8 @@ CREATE TABLE purchases
     company_id            VARCHAR(255)             NOT NULL,
     discount             DECIMAL(15, 2)           NOT NULL,
     is_discount_percent  BOOLEAN                  NOT NULL,
-    tax                   DECIMAL(15, 2)           NOT NULL,
-    payment        VARCHAR(255)             NOT NULL,
+    tax_id               VARCHAR(255)           NOT NULL,
+    payment              VARCHAR(255)             NOT NULL,
     note                 VARCHAR(255)             NULL,
     due_date              TIMESTAMP WITH TIME ZONE  NULL,
     created_at            TIMESTAMP WITH TIME ZONE NOT NULL

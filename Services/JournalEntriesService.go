@@ -120,7 +120,7 @@ func (service *JournalEntriesService) InsertJournalPurchase(ctx context.Context)
 			CompanyID: p.CompanyID,
 			Note:      note,
 			SubTotal:  float64(p.TotalPurchaseAmount),
-			Tax:       float64(p.Tax),
+			Tax:       float64(p.Tax.Precentage),
 		}
 
 		acc, err := service.allAccountCompanyUser(p.CompanyID)

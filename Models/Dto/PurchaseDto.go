@@ -10,7 +10,7 @@ type createPurchaseDto struct {
 
 type CreatePurchasesDto struct {
 	Purchases           []createPurchaseDto `json:"purchases" validate:"required,dive"`
-	Tax                 float32             `json:"tax" validate:"required"`
+	TaxID               string              `json:"tax_id" validate:"required"`
 	Discount            float32             `json:"discount" validate:"required"`
 	IsDiscountPercent   bool                `json:"is_discount_percent" validate:"required"`
 	Payment             string              `json:"payment" validate:"required,oneof=cash hutang"`
