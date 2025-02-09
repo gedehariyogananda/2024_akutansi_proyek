@@ -202,6 +202,7 @@ func DISubUser(db *gorm.DB) *Controllers.SubUserController {
 		Repositories.SubUserRepositoryProvider,
 		Services.SubUserProvider,
 		Controllers.SubUserProvider,
+
 		wire.Bind(new(Controllers.ISubUserController), new(*Controllers.SubUserController)),
 		wire.Bind(new(Services.ISubUserService), new(*Services.SubUserService)),
 		wire.Bind(new(Repositories.ISubUserRepository), new(*Repositories.SubUserRepository)),
@@ -377,10 +378,14 @@ func DiUser(db *gorm.DB, minio *minio.Client) *Controllers.UserController {
 		Services.UserServiceProvider,
 		Controllers.UserControllerProvider,
 		Services.StorageServiceProvider,
+		Services.JwtServiceProvider,
+		Services.EmailServiceProvider,
 
 		wire.Bind(new(Controllers.IUserController), new(*Controllers.UserController)),
 		wire.Bind(new(Services.IUserService), new(*Services.UserService)),
 		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
+		wire.Bind(new(Services.IJwtService), new(*Services.JwtService)),
+		wire.Bind(new(Services.IEmailService), new(*Services.EmailService)),
 		wire.Bind(new(Services.IStorageService), new(*Services.StorageService)),
 	)))
 }

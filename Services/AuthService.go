@@ -9,6 +9,7 @@ import (
 	"2024_akutansi_project/Utils"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -83,6 +84,7 @@ func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models
 }
 
 func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOwnerRequest) (token string, statusCode int, err error) {
+	fmt.Println("email", request.Email)
 	ownerData, err := service.userRepository.FindEmail(request.Email)
 
 	if err != nil {

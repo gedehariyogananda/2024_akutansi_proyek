@@ -11,6 +11,18 @@ type UserResponse struct {
 	Avatar   string `json:"avatar"`
 }
 
+type SendOtpResponse struct {
+	Token   string `json:"token"`
+	Message string `json:"message"`
+}
+
+func ToSendOtpResponse(token, message string) *SendOtpResponse {
+	return &SendOtpResponse{
+		Token:   token,
+		Message: message,
+	}
+}
+
 func ToUserResponse(user *Models.User) *UserResponse {
 	return &UserResponse{
 		ID:       user.ID,

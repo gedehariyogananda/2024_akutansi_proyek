@@ -5,6 +5,7 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,7 @@ type (
 		UploadAvatar(ctx *gin.Context)
 		GetCurrentUser(ctx *gin.Context)
 		ChangePassword(ctx *gin.Context)
+		SendOtp(ctx *gin.Context)
 	}
 
 	UserController struct {
@@ -87,13 +89,22 @@ func (c *UserController) ChangePassword(ctx *gin.Context) {
 		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
-
-	userID := ctx.GetString("id")
-	statusCode, err := c.userService.ChangePassword(userID, changePasswordDto)
+	statusCode, err := c.userService.ChangePassword(changePasswordDto)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
 	Helper.SetSuccessResponse(ctx, "Berhasil mengubah password", nil, 200)
+}
+
+func (c *UserController) SendOtp(ctx *gin.Context) {
+	userID := ctx.GetString("id")
+	res, err := c.userService.SendOtp(userID)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mengirim OTP", res, 200)
 }

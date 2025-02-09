@@ -5,6 +5,7 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -62,6 +63,8 @@ func (c *AuthController) LoginOwner(ctx *gin.Context) {
 		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
+
+	fmt.Println("email", loginOwnerDTO.Email)
 
 	token, statusCode, err := c.service.LoginOwner(ctx.Request.Context(), &loginOwnerDTO)
 	if err != nil {
