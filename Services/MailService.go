@@ -11,8 +11,7 @@ type (
 		Send(to, subject, otp string) (err error)
 	}
 
-	EmailService struct {
-	}
+	EmailService struct{}
 )
 
 func EmailServiceProvider() *EmailService {
@@ -25,24 +24,26 @@ func (e *EmailService) Send(to, subject, otp string) (err error) {
 	smtpHost := os.Getenv("SMTP_HOST")
 	smtpPort := os.Getenv("SMTP_PORT")
 
-	fmt.Println("email : ", email)
-	fmt.Println("password : ", password)
-	fmt.Println("smtpHost : ", smtpHost)
-	fmt.Println("smtpPort : ", smtpPort)
+	fmt.Println("email:", email)
+	fmt.Println("to:", to)
+	fmt.Println("subject:", subject)
 
 	auth := smtp.PlainAuth("", email, password, smtpHost)
 
-	msg := []byte("From : Duit <" + email + ">\n" +
-		"To : " + to + "\n" +
-		"Subject : " + subject +
-		"\nBody : Ini OTP anda" + otp,
-	)
+	msg := "From: " + email + "\r\n" +
+		"To: " + to + "\r\n" +
+		"Subject: " + subject + "\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: text/plain; charset=\"utf-8\"\r\n\r\n" +
+		"Ini OTP Anda: " + otp + "\r\n"
 
-	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, email, []string{to}, msg)
+	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, email, []string{to}, []byte(msg))
 
 	if err != nil {
+		fmt.Println("Failed to send email:", err)
 		return err
 	}
 
-	return
+	fmt.Println("Email sent successfully!")
+	return nil
 }
