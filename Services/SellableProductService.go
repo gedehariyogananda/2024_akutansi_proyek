@@ -295,13 +295,13 @@ func (s *SellableProductService) FindById(id string, setWithMaterial bool) (res 
 	}
 
 	var promo string
+	isExpired := false
+
 	if len(sellableProduct.PromoItems) > 0 {
 		promo = sellableProduct.PromoItems[0].PromoID
-	}
-
-	isExpired := false
-	if time.Now().After(sellableProduct.PromoItems[0].Promo.EndDate) {
-		isExpired = true
+		if time.Now().After(sellableProduct.PromoItems[0].Promo.EndDate) {
+			isExpired = true
+		}
 	}
 
 	if setWithMaterial {
