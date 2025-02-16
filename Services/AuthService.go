@@ -23,6 +23,7 @@ type (
 		LoginEmployee(ctx context.Context, request *Dto.LoginEmployeeRequest) (token string, statusCode int, err error)
 		LoginMobile(ctx context.Context, request *Dto.LoginMobileRequest) (token string, typeUser string, statusCode int, err error)
 		GetProfile(id string) (profile *Response.Profile, statusCode int, err error)
+		ActivationAccount(token string) (statusCode int, err error)
 	}
 
 	AuthService struct {
@@ -326,4 +327,30 @@ func (service *AuthService) GetProfile(id string) (profile *Response.Profile, st
 	profile.CompanyName = company.Name
 
 	return profile, http.StatusOK, nil
+}
+
+func (service *AuthService) ActivationAccount(token string) (statusCode int, err error) {
+	claims, err := service.jwtService.ParseTokenVerificationAccount(token)
+
+	if err != nil {
+		return http.StatusBadRequest, errors.New("token tidak valid")
+	}
+
+	user, err := service.userRepository.FindEmail(claims["email"].(string))
+
+	if err != nil {
+		return http.StatusNotFound, errors.New("email tidak ditemukan")
+	}
+
+	if user.IsActive {
+		return http.StatusBadRequest, errors.New("akun sudah aktif")
+	}
+
+	err = service.userRepository.UpdateStatus(user.ID, true)
+
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("kesalahan saat mengaktifkan akun")
+	}
+
+	return http.StatusOK, nil
 }

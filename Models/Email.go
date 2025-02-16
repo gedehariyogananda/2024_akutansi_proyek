@@ -1,6 +1,9 @@
 package Models
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 type EmailMessage struct {
 	To      string
@@ -35,6 +38,8 @@ func ToSendOTPMessage(to, name, otp string) *EmailMessage {
 }
 
 func ToSendEmailVerificationMessage(to, name, token string) *EmailMessage {
+	urlApp := os.Getenv("API_URL_V1")
+	urlVerification := urlApp + "/auth/activation-account"
 	body := fmt.Sprintf(`<!DOCTYPE html>
 		<html lang="en">
 		<head>
@@ -46,14 +51,14 @@ func ToSendEmailVerificationMessage(to, name, token string) *EmailMessage {
 			<h1>Halo %s </h1>
 			<p>Berikut Adalah Kode OTP (One-Time Padssword) Anda untuk verifikasi</p>
 	
-			<p>Terima kasih telah mendaftar di DuitAja! Untuk mengaktifkan akun Anda, <b><a href="">silakan verifikasi email Anda %s.</a></b></p>
+			<p>Terima kasih telah mendaftar di DuitAja! Untuk mengaktifkan akun Anda, <b><a href="%s?token=%s">silakan verifikasi email Anda.</a></b></p>
 	
 			<p>Jika anda tidak merasa mendaftar, harap abaikan email ini</p>
 	
 			<p>Terima Kasih,</p>
 			<p>Tim DuitAja</p>
 		</body>
-		</html>`, name, token)
+		</html>`, name, urlVerification, token)
 
 	return &EmailMessage{
 		To:      to,

@@ -15,6 +15,7 @@ type (
 		FindEmail(email string) (user *Models.User, err error)
 		UpdateAvatar(userID string, fileName string) (err error)
 		UpdatePassword(userID string, newPassword string) (err error)
+		UpdateStatus(userID string, status bool) (err error)
 	}
 
 	UserRepository struct {
@@ -73,6 +74,16 @@ func (h *UserRepository) UpdatePassword(userID string, newPassword string) (err 
 		Where("id = ?", userID).
 		Update("password", newPassword).Error; err != nil {
 		return fmt.Errorf("error saat update password: %w", err)
+	}
+
+	return nil
+}
+
+func (h *UserRepository) UpdateStatus(userID string, status bool) (err error) {
+	if err := h.DB.Model(&Models.User{}).
+		Where("id = ?", userID).
+		Update("is_active", status).Error; err != nil {
+		return fmt.Errorf("error saat update status: %w", err)
 	}
 
 	return nil
