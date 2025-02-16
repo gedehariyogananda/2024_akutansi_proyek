@@ -20,6 +20,7 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	DeletedAt time.Time `json:"deleted_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	IsActive  bool      `json:"is_active"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {

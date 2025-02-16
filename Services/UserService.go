@@ -2,6 +2,7 @@ package Services
 
 import (
 	"2024_akutansi_project/Helper"
+	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
@@ -103,7 +104,7 @@ func (u *UserService) SendOtp(userID string) (res *Response.SendOtpResponse, err
 
 	otp := strconv.Itoa(Helper.GenerateRandomNumber(6))
 
-	err = u.mailService.Send(user.Email, "OTP", otp)
+	err = u.mailService.Send(*Models.ToSendOTPMessage(user.Email, user.Name, otp))
 
 	if err != nil {
 		return

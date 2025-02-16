@@ -28,7 +28,8 @@ func DIAuth(db *gorm.DB, redis2 *redis.Client) *Controllers.AuthController {
 	subUserRepository := Repositories.SubUserRepositoryProvider(db)
 	accountRepository := Repositories.AccountProvider(db)
 	logActivityRepository := Repositories.LogActivityRepositoryProvider(db)
-	authService := Services.AuthServiceProvider(userRepository, jwtService, companyRepository, subUserRepository, redis2, accountRepository, logActivityRepository)
+	emailService := Services.EmailServiceProvider()
+	authService := Services.AuthServiceProvider(userRepository, jwtService, companyRepository, subUserRepository, redis2, accountRepository, logActivityRepository, emailService)
 	authController := Controllers.AuthControllerProvider(authService)
 	return authController
 }

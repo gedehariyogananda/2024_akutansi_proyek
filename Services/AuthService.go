@@ -33,10 +33,11 @@ type (
 		redisClient            *redis.Client
 		accountRepository      Repositories.IAccountRepository
 		logActivityRespository Repositories.ILogActivityRepository
+		mailService            IEmailService
 	}
 )
 
-func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client, accountRepository Repositories.IAccountRepository, logActivityRepo Repositories.ILogActivityRepository) *AuthService {
+func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client, accountRepository Repositories.IAccountRepository, logActivityRepo Repositories.ILogActivityRepository, mailService IEmailService) *AuthService {
 	return &AuthService{
 		userRepository:         userRepository,
 		companyRepository:      companyRepository,
@@ -45,6 +46,7 @@ func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService
 		redisClient:            redisClient,
 		accountRepository:      accountRepository,
 		logActivityRespository: logActivityRepo,
+		mailService:            mailService,
 	}
 }
 
@@ -71,6 +73,7 @@ func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models
 		Password:  request.Password,
 		Name:      request.Name,
 		CompanyID: company.ID,
+		IsActive:  false,
 	})
 
 	if err != nil {
@@ -80,6 +83,20 @@ func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models
 	// create account for company
 	if err := service.accountRepository.InsertDefaultAccounts(company.ID); err != nil {
 		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat account")
+	}
+
+	token, err := service.jwtService.GenerateTokenForVerificationAccount(user.Email)
+
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat token")
+	}
+
+	emailMessage := Models.ToSendEmailVerificationMessage(user.Email, user.Name, token)
+
+	err = service.mailService.Send(*emailMessage)
+
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.New("kesalahan saat mengirim email")
 	}
 
 	return user, http.StatusCreated, nil

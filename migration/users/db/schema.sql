@@ -470,6 +470,7 @@ CREATE TABLE public.users (
     email character varying(255) NOT NULL,
     password character varying(255) NOT NULL,
     avatar character varying(255),
+    is_active boolean DEFAULT false,
     created_at timestamp with time zone,
     deleted_at timestamp with time zone,
     updated_at timestamp with time zone,
