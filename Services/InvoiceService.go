@@ -419,7 +419,7 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 	var moneyBack *float64
 	if invoice.MoneyReceived != nil {
 		value := *invoice.MoneyReceived - (invoice.SubTotal + invoice.Tax)
-		moneyBack = &value // Simpan dalam pointer
+		moneyBack = &value
 	}
 
 	res := Response.CoreInvoiceRes{
