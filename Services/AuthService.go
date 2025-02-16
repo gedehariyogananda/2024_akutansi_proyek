@@ -26,23 +26,25 @@ type (
 	}
 
 	AuthService struct {
-		userRepository    Repositories.IUserRepository
-		subUserRepository Repositories.ISubUserRepository
-		companyRepository Repositories.ICompanyRepository
-		jwtService        IJwtService
-		redisClient       *redis.Client
-		accountRepository Repositories.IAccountRepository
+		userRepository         Repositories.IUserRepository
+		subUserRepository      Repositories.ISubUserRepository
+		companyRepository      Repositories.ICompanyRepository
+		jwtService             IJwtService
+		redisClient            *redis.Client
+		accountRepository      Repositories.IAccountRepository
+		logActivityRespository Repositories.ILogActivityRepository
 	}
 )
 
-func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client, accountRepository Repositories.IAccountRepository) *AuthService {
+func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client, accountRepository Repositories.IAccountRepository, logActivityRepo Repositories.ILogActivityRepository) *AuthService {
 	return &AuthService{
-		userRepository:    userRepository,
-		companyRepository: companyRepository,
-		jwtService:        jwtService,
-		subUserRepository: subUser,
-		redisClient:       redisClient,
-		accountRepository: accountRepository,
+		userRepository:         userRepository,
+		companyRepository:      companyRepository,
+		jwtService:             jwtService,
+		subUserRepository:      subUser,
+		redisClient:            redisClient,
+		accountRepository:      accountRepository,
+		logActivityRespository: logActivityRepo,
 	}
 }
 
@@ -119,6 +121,20 @@ func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOw
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error set redis")
+	}
+
+	logActivity := &Models.LogActivity{
+		UserID: ownerData.ID,
+		Name:   "Login",
+		Device: request.Device,
+	}
+
+	fmt.Println("logActivity", logActivity)
+
+	err = service.logActivityRespository.Create(logActivity)
+
+	if err != nil {
+		return "", http.StatusInternalServerError, errors.New("error create log activity")
 	}
 
 	return token, http.StatusOK, err

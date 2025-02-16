@@ -9,6 +9,7 @@ import (
 type (
 	ILogActivityRepository interface {
 		FindByUserId(userID string) (logActivity []*Models.LogActivity, err error)
+		Create(logActivity *Models.LogActivity) (err error)
 	}
 
 	LogActivityRepository struct {
@@ -28,4 +29,12 @@ func (h *LogActivityRepository) FindByUserId(userID string) (logActivity []*Mode
 	}
 
 	return logActivity, nil
+}
+
+func (h *LogActivityRepository) Create(logActivity *Models.LogActivity) (err error) {
+	if err := h.DB.Create(logActivity).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
