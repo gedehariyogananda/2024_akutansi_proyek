@@ -19,8 +19,13 @@ type InvoiceRequestDTO struct {
 	InvoiceNumber string          `json:"invoice_number" validate:"required"`
 	TaxID         string          `json:"tax_id" validate:"omitempty"`
 	Tax           float64         `json:"tax" validate:"gte=0"`
+	MoneyReceived *float64        `json:"money_received"`
 	Status        bool            `json:"status"`
 	Purchaseds    []PurchasedItem `json:"purchaseds" validate:"required,dive"`
+}
+
+type PaidRequestDTO struct {
+	MoneyReceived float64 `json:"money_received" validate:"required"`
 }
 
 type GetHistoryInvoice struct {
