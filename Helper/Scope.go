@@ -140,13 +140,13 @@ func FilterHistoryTransaction(query string) func(*gorm.DB) *gorm.DB {
 		}
 
 		if query == "paid" {
-			return db.Where("status = ?", true)
+			return db.Where("refund_at IS NULL AND status = ?", true)
 		}
 		if query == "refund" {
-			return db.Where("refund_at IS NOT NULL AND status = ?", false)
+			return db.Where("refund_at IS NOT NULL AND status = ?", true)
 		}
 		if query == "unpaid" {
-			return db.Where("refund_at IS NULL AND status = ?", false)
+			return db.Where("status = ?", false)
 		}
 
 		return db

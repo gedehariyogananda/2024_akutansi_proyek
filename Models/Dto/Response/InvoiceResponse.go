@@ -44,6 +44,9 @@ type CoreInvoiceRes struct {
 	Status        *string      `json:"status,omitempty"`
 	Tax           *float64     `json:"tax,omitempty"`
 	SubTotal      float64      `json:"sub_total,omitempty"`
+	MoneyReceived *float64     `json:"money_received,omitempty"`
+	MoneyBack     *float64     `json:"money_back,omitempty"`
+	Total         float64      `json:"total,omitempty"`
 	CreatedAt     string       `json:"created_at,omitempty"`
 	CountSale     int          `json:"count_sale,omitempty"`
 	RefundAt      *string      `json:"refund_at,omitempty"`

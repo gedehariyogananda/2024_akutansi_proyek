@@ -14,6 +14,7 @@ CREATE TABLE invoices
     status         BOOLEAN                      NOT NULL,
     tax            INT                      NOT NULL,
     sub_total      DECIMAL(15, 2)           NOT NULL,
+    money_received DECIMAL(15, 2) NOT NULL,
     deleted_at     TIMESTAMP WITH TIME ZONE,
     created_at     TIMESTAMP WITH TIME ZONE,
     updated_at     TIMESTAMP WITH TIME ZONE,

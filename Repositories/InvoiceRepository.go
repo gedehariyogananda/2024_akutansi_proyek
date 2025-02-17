@@ -14,6 +14,7 @@ type (
 		Store(trx *gorm.DB, invoice *Models.Invoice) (*Models.Invoice, error)
 		FindByID(id string, companyID string) (invoice *Models.Invoice, err error)
 		Update(id string, invoice *Models.Invoice) (err error)
+		UpdateToNull(id string, field string) (err error)
 		GetAllByCompany(companyID string, query *Dto.GetHistoryInvoice) (invoices []*Models.Invoice, totalData int64, err error)
 		GetByInvoiceID(companyID string, invoiceID string) (invoice *Models.Invoice, err error)
 		SumSalesByDate(companyID string, date string) (totalSales float64, err error)
@@ -138,4 +139,16 @@ func (r *InvoiceRepository) SumSalesByYearMonth(companyID string, year int, mont
 	}
 
 	return totalSales, nil
+}
+
+func (r *InvoiceRepository) UpdateToNull(id string, field string) (err error) {
+	if err := r.DB.
+		Model(&Models.Invoice{}).
+		Where("id = ?", id).
+		Select(field).
+		Updates(map[string]interface{}{field: nil}).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
