@@ -44,6 +44,9 @@ func ValidateRequest(ctx *gin.Context, data interface{}) []Helper.ErrorFieldsRes
 			case "oneof":
 				errField.FieldName = strings.ToLower(err.Field())
 				errField.Message = err.Field() + " harus salah satu dari: " + err.Param()
+			case "date":
+				errField.FieldName = strings.ToLower(err.Field())
+				errField.Message = err.Field() + " harus memiliki format tanggal yang benar"
 			}
 			errFields = append(errFields, errField)
 		}

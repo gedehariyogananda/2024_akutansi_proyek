@@ -5,7 +5,6 @@ CREATE TABLE promos
 (
     id         VARCHAR(100) PRIMARY KEY NOT NULL UNIQUE,
     name       VARCHAR(255)             NOT NULL,
-    quantity   INT                      NOT NULL,
     type       VARCHAR(50)              NOT NULL,
     start_date TIMESTAMP WITH TIME ZONE,
     end_date   TIMESTAMP WITH TIME ZONE,

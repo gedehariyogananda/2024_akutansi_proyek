@@ -301,7 +301,7 @@ func (s *PromoService) UnasignPromo(dto *Dto.AsignPromoDto) (statusCode int, err
 	}
 
 	for _, item := range dto.SellableProductIDS {
-		_, err = s.PromoItemRepository.DeleteBySellableProductID(item)
+		err = s.PromoItemRepository.DeleteBySellableProductID(item)
 		if err != nil {
 			return http.StatusInternalServerError, err
 		}

@@ -14,7 +14,7 @@ func UserRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client, minio *mini
 
 	m := Di.DICommonMiddleware(db, redis)
 
-	route.Use(m.IsAuthenticate)
+	route.Use(m.RolesAll)
 
 	UserController := Di.DiUser(db, minio)
 
