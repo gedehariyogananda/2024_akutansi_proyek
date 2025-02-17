@@ -19,6 +19,7 @@ type Invoice struct {
 	Status        *bool          `json:"status,omitempty"`
 	Tax           float64        `json:"tax,omitempty"`
 	SubTotal      float64        `json:"sub_total,omitempty"`
+	MoneyReceived *float64       `json:"money_received,omitempty"`
 	CreatedAt     time.Time      `json:"created_at,omitempty"`
 	UpdatedAt     time.Time      `json:"updated_at,omitempty"`
 	RefundAt      *time.Time     `json:"refund_at,omitempty"`

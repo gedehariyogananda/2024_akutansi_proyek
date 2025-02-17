@@ -9,6 +9,7 @@ import (
 type (
 	ITaxRepository interface {
 		GetAll() (taxs []*Models.Tax, err error)
+		FindByID(id string) (tax *Models.Tax, err error)
 	}
 
 	TaxRepository struct {
@@ -26,4 +27,13 @@ func (r *TaxRepository) GetAll() (taxs []*Models.Tax, err error) {
 	}
 
 	return taxs, nil
+}
+
+func (r *TaxRepository) FindByID(id string) (tax *Models.Tax, err error) {
+	tax = &Models.Tax{}
+	if err := r.DB.Where("id = ?", id).First(&tax).Error; err != nil {
+		return nil, err
+	}
+
+	return tax, nil
 }
