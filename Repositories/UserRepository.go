@@ -13,6 +13,7 @@ type (
 		Create(userClient *Models.User) (*Models.User, error)
 		FindByID(userID string) (user *Models.User, err error)
 		FindEmail(email string) (user *Models.User, err error)
+		UpdateAvatar(userID string, fileName string) (err error)
 	}
 
 	UserRepository struct {
@@ -54,4 +55,14 @@ func (h *UserRepository) FindByID(userID string) (user *Models.User, err error) 
 	}
 
 	return user, nil
+}
+
+func (h *UserRepository) UpdateAvatar(userID string, fileName string) (err error) {
+	if err := h.DB.Model(&Models.User{}).
+		Where("id = ?", userID).
+		Update("avatar", fileName).Error; err != nil {
+		return fmt.Errorf("error saat update avatar: %w", err)
+	}
+
+	return nil
 }

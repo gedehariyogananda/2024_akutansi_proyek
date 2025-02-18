@@ -263,6 +263,22 @@ func DIMaterialProduct(db *gorm.DB) *Controllers.MaterialProductController {
 	return &Controllers.MaterialProductController{}
 }
 
+func DIPromo(db *gorm.DB) *Controllers.PromoController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.PromoRepositoryProvider,
+		Services.PromoServiceProvider,
+		Controllers.PromoControllerProvider,
+		Repositories.PromoItemRepositoryProvider,
+
+		wire.Bind(new(Controllers.IPromoController), new(*Controllers.PromoController)),
+		wire.Bind(new(Services.IPromoService), new(*Services.PromoService)),
+		wire.Bind(new(Repositories.IPromoRepository), new(*Repositories.PromoRepository)),
+		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
+	),
+	))
+
+	return &Controllers.PromoController{}
+}
 func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.StockOpnameRepositoryProvider,
@@ -352,5 +368,19 @@ func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
 		wire.Bind(new(Repositories.IPurchaseMaterialProductRepository), new(*Repositories.PurchaseMaterialProductRepository)),
 		wire.Bind(new(Repositories.IMaterialStockRepository), new(*Repositories.MaterialStockRepository)),
 		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
+	)))
+}
+
+func DiUser(db *gorm.DB, minio *minio.Client) *Controllers.UserController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.UserRepositoryProvider,
+		Services.UserServiceProvider,
+		Controllers.UserControllerProvider,
+		Services.StorageServiceProvider,
+
+		wire.Bind(new(Controllers.IUserController), new(*Controllers.UserController)),
+		wire.Bind(new(Services.IUserService), new(*Services.UserService)),
+		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
+		wire.Bind(new(Services.IStorageService), new(*Services.StorageService)),
 	)))
 }

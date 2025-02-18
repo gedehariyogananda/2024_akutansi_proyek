@@ -144,7 +144,7 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 		// add invoice item
 		var promoAmount *float64
 		if purchasedItem.PromoID != nil {
-			promo, err := invoiceService.promoRepository.FindByID(*purchasedItem.PromoID)
+			promo, err := invoiceService.promoRepository.FindById(*purchasedItem.PromoID)
 			if err != nil {
 				return nil, http.StatusNotFound, fmt.Errorf("promo tidak ditemukan: %s", *purchasedItem.PromoID)
 			}
@@ -398,7 +398,7 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 		if item.PromoID != nil {
 			resultTotal -= *item.PromoAmount
 
-			promo, err := invoiceService.promoRepository.FindByID(*item.PromoID)
+			promo, err := invoiceService.promoRepository.FindById(*item.PromoID)
 			if err != nil {
 				return Response.CoreInvoiceRes{}, http.StatusNotFound, err
 			}

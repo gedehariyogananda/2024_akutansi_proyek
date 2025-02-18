@@ -21,6 +21,10 @@ type (
 		Delete(id string) error
 		FindByID(id string, setWithMaterial bool) (*Models.SellableProduct, error)
 		FindAllFilterReceipt(companyId string, HasReceipt bool) (sellableProducts []*Models.SellableProduct, err error)
+		// FindByID(id string) (*Models.SellableProduct, error)
+
+		// FindAll(companyID string, query *Common.Query) ([]*Models.SellableProduct, int64, error)
+		GetByCompanyID(companyID string) (sellableProducts []Models.SellableProduct, err error)
 	}
 
 	SellableProductRepository struct {
@@ -145,6 +149,14 @@ func (sellableProductRepository SellableProductRepository) FindAllFilterReceipt(
 	if err := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
 		Where("has_receipt = ?", HasReceipt).
 		Find(&sellableProducts).Error; err != nil {
+		return nil, err
+	}
+
+	return sellableProducts, nil
+}
+
+func (SellableProductRepository *SellableProductRepository) GetByCompanyID(companyID string) (sellableProducts []Models.SellableProduct, err error) {
+	if err := SellableProductRepository.DB.Where("company_id = ?", companyID).Preload("PromoItems.Promo").Find(&sellableProducts).Error; err != nil {
 		return nil, err
 	}
 
