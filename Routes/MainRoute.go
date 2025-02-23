@@ -30,4 +30,5 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 
 	CompanyRoute(apiPrefix, deps.DB, deps.Redis)
 	LogActivityRoute(apiPrefix, deps.DB, deps.Redis)
+	DashboardRoute(apiPrefix, deps.DB, deps.Redis)
 }

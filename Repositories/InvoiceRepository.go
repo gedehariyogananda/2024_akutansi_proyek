@@ -118,7 +118,7 @@ func (r *InvoiceRepository) SumSalesByDate(companyID string, date string) (total
 		Model(&Models.Invoice{}).
 		Where("company_id = ?", companyID).
 		Where("date(created_at) = ?", date).
-		Select("sum(sub_total)").
+		Select("COALESCE(SUM(sub_total), 0)").
 		Scan(&totalSales).Error; err != nil {
 		return 0, err
 	}
@@ -133,7 +133,7 @@ func (r *InvoiceRepository) SumSalesByYearMonth(companyID string, year int, mont
 		Where("company_id = ?", companyID).
 		Where("EXTRACT(YEAR FROM created_at) = ?", year).
 		Where("EXTRACT(MONTH FROM created_at) = ?", month).
-		Select("sum(sub_total)").
+		Select("COALESCE(SUM(sub_total), 0)").
 		Scan(&totalSales).Error; err != nil {
 		return 0, err
 	}

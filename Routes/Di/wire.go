@@ -414,3 +414,17 @@ func DiLogActivity(db *gorm.DB) *Controllers.LogActivityController {
 		wire.Bind(new(Repositories.ILogActivityRepository), new(*Repositories.LogActivityRepository)),
 	)))
 }
+
+func DiDashboard(db *gorm.DB) *Controllers.DashboardController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.InvoiceItemRepositoryProvider,
+		Services.DashboardServiceProvider,
+		Controllers.DashboardControllerProvider,
+		Repositories.InvoiceRepositoryProvider,
+
+		wire.Bind(new(Services.IDashboardService), new(*Services.DashboardService)),
+		wire.Bind(new(Controllers.IDashboardController), new(*Controllers.DashboardController)),
+		wire.Bind(new(Repositories.IInvoiceItemRepository), new(*Repositories.InvoiceItemRepository)),
+		wire.Bind(new(Repositories.IInvoiceRepository), new(*Repositories.InvoiceRepository)),
+	)))
+}
