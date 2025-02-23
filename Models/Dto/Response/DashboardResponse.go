@@ -8,3 +8,9 @@ type SalesResumeResponse struct {
 	BestSellingProduct            string  `json:"best_selling_product"`
 	NumberOfBestSellingPoductSold float64 `json:"number_of_best_selling_product_sold"`
 }
+
+type BestSellingResponse struct {
+	Name          string  `json:"name"`
+	TotalQuantity int     `json:"total_quantity"`
+	TotalRevenue  float64 `json:"total_revenue"`
+}

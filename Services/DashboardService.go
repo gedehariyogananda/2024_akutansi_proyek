@@ -4,12 +4,14 @@ import (
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Repositories"
+	"fmt"
 	"time"
 )
 
 type (
 	IDashboardService interface {
 		GetSalesResume(companyId string) (res Response.SalesResumeResponse, err error)
+		GetBestSellingProducts(companyId, startDate, endDate string, limit int) (res []Response.BestSellingResponse, err error)
 	}
 
 	DashboardService struct {
@@ -76,6 +78,30 @@ func (s *DashboardService) GetSalesResume(companyId string) (res Response.SalesR
 		LastDayComparison:             comparisonTodayWithyesterday,
 		LastMonthComparison:           comparisonThisMonthWithLastMonth,
 		NumberOfBestSellingPoductSold: invoiceItem.CountSale,
+	}
+
+	return res, nil
+}
+
+func (s *DashboardService) GetBestSellingProducts(companyId, startDate, endDate string, limit int) (res []Response.BestSellingResponse, err error) {
+	if limit == 0 {
+		limit = 5
+	}
+
+	fmt.Println("start date service", startDate)
+
+	invoiceItems, err := s.invoiceItemRepository.GetBestSellingProducts(companyId, startDate, endDate, limit)
+
+	if err != nil {
+		return res, err
+	}
+
+	for _, invoiceItem := range invoiceItems {
+		res = append(res, Response.BestSellingResponse{
+			Name:          invoiceItem.ProductName,
+			TotalQuantity: int(invoiceItem.CountSale),
+			TotalRevenue:  *invoiceItem.TotalRevenue,
+		})
 	}
 
 	return res, nil

@@ -125,6 +125,7 @@ func FilterManagementStock(query string) func(*gorm.DB) *gorm.DB {
 
 func FilterDateInvoice(startDate string, endDate string) func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
+		fmt.Println("scope", startDate)
 		if startDate == "" || endDate == "" {
 			return db
 		}

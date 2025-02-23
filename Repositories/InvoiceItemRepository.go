@@ -1,6 +1,7 @@
 package Repositories
 
 import (
+	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto/Response"
 	"fmt"
@@ -12,6 +13,7 @@ type (
 	IInvoiceItemRepository interface {
 		Store(trx *gorm.DB, invoiceItem *Models.InvoiceItem) error
 		GetMostProductSold(companyID string, date string) (invoiceItems Response.InvoiceItemResponse, err error)
+		GetBestSellingProducts(companyID, startDate, endDate string, limit int) (invoiceItems []Response.InvoiceItemResponse, err error)
 	}
 
 	InvoiceItemRepository struct {
@@ -47,6 +49,29 @@ func (r *InvoiceItemRepository) GetMostProductSold(companyID string, date string
 		Group("invoice_items.sellable_product_id, sellable_products.name").
 		Order("count_sale DESC").
 		Limit(1).
+		Scan(&invoiceItems).Error; err != nil {
+		return invoiceItems, fmt.Errorf("error saat mencari data penjualan: %w", err)
+	}
+
+	return invoiceItems, nil
+}
+
+func (r *InvoiceItemRepository) GetBestSellingProducts(companyID, startDate, endDate string, limit int) (invoiceItems []Response.InvoiceItemResponse, err error) {
+
+	fmt.Println("repository", startDate)
+
+	if err := r.DB.
+		Scopes(Helper.FilterDateInvoiceDashboard(startDate, endDate)).
+		Model(&Models.InvoiceItem{}).
+		Select("invoice_items.sellable_product_id, SUM(invoice_items.quantity) as count_sale, "+
+			"SUM(invoice_items.quantity * invoice_items.price) as total_revenue, "+
+			"sellable_products.name as product_name").
+		Joins("JOIN invoices ON invoices.id = invoice_items.invoice_id").
+		Joins("JOIN sellable_products ON sellable_products.id = invoice_items.sellable_product_id").
+		Group("invoice_items.sellable_product_id, sellable_products.name").
+		Where("invoices.company_id = ?", companyID).
+		Order("count_sale DESC").
+		Limit(limit).
 		Scan(&invoiceItems).Error; err != nil {
 		return invoiceItems, fmt.Errorf("error saat mencari data penjualan: %w", err)
 	}

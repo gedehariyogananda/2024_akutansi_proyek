@@ -27,6 +27,7 @@ type InvoiceItemResponse struct {
 	CountSale         float64                 `json:"count_sale"`
 	ProductName       string                  `json:"product_name"`
 	SellableProduct   *Models.SellableProduct `json:"sellable_product,omitempty"`
+	TotalRevenue      *float64                `json:"total_revenue,omitempty"`
 }
 
 type StatisticResponse struct {
