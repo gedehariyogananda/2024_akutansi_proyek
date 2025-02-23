@@ -14,3 +14,8 @@ type BestSellingResponse struct {
 	TotalQuantity int     `json:"total_quantity"`
 	TotalRevenue  float64 `json:"total_revenue"`
 }
+
+type MonthlyRevenueResponse struct {
+	Month        string  `json:"month"`
+	TotalRevenue float64 `json:"total_revenue"`
+}

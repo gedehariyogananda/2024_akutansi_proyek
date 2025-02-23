@@ -4,6 +4,7 @@ import (
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
+	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Utils"
 
 	"gorm.io/gorm"
@@ -19,6 +20,7 @@ type (
 		GetByInvoiceID(companyID string, invoiceID string) (invoice *Models.Invoice, err error)
 		SumSalesByDate(companyID string, date string) (totalSales float64, err error)
 		SumSalesByYearMonth(companyID string, year int, month int) (totalSales float64, err error)
+		GetMonthlyRevenue(companyID string, year int) (monthlyRevenue []Response.MonthlyRevenueResponse, err error)
 	}
 
 	InvoiceRepository struct {

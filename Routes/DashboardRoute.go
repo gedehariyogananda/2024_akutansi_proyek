@@ -18,4 +18,5 @@ func DashboardRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 
 	route.GET("/sales-resume", DashboardController.GetSalesResume)
 	route.GET("/best-sales", DashboardController.GetBestSalesProduct)
+	route.GET("/revenue-chart", DashboardController.GetRevenue)
 }

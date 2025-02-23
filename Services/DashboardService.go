@@ -12,6 +12,7 @@ type (
 	IDashboardService interface {
 		GetSalesResume(companyId string) (res Response.SalesResumeResponse, err error)
 		GetBestSellingProducts(companyId, startDate, endDate string, limit int) (res []Response.BestSellingResponse, err error)
+		GetRevenue(companyId string, year int) (res []Response.MonthlyRevenueResponse, err error)
 	}
 
 	DashboardService struct {
@@ -102,6 +103,16 @@ func (s *DashboardService) GetBestSellingProducts(companyId, startDate, endDate 
 			TotalQuantity: int(invoiceItem.CountSale),
 			TotalRevenue:  *invoiceItem.TotalRevenue,
 		})
+	}
+
+	return res, nil
+}
+
+func (s *DashboardService) GetRevenue(companyId string, year int) (res []Response.MonthlyRevenueResponse, err error) {
+	res, err = s.invoiceRepository.GetMonthlyRevenue(companyId, year)
+
+	if err != nil {
+		return res, err
 	}
 
 	return res, nil

@@ -3,9 +3,9 @@ package Controllers
 import (
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Services"
-	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +14,7 @@ type (
 	IDashboardController interface {
 		GetSalesResume(ctx *gin.Context)
 		GetBestSalesProduct(ctx *gin.Context)
+		GetRevenue(ctx *gin.Context)
 	}
 
 	DashboardController struct {
@@ -41,9 +42,6 @@ func (controller *DashboardController) GetBestSalesProduct(ctx *gin.Context) {
 	startDate := ctx.Query("start_date")
 	endDate := ctx.Query("end_date")
 
-	fmt.Printf(startDate)
-	fmt.Println(endDate)
-
 	limitInt := 0
 	var err error
 
@@ -62,4 +60,25 @@ func (controller *DashboardController) GetBestSalesProduct(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Get Best Selling Product Success!", res, http.StatusOK)
+}
+
+func (controller *DashboardController) GetRevenue(ctx *gin.Context) {
+	yearStr := ctx.DefaultQuery("year", strconv.Itoa(time.Now().Year()))
+	yearInt, err := strconv.Atoi(yearStr)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, "Invalid year format", http.StatusBadRequest)
+		return
+	}
+
+	companyID := ctx.GetString("company_id")
+	if companyID == "" {
+		Helper.SetErrorResponse(ctx, "Company ID is required", http.StatusBadRequest)
+		return
+	}
+	res, err := controller.DashboardService.GetRevenue(companyID, yearInt)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	Helper.SetSuccessResponse(ctx, "Get Revenue Success!", res, http.StatusOK)
 }
