@@ -421,10 +421,12 @@ func DiDashboard(db *gorm.DB) *Controllers.DashboardController {
 		Services.DashboardServiceProvider,
 		Controllers.DashboardControllerProvider,
 		Repositories.InvoiceRepositoryProvider,
+		Repositories.PurchaseRepositoryProvider,
 
 		wire.Bind(new(Services.IDashboardService), new(*Services.DashboardService)),
 		wire.Bind(new(Controllers.IDashboardController), new(*Controllers.DashboardController)),
 		wire.Bind(new(Repositories.IInvoiceItemRepository), new(*Repositories.InvoiceItemRepository)),
 		wire.Bind(new(Repositories.IInvoiceRepository), new(*Repositories.InvoiceRepository)),
+		wire.Bind(new(Repositories.IPurchaseRepository), new(*Repositories.PurchaseRepository)),
 	)))
 }

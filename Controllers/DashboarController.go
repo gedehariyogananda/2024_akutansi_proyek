@@ -15,6 +15,7 @@ type (
 		GetSalesResume(ctx *gin.Context)
 		GetBestSalesProduct(ctx *gin.Context)
 		GetRevenue(ctx *gin.Context)
+		GetExpense(ctx *gin.Context)
 	}
 
 	DashboardController struct {
@@ -81,4 +82,25 @@ func (controller *DashboardController) GetRevenue(ctx *gin.Context) {
 		return
 	}
 	Helper.SetSuccessResponse(ctx, "Get Revenue Success!", res, http.StatusOK)
+}
+
+func (controller *DashboardController) GetExpense(ctx *gin.Context) {
+	yearStr := ctx.DefaultQuery("year", strconv.Itoa(time.Now().Year()))
+	yearInt, err := strconv.Atoi(yearStr)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, "Invalid year format", http.StatusBadRequest)
+		return
+	}
+
+	companyID := ctx.GetString("company_id")
+	if companyID == "" {
+		Helper.SetErrorResponse(ctx, "Company ID is required", http.StatusBadRequest)
+		return
+	}
+	res, err := controller.DashboardService.GetExpense(companyID, yearInt)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	Helper.SetSuccessResponse(ctx, "Get Expense Success!", res, http.StatusOK)
 }

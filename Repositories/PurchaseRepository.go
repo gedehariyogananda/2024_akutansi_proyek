@@ -3,6 +3,7 @@ package Repositories
 import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Common"
+	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Utils"
 	"time"
 
@@ -16,6 +17,7 @@ type (
 		GetTotalPurchaseMonth(companyID string) (float32, error)
 		Delete(id string) error
 		GetByDate(date string) (purchaseds []*Models.Purchase, err error)
+		GetMonthlyExpense(companyID string, year int) (monthlyExpenses []Response.MonthlyExpenseResponse, err error)
 	}
 
 	PurchaseRepository struct {
@@ -81,4 +83,19 @@ func (r *PurchaseRepository) GetByDate(date string) (purchaseds []*Models.Purcha
 	}
 
 	return purchaseds, nil
+}
+
+func (r *PurchaseRepository) GetMonthlyExpense(companyID string, year int) (monthlyExpenses []Response.MonthlyExpenseResponse, err error) {
+	if err := r.DB.
+		Model(&Models.Purchase{}).
+		Select("EXTRACT(MONTH FROM created_at) as month, COALESCE(SUM(total_purchase_amount), 0) as total_expense").
+		Where("company_id = ?", companyID).
+		Where("EXTRACT(YEAR FROM created_at) = ?", year).
+		Group("month").
+		Order("month").
+		Scan(&monthlyExpenses).Error; err != nil {
+		return monthlyExpenses, err
+	}
+
+	return monthlyExpenses, nil
 }

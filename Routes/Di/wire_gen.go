@@ -220,7 +220,8 @@ func DiLogActivity(db *gorm.DB) *Controllers.LogActivityController {
 func DiDashboard(db *gorm.DB) *Controllers.DashboardController {
 	invoiceItemRepository := Repositories.InvoiceItemRepositoryProvider(db)
 	invoiceRepository := Repositories.InvoiceRepositoryProvider(db)
-	dashboardService := Services.DashboardServiceProvider(invoiceItemRepository, invoiceRepository)
+	purchaseRepository := Repositories.PurchaseRepositoryProvider(db)
+	dashboardService := Services.DashboardServiceProvider(invoiceItemRepository, invoiceRepository, purchaseRepository)
 	dashboardController := Controllers.DashboardControllerProvider(dashboardService)
 	return dashboardController
 }

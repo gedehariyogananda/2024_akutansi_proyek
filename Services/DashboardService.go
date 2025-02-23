@@ -13,18 +13,21 @@ type (
 		GetSalesResume(companyId string) (res Response.SalesResumeResponse, err error)
 		GetBestSellingProducts(companyId, startDate, endDate string, limit int) (res []Response.BestSellingResponse, err error)
 		GetRevenue(companyId string, year int) (res []Response.MonthlyRevenueResponse, err error)
+		GetExpense(companyId string, year int) (res []Response.MonthlyExpenseResponse, err error)
 	}
 
 	DashboardService struct {
 		invoiceItemRepository Repositories.IInvoiceItemRepository
 		invoiceRepository     Repositories.IInvoiceRepository
+		purchaseRepository    Repositories.IPurchaseRepository
 	}
 )
 
-func DashboardServiceProvider(invoiceItemRepository Repositories.IInvoiceItemRepository, invoiceRepository Repositories.IInvoiceRepository) *DashboardService {
+func DashboardServiceProvider(invoiceItemRepository Repositories.IInvoiceItemRepository, invoiceRepository Repositories.IInvoiceRepository, purchaseRepository Repositories.IPurchaseRepository) *DashboardService {
 	return &DashboardService{
 		invoiceItemRepository: invoiceItemRepository,
 		invoiceRepository:     invoiceRepository,
+		purchaseRepository:    purchaseRepository,
 	}
 }
 
@@ -110,6 +113,16 @@ func (s *DashboardService) GetBestSellingProducts(companyId, startDate, endDate 
 
 func (s *DashboardService) GetRevenue(companyId string, year int) (res []Response.MonthlyRevenueResponse, err error) {
 	res, err = s.invoiceRepository.GetMonthlyRevenue(companyId, year)
+
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
+func (s *DashboardService) GetExpense(companyId string, year int) (res []Response.MonthlyExpenseResponse, err error) {
+	res, err = s.purchaseRepository.GetMonthlyExpense(companyId, year)
 
 	if err != nil {
 		return res, err

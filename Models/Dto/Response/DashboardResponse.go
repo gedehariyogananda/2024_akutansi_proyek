@@ -19,3 +19,8 @@ type MonthlyRevenueResponse struct {
 	Month        string  `json:"month"`
 	TotalRevenue float64 `json:"total_revenue"`
 }
+
+type MonthlyExpenseResponse struct {
+	Month        string  `json:"month"`
+	TotalExpense float64 `json:"total_expense"`
+}
