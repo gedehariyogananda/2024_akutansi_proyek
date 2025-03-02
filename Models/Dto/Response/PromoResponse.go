@@ -30,7 +30,7 @@ func toProductPromoResponseSlice(products []*Models.SellableProduct) []productPr
 type PromoResponse struct {
 	ID        string                 `json:"id"`
 	Name      string                 `json:"name"`
-	Ammount   float64                `json:"ammount"`
+	Amount    float64                `json:"amount"`
 	StartDate time.Time              `json:"start_date"`
 	EndDate   time.Time              `json:"end_date"`
 	IsAll     bool                   `json:"is_all"`
@@ -51,7 +51,7 @@ func ToPromoResponse(productPromo Models.Promo) PromoResponse {
 		return PromoResponse{
 			ID:        productPromo.ID,
 			Name:      productPromo.Name,
-			Ammount:   productPromo.Amount,
+			Amount:    productPromo.Amount,
 			StartDate: productPromo.StartDate,
 			EndDate:   productPromo.EndDate,
 			IsAll:     productPromo.IsAll,
@@ -64,7 +64,7 @@ func ToPromoResponse(productPromo Models.Promo) PromoResponse {
 	return PromoResponse{
 		ID:        productPromo.ID,
 		Name:      productPromo.Name,
-		Ammount:   productPromo.Amount,
+		Amount:    productPromo.Amount,
 		StartDate: productPromo.StartDate,
 		EndDate:   productPromo.EndDate,
 		IsAll:     productPromo.IsAll,
