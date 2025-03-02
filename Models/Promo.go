@@ -1,6 +1,8 @@
 package Models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -9,8 +11,8 @@ type Promo struct {
 	ID         string          `json:"id"`
 	Name       string          `json:"name,omitempty"`
 	Type       string          `json:"type,omitempty"`
-	StartDate  string          `json:"start_date,omitempty"`
-	EndDate    string          `json:"end_date,omitempty"`
+	StartDate  time.Time       `json:"start_date,omitempty"`
+	EndDate    time.Time       `json:"end_date,omitempty"`
 	IsAll      bool            `json:"is_all,omitempty"`
 	CompanyID  string          `json:"company_id,omitempty"`
 	Amount     float64         `json:"amount,omitempty"`

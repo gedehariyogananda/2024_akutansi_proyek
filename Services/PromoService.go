@@ -39,10 +39,23 @@ func PromoServiceProvider(promoRepository Repositories.IPromoRepository, promoIt
 }
 
 func (s *PromoService) Create(dto *Dto.CreatePromoDto) (res Response.PromoResponse, err error) {
+
+	startDate, err := time.Parse(Common.Layout, dto.StartDate)
+
+	if err != nil {
+		return
+	}
+
+	endDate, err := time.Parse(Common.Layout, dto.EndDate)
+
+	if err != nil {
+		return
+	}
+
 	promo := &Models.Promo{
 		Name:      dto.Name,
-		StartDate: dto.StartDate,
-		EndDate:   dto.EndDate,
+		StartDate: startDate,
+		EndDate:   endDate,
 		Amount:    dto.Amount,
 		CompanyID: dto.CompanyID,
 		IsAll:     dto.IsAll,
@@ -136,9 +149,21 @@ func (s *PromoService) Update(dto *Dto.UpdatePromoDto, id string) (res Response.
 		return
 	}
 
+	startDate, err := time.Parse(Common.Layout, dto.StartDate)
+
+	if err != nil {
+		return
+	}
+
+	endDate, err := time.Parse(Common.Layout, dto.EndDate)
+
+	if err != nil {
+		return
+	}
+
 	promo.Name = dto.Name
-	promo.StartDate = dto.StartDate
-	promo.EndDate = dto.EndDate
+	promo.StartDate = startDate
+	promo.EndDate = endDate
 	promo.Amount = dto.Amount
 	promo.IsAll = dto.IsAll
 	promo.Type = dto.Type
@@ -188,10 +213,22 @@ func (s *PromoService) FindAll(companyID string, query Common.Query) (res []Resp
 }
 
 func (s *PromoService) CreatePromoOnly(dto *Dto.CreatePromoOnly) (res Response.PromoResponse, err error) {
+	startDate, err := time.Parse(Common.Layout, dto.StartDate)
+
+	if err != nil {
+		return
+	}
+
+	endDate, err := time.Parse(Common.Layout, dto.EndDate)
+
+	if err != nil {
+		return
+	}
+
 	promo := &Models.Promo{
 		Name:      dto.Name,
-		StartDate: dto.StartDate,
-		EndDate:   dto.EndDate,
+		StartDate: startDate,
+		EndDate:   endDate,
 		Amount:    dto.Amount,
 		CompanyID: dto.CompanyID,
 		IsAll:     false,
@@ -247,11 +284,7 @@ func (s *PromoService) AsginPromo(dto *Dto.AsignPromoDto) (res Response.PromoRes
 
 func (s *PromoService) checkAvailableProduct(promoItems []Models.PromoItem) bool {
 	for _, item := range promoItems {
-		endDate, err := time.Parse(Common.Layout, item.Promo.EndDate)
-
-		if err != nil {
-			return false
-		}
+		endDate := item.Promo.EndDate
 
 		if endDate.Before(time.Now()) {
 			return false
@@ -270,10 +303,7 @@ func (s *PromoService) asignPromoToAllProduct(companyID string, promoID string) 
 	}
 
 	for _, product := range products {
-		endDate, err := time.Parse(Common.Layout, product.PromoItems[0].Promo.EndDate)
-		if err != nil {
-			return err
-		}
+		endDate := product.PromoItems[0].Promo.EndDate
 		if endDate.After(time.Now()) {
 			promoItem := &Models.PromoItem{
 				PromoID:           promoID,
