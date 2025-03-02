@@ -30,23 +30,26 @@ type (
 	PromoService struct {
 		PromoRepository           Repositories.IPromoRepository
 		PromoItemRepository       Repositories.IPromoItemRepository
-		SellableProductRepository Repositories.SellableProductRepository
+		SellableProductRepository Repositories.ISellableProductRepository
 	}
 )
 
-func PromoServiceProvider(promoRepository Repositories.IPromoRepository, promoItemRepository Repositories.IPromoItemRepository) *PromoService {
-	return &PromoService{PromoRepository: promoRepository, PromoItemRepository: promoItemRepository}
+func PromoServiceProvider(promoRepository Repositories.IPromoRepository, promoItemRepository Repositories.IPromoItemRepository, sellableProductRepository Repositories.ISellableProductRepository) *PromoService {
+	return &PromoService{
+		PromoRepository:           promoRepository,
+		PromoItemRepository:       promoItemRepository,
+		SellableProductRepository: sellableProductRepository,
+	}
 }
 
 func (s *PromoService) Create(dto *Dto.CreatePromoDto) (res Response.PromoResponse, err error) {
-
-	startDate, err := time.Parse(Common.Layout, dto.StartDate)
+	startDate, err := time.Parse("2006-01-02", dto.StartDate)
 
 	if err != nil {
 		return
 	}
 
-	endDate, err := time.Parse(Common.Layout, dto.EndDate)
+	endDate, err := time.Parse("2006-01-02", dto.EndDate)
 
 	if err != nil {
 		return
@@ -149,13 +152,13 @@ func (s *PromoService) Update(dto *Dto.UpdatePromoDto, id string) (res Response.
 		return
 	}
 
-	startDate, err := time.Parse(Common.Layout, dto.StartDate)
+	startDate, err := time.Parse("2006-01-02", dto.StartDate)
 
 	if err != nil {
 		return
 	}
 
-	endDate, err := time.Parse(Common.Layout, dto.EndDate)
+	endDate, err := time.Parse("2006-01-02", dto.EndDate)
 
 	if err != nil {
 		return
@@ -213,13 +216,13 @@ func (s *PromoService) FindAll(companyID string, query Common.Query) (res []Resp
 }
 
 func (s *PromoService) CreatePromoOnly(dto *Dto.CreatePromoOnly) (res Response.PromoResponse, err error) {
-	startDate, err := time.Parse(Common.Layout, dto.StartDate)
+	startDate, err := time.Parse("2006-01-02", dto.StartDate)
 
 	if err != nil {
 		return
 	}
 
-	endDate, err := time.Parse(Common.Layout, dto.EndDate)
+	endDate, err := time.Parse("2006-01-02", dto.EndDate)
 
 	if err != nil {
 		return
@@ -303,19 +306,34 @@ func (s *PromoService) asignPromoToAllProduct(companyID string, promoID string) 
 	}
 
 	for _, product := range products {
-		endDate := product.PromoItems[0].Promo.EndDate
-		if endDate.After(time.Now()) {
-			promoItem := &Models.PromoItem{
+		// Variabel flag untuk menentukan apakah promo item harus dibuat
+		createPromo := false
+
+		if len(product.PromoItems) > 0 {
+			// Jika ada promo item, cek apakah setidaknya salah satu promo belum berakhir
+			for _, promoItem := range product.PromoItems {
+				if promoItem.Promo.EndDate.After(time.Now()) {
+					createPromo = true
+					break
+				}
+			}
+		} else {
+			// Jika tidak ada promo item, maka langsung buat promo item baru
+			createPromo = true
+		}
+
+		// Jika flag createPromo bernilai true, buat promo item baru
+		if createPromo {
+			newPromoItem := &Models.PromoItem{
 				PromoID:           promoID,
 				SellableProductID: product.ID,
 			}
-
-			_, err = s.PromoItemRepository.Create(promoItem)
-			if err != nil {
+			if _, err := s.PromoItemRepository.Create(newPromoItem); err != nil {
 				return err
 			}
 		}
 	}
+
 	return nil
 }
 

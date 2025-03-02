@@ -271,11 +271,13 @@ func DIPromo(db *gorm.DB) *Controllers.PromoController {
 		Services.PromoServiceProvider,
 		Controllers.PromoControllerProvider,
 		Repositories.PromoItemRepositoryProvider,
+		Repositories.SellableProductRepositoryProvider,
 
 		wire.Bind(new(Controllers.IPromoController), new(*Controllers.PromoController)),
 		wire.Bind(new(Services.IPromoService), new(*Services.PromoService)),
 		wire.Bind(new(Repositories.IPromoRepository), new(*Repositories.PromoRepository)),
 		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
+		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
 	),
 	))
 
