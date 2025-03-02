@@ -3,6 +3,7 @@ package Models
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"time"
 )
 
 type StockOpnameItem struct {
@@ -12,6 +13,8 @@ type StockOpnameItem struct {
 	StockID            string       `json:"stock_id,omitempty"`
 	ProductType        string       `json:"product_type,omitempty"`
 	DifferenceQuantity int          `json:"difference_quantity,omitempty"`
+	InitialQuantity    int          `json:"initial_quantity,omitempty"`
+	ExpiredDate        time.Time    `json:"expired_date,omitempty"`
 	Name               string       `json:"name,omitempty"`
 	StockOpname        *StockOpname `json:"stock_opname,omitempty"`
 }

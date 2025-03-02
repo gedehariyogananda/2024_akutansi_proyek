@@ -13,6 +13,7 @@ type (
 		SumCurrentQuantity(sellableStockID string) (total int, err error)
 		GetAvailableStock(companyId string) (sellableStock []*Models.SellableStock, err error)
 		Create(sellableStock *Models.SellableStock) (*Models.SellableStock, error)
+		Get(sellableStockID string) (*Models.SellableStock, error)
 	}
 
 	SellableStockRepository struct {
@@ -83,4 +84,16 @@ func (r *SellableStockRepository) Create(sellableStock *Models.SellableStock) (*
 	}
 
 	return sellableStock, nil
+}
+
+func (r *SellableStockRepository) Get(sellableStockID string) (*Models.SellableStock, error) {
+	var sellableStock Models.SellableStock
+
+	if err := r.DB.
+		Where("id = ?", sellableStockID).
+		First(&sellableStock).Error; err != nil {
+		return nil, err
+	}
+
+	return &sellableStock, nil
 }

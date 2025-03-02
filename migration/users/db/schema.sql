@@ -93,6 +93,22 @@ CREATE TABLE public.geographies (
 
 
 --
+-- Name: invoice_items; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.invoice_items (
+    id character varying(100) NOT NULL,
+    invoice_id character varying(255) NOT NULL,
+    sellable_product_id character varying(255) NOT NULL,
+    quantity integer NOT NULL,
+    company_id character varying(255) NOT NULL,
+    price numeric(15,2) NOT NULL,
+    promo_id character varying(255),
+    promo_amount integer DEFAULT 0
+);
+
+
+--
 -- Name: invoices; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -129,6 +145,8 @@ CREATE TABLE public.journal_entries (
     note character varying(255),
     date timestamp with time zone NOT NULL,
     transaction_code character varying(255),
+    credit_at numeric(20,2),
+    debit_at numeric(20,2),
     created_at timestamp with time zone NOT NULL
 );
 
@@ -176,7 +194,8 @@ CREATE TABLE public.material_stocks (
     quantity integer NOT NULL,
     current_quantity integer NOT NULL,
     expired_date timestamp with time zone NOT NULL,
-    company_id character varying(255) NOT NULL
+    company_id character varying(255) NOT NULL,
+    created_at timestamp with time zone
 );
 
 
@@ -323,7 +342,8 @@ CREATE TABLE public.sellable_stocks (
     quantity integer NOT NULL,
     current_quantity integer NOT NULL,
     expired_date timestamp with time zone NOT NULL,
-    company_id character varying(255) NOT NULL
+    company_id character varying(255) NOT NULL,
+    created_at timestamp with time zone
 );
 
 
@@ -338,6 +358,8 @@ CREATE TABLE public.stock_opname_items (
     stock_id character varying(255) NOT NULL,
     product_type character varying(255) NOT NULL,
     difference_quantity integer NOT NULL,
+    initial_quantity integer NOT NULL,
+    expired_date timestamp with time zone NOT NULL,
     name character varying(255) NOT NULL
 );
 
@@ -471,6 +493,14 @@ ALTER TABLE ONLY public.companies
 
 ALTER TABLE ONLY public.geographies
     ADD CONSTRAINT geographies_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: invoice_items invoice_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoice_items
+    ADD CONSTRAINT invoice_items_pkey PRIMARY KEY (id);
 
 
 --
@@ -680,6 +710,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20241112140542'),
     ('20241112141157'),
     ('20241112141412'),
+    ('20241112141730'),
     ('20241112143418'),
     ('20241112144115'),
     ('20241112144355'),
