@@ -2,6 +2,7 @@ package Response
 
 import (
 	"2024_akutansi_project/Models"
+	"time"
 )
 
 type productPromoResponse struct {
@@ -30,8 +31,8 @@ type PromoResponse struct {
 	ID        string                 `json:"id"`
 	Name      string                 `json:"name"`
 	Ammount   float64                `json:"ammount"`
-	StartDate string                 `json:"start_date"`
-	EndDate   string                 `json:"end_date"`
+	StartDate time.Time              `json:"start_date"`
+	EndDate   time.Time              `json:"end_date"`
 	IsAll     bool                   `json:"is_all"`
 	Type      string                 `json:"type"`
 	CompanyID string                 `json:"company_id"`
