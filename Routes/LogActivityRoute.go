@@ -13,7 +13,7 @@ func LogActivityRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 
 	m := Di.DICommonMiddleware(db, redis)
 
-	route.Use(m.IsAuthenticate)
+	route.Use(m.RolesAll)
 
 	LogActivityController := Di.DiLogActivity(db)
 

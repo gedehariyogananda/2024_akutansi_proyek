@@ -23,18 +23,33 @@ type (
 		userRepository Repositories.IUserRepository
 		mailService    IEmailService
 		jwtService     IJwtService
+		storageService IStorageService
 	}
 )
 
-func UserServiceProvider(userRepository Repositories.IUserRepository, mailService IEmailService, jwtService IJwtService) *UserService {
+func UserServiceProvider(userRepository Repositories.IUserRepository, mailService IEmailService, jwtService IJwtService, storageService IStorageService) *UserService {
 	return &UserService{
 		userRepository: userRepository,
 		mailService:    mailService,
 		jwtService:     jwtService,
+		storageService: storageService,
 	}
 }
 
 func (u *UserService) UploadAvatar(userID string, avatar string) (err error) {
+
+	user, err := u.userRepository.FindByID(userID)
+
+	if err != nil {
+		return err
+	}
+
+	if user.Avatar != nil {
+		err = u.storageService.DeleteFile(Dto.StorageRequest{
+			ObjectKey: *user.Avatar,
+		})
+	}
+
 	err = u.userRepository.UpdateAvatar(userID, avatar)
 
 	if err != nil {
@@ -50,6 +65,16 @@ func (u *UserService) GetCurrentUser(userID string) (res *Response.UserResponse,
 	if err != nil {
 		return nil, err
 	}
+
+	url, err := u.storageService.SignedUrl(Dto.StorageRequest{
+		ObjectKey: *user.Avatar,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	user.Avatar = &url
 
 	res = Response.ToUserResponse(user)
 

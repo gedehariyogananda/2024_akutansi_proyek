@@ -12,7 +12,7 @@ func DashboardRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client) {
 	route := c.Group("/dashboard")
 	m := Di.DICommonMiddleware(db, redis)
 
-	route.Use(m.IsAuthenticate)
+	route.Use(m.RolesAll)
 
 	DashboardController := Di.DiDashboard(db)
 

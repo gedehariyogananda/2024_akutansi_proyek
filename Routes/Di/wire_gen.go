@@ -197,15 +197,16 @@ func DiUser(db *gorm.DB, minio2 *minio.Client) *Controllers.UserController {
 	userRepository := Repositories.UserRepositoryProvider(db)
 	emailService := Services.EmailServiceProvider()
 	jwtService := Services.JwtServiceProvider()
-	userService := Services.UserServiceProvider(userRepository, emailService, jwtService)
 	storageService := Services.StorageServiceProvider(minio2)
+	userService := Services.UserServiceProvider(userRepository, emailService, jwtService, storageService)
 	userController := Controllers.UserControllerProvider(userService, storageService)
 	return userController
 }
 
-func DiCompany(db *gorm.DB) *Controllers.CompanyController {
+func DiCompany(db *gorm.DB, minio2 *minio.Client) *Controllers.CompanyController {
 	companyRepository := Repositories.CompanyRepositoryProvider(db)
-	companyService := Services.CompanyServiceProvider(companyRepository)
+	storageService := Services.StorageServiceProvider(minio2)
+	companyService := Services.CompanyServiceProvider(companyRepository, storageService)
 	companyController := Controllers.CompanyControllerProvider(companyService)
 	return companyController
 }

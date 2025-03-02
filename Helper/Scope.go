@@ -153,6 +153,7 @@ func FilterHistoryTransaction(query string) func(*gorm.DB) *gorm.DB {
 		return db
 	}
 }
+
 func FilterType(types string) func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		if types == "" {
@@ -160,5 +161,24 @@ func FilterType(types string) func(*gorm.DB) *gorm.DB {
 		}
 
 		return db.Where("type = ?", types)
+	}
+}
+
+func FilterDateInvoiceDashboard(startDate, endDate string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if startDate == "" && endDate == "" {
+			return db
+		}
+
+		query := db
+		if startDate != "" && endDate != "" {
+			query = query.Where("DATE(invoices.created_at) BETWEEN ? AND ?", startDate, endDate)
+		} else if startDate != "" {
+			query = query.Where("DATE(invoices.created_at) >= ?", startDate)
+		} else if endDate != "" {
+			query = query.Where("DATE(invoices.created_at) <= ?", endDate)
+		}
+
+		return query
 	}
 }

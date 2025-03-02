@@ -154,3 +154,17 @@ func (r *InvoiceRepository) UpdateToNull(id string, field string) (err error) {
 
 	return nil
 }
+func (r *InvoiceRepository) GetMonthlyRevenue(companyID string, year int) (monthlyRevenue []Response.MonthlyRevenueResponse, err error) {
+	if err := r.DB.
+		Model(&Models.Invoice{}).
+		Select("EXTRACT(MONTH FROM created_at) as month, COALESCE(SUM(sub_total), 0) as total_revenue").
+		Where("company_id = ?", companyID).
+		Where("EXTRACT(YEAR FROM created_at) = ?", year).
+		Group("month").
+		Order("month").
+		Scan(&monthlyRevenue).Error; err != nil {
+		return monthlyRevenue, err
+	}
+
+	return monthlyRevenue, nil
+}
