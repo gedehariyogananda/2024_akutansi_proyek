@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -305,6 +306,8 @@ func (s *PromoService) asignPromoToAllProduct(companyID string, promoID string) 
 		return err
 	}
 
+	var promoItems []Models.PromoItem
+
 	for _, product := range products {
 		// Variabel flag untuk menentukan apakah promo item harus dibuat
 		createPromo := false
@@ -324,14 +327,24 @@ func (s *PromoService) asignPromoToAllProduct(companyID string, promoID string) 
 
 		// Jika flag createPromo bernilai true, buat promo item baru
 		if createPromo {
+			uuid, err := uuid.NewV7()
+
+			if err != nil {
+				return err
+			}
+
 			newPromoItem := &Models.PromoItem{
 				PromoID:           promoID,
 				SellableProductID: product.ID,
+				ID:                uuid.String(),
 			}
-			if _, err := s.PromoItemRepository.Create(newPromoItem); err != nil {
-				return err
-			}
+
+			promoItems = append(promoItems, *newPromoItem)
 		}
+
+	}
+	if err := s.PromoItemRepository.BulkCreate(promoItems); err != nil {
+		return err
 	}
 
 	return nil

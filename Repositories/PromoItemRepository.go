@@ -14,6 +14,7 @@ type (
 		Create(promoItem *Models.PromoItem) (*Models.PromoItem, error)
 		DeleteByPromoID(promoID string) error
 		FindByPromoID(promoID string) ([]Models.PromoItem, error)
+		BulkCreate(promoItems []Models.PromoItem) error
 	}
 
 	PromoItemRepository struct {
@@ -87,4 +88,12 @@ func (promoItemRepository *PromoItemRepository) FindByPromoID(promoID string) ([
 	}
 
 	return promoItems, nil
+}
+
+func (promoItemRepository *PromoItemRepository) BulkCreate(promoItems []Models.PromoItem) error {
+	if err := promoItemRepository.DB.Create(&promoItems).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
