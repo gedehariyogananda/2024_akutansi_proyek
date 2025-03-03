@@ -105,7 +105,7 @@ func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models
 
 func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOwnerRequest) (token string, statusCode int, err error) {
 	fmt.Println("email", request.Email)
-	ownerData, err := service.userRepository.FindEmail(request.Email)
+	ownerData, err := service.userRepository.FindEmailActive(request.Email)
 
 	if err != nil {
 		return "", http.StatusNotFound, errors.New("email tidak ditemukan")

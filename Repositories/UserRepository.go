@@ -16,6 +16,7 @@ type (
 		UpdateAvatar(userID string, fileName string) (err error)
 		UpdatePassword(userID string, newPassword string) (err error)
 		UpdateStatus(userID string, status bool) (err error)
+		FindEmailActive(email string) (user *Models.User, err error)
 	}
 
 	UserRepository struct {
@@ -87,4 +88,17 @@ func (h *UserRepository) UpdateStatus(userID string, status bool) (err error) {
 	}
 
 	return nil
+}
+
+func (h *UserRepository) FindEmailActive(email string) (user *Models.User, err error) {
+	user = &Models.User{}
+
+	if err := h.DB.
+		Where("email = ?", email).
+		Where("is_active = ?", true).
+		First(user).Error; err != nil {
+		return nil, fmt.Errorf("account tidak ditemukan!")
+	}
+
+	return user, nil
 }
