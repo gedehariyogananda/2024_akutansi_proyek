@@ -70,6 +70,16 @@ func InsertParams(ctx *gin.Context) Common.Query {
 		query.CategoryID = &categoryID
 	}
 
+	if ctx.Query("start_date") != "" {
+		startDate := ctx.Query("start_date")
+		query.StartDate = &startDate
+	}
+
+	if ctx.Query("end_date") != "" {
+		endDate := ctx.Query("end_date")
+		query.EndDate = &endDate
+	}
+
 	return query
 }
 

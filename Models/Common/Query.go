@@ -10,4 +10,6 @@ type Query struct {
 	CompanyID      *string `json:"company_id"`
 	SmallestUnitID string  `json:"smallest_unit_id"`
 	CategoryID     *string `json:"category_id"`
+	StartDate      *string `json:"start_date"`
+	EndDate        *string `json:"end_date"`
 }
