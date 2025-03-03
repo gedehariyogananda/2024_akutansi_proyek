@@ -4,6 +4,7 @@ CREATE TABLE sub_users (
     id VARCHAR(100) PRIMARY KEY NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL,
     employee_key VARCHAR(255) NOT NULL,
+    employee_type VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     status BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE,
