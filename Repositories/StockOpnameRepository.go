@@ -29,6 +29,7 @@ func (r *StockOpnameRepository) GetAll(query *Common.Query) (data []*Models.Stoc
 		Where("company_id = ?", query.CompanyID).
 		Scopes(
 			Utils.Paginate(query.Page, query.Limit)).
+		Preload("Items").
 		Order("created_at desc").
 		Find(&data).Error; err != nil {
 		return nil, 0, err

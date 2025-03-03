@@ -44,3 +44,27 @@ func MapFromStockOpname(stockOpname Models.StockOpname) *StockOpnameResponse {
 		Items:       items,
 	}
 }
+
+type StockOpnameAllResponse struct {
+	ID          string     `json:"id"`
+	Title       string     `json:"title"`
+	ChangerName *string    `json:"changer_name"`
+	Amount      int        `json:"amount"`
+	CreatedAt   *time.Time `json:"created_at"`
+}
+
+func MapFromStockOpnameAll(stockOpname []*Models.StockOpname) []StockOpnameAllResponse {
+	var stockOpnameAllResponse []StockOpnameAllResponse
+
+	for _, item := range stockOpname {
+		stockOpnameAllResponse = append(stockOpnameAllResponse, StockOpnameAllResponse{
+			ID:          item.ID,
+			Title:       item.Title,
+			ChangerName: item.ChangerName,
+			Amount:      len(item.Items),
+			CreatedAt:   item.CreatedAt,
+		})
+	}
+
+	return stockOpnameAllResponse
+}

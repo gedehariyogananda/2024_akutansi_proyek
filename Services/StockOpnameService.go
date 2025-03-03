@@ -15,7 +15,7 @@ import (
 
 type (
 	IStockOpnameService interface {
-		GetAll(query *Common.Query) (data []*Models.StockOpname, meta Common.Meta, err error)
+		GetAll(query *Common.Query) (data []Response.StockOpnameAllResponse, meta Common.Meta, err error)
 		Create(data *Dto.CreateStockOpnameDto) (err error)
 		GetAvailableStock(companyID string) (data []*Response.AvailableStockResponse, err error)
 		GetById(stockOpnameID string) (data *Response.StockOpnameResponse, err error)
@@ -41,13 +41,15 @@ func StockOpnameServiceProvider(
 		DB:                      DB}
 }
 
-func (s *StockOpnameService) GetAll(query *Common.Query) (data []*Models.StockOpname, meta Common.Meta, err error) {
-	data, totalData, err := s.StockOpnameRepository.GetAll(query)
+func (s *StockOpnameService) GetAll(query *Common.Query) (data []Response.StockOpnameAllResponse, meta Common.Meta, err error) {
+	result, totalData, err := s.StockOpnameRepository.GetAll(query)
 	if err != nil {
 		return nil, Common.Meta{}, err
 	}
 
 	meta = Common.PaginateMetadata(nil, totalData, query.Limit, query.Page)
+
+	data = Response.MapFromStockOpnameAll(result)
 
 	return data, meta, nil
 }
