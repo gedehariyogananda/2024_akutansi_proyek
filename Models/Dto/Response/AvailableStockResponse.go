@@ -10,6 +10,7 @@ type AvailableStockResponse struct {
 	CurrentQuantity int    `json:"quantity"`
 	ExpiredDate     string `json:"expired_date"`
 	Name            string `json:"name"`
+	Type            string `json:"type"`
 }
 
 func ToSellStock(availableStock *Models.SellableStock) *AvailableStockResponse {
@@ -19,6 +20,7 @@ func ToSellStock(availableStock *Models.SellableStock) *AvailableStockResponse {
 		CurrentQuantity: availableStock.CurrentQuantity,
 		ExpiredDate:     availableStock.ExpiredDate.Format("2006-01-02"),
 		Name:            availableStock.SellableProduct.Name,
+		Type:            "product",
 	}
 }
 
@@ -38,6 +40,7 @@ func ToMaterialStock(availableStock *Models.MaterialStock) *AvailableStockRespon
 		CurrentQuantity: availableStock.CurrentQuantity,
 		ExpiredDate:     availableStock.ExpiredDate.Format("2006-01-02"),
 		Name:            availableStock.MaterialProduct.Name,
+		Type:            "material",
 	}
 }
 

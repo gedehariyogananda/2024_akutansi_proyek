@@ -373,6 +373,8 @@ CREATE TABLE public.stock_opname_items (
     stock_id character varying(255) NOT NULL,
     product_type character varying(255) NOT NULL,
     difference_quantity integer NOT NULL,
+    initial_quantity integer NOT NULL,
+    expired_date timestamp with time zone NOT NULL,
     name character varying(255) NOT NULL
 );
 

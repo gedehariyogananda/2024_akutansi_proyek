@@ -10,14 +10,15 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"sync"
+	"time"
 )
 
 type (
 	IStockOpnameService interface {
-		GetAll(query *Common.Query) (data []*Models.StockOpname, meta Common.Meta, err error)
+		GetAll(query *Common.Query) (data []Response.StockOpnameAllResponse, meta Common.Meta, err error)
 		Create(data *Dto.CreateStockOpnameDto) (err error)
 		GetAvailableStock(companyID string) (data []*Response.AvailableStockResponse, err error)
-		GetById(stockOpnameID string) (data *Models.StockOpname, err error)
+		GetById(stockOpnameID string) (data *Response.StockOpnameResponse, err error)
 	}
 
 	StockOpnameService struct {
@@ -40,13 +41,15 @@ func StockOpnameServiceProvider(
 		DB:                      DB}
 }
 
-func (s *StockOpnameService) GetAll(query *Common.Query) (data []*Models.StockOpname, meta Common.Meta, err error) {
-	data, totalData, err := s.StockOpnameRepository.GetAll(query)
+func (s *StockOpnameService) GetAll(query *Common.Query) (data []Response.StockOpnameAllResponse, meta Common.Meta, err error) {
+	result, totalData, err := s.StockOpnameRepository.GetAll(query)
 	if err != nil {
 		return nil, Common.Meta{}, err
 	}
 
 	meta = Common.PaginateMetadata(nil, totalData, query.Limit, query.Page)
+
+	data = Response.MapFromStockOpnameAll(result)
 
 	return data, meta, nil
 }
@@ -84,13 +87,39 @@ func (s *StockOpnameService) Create(data *Dto.CreateStockOpnameDto) (err error) 
 
 	items := make([]*Models.StockOpnameItem, 0)
 	for _, item := range data.Items {
+		var systemQuantity int
+		var expiredDate time.Time
+		var initialQuantity int
+
+		if item.Type == "material" {
+			materialStock, err := s.MaterialStockRepository.Get(item.StockId)
+			if err != nil {
+				return err
+			}
+
+			systemQuantity = materialStock.CurrentQuantity
+			expiredDate = materialStock.ExpiredDate
+			initialQuantity = materialStock.Quantity
+		} else {
+			sellableStock, err := s.SellableStockRepository.Get(item.StockId)
+			if err != nil {
+				return err
+			}
+
+			systemQuantity = sellableStock.CurrentQuantity
+			expiredDate = sellableStock.ExpiredDate
+			initialQuantity = sellableStock.Quantity
+		}
+
 		stockOpnameItem := &Models.StockOpnameItem{
 			StockOpnameID:      stockOpnameId.String(),
 			Quantity:           item.Quantity,
 			StockID:            item.StockId,
-			DifferenceQuantity: item.Quantity - item.SystemQuantity,
+			DifferenceQuantity: item.Quantity - systemQuantity,
+			ExpiredDate:        expiredDate,
 			ProductType:        item.Type,
 			Name:               item.Name,
+			InitialQuantity:    initialQuantity,
 		}
 
 		items = append(items, stockOpnameItem)
@@ -146,11 +175,13 @@ func (s *StockOpnameService) GetAvailableStock(companyID string) (data []*Respon
 	return data, nil
 }
 
-func (s *StockOpnameService) GetById(stockOpnameID string) (data *Models.StockOpname, err error) {
-	data, err = s.StockOpnameRepository.GetById(stockOpnameID)
-	if err != nil {
-		return nil, err
+func (s *StockOpnameService) GetById(stockOpnameID string) (data *Response.StockOpnameResponse, err error) {
+	stockOpname, e := s.StockOpnameRepository.GetById(stockOpnameID)
+	if e != nil {
+		return nil, e
 	}
+
+	data = Response.MapFromStockOpname(*stockOpname)
 
 	return data, nil
 }

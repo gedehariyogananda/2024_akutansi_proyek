@@ -15,6 +15,7 @@ type (
 		FetchMaterialStockToPushNotification(ctx context.Context) []*Models.MaterialStock
 		GetAvailableStock(companyId string) (materialStock []*Models.MaterialStock, err error)
 		Create(materialStock *Models.MaterialStock) (*Models.MaterialStock, error)
+		Get(materialStockID string) (*Models.MaterialStock, error)
 	}
 
 	MaterialStockRepository struct {
@@ -84,4 +85,16 @@ func (r *MaterialStockRepository) Create(materialStock *Models.MaterialStock) (*
 	}
 
 	return materialStock, nil
+}
+
+func (r *MaterialStockRepository) Get(materialStockID string) (*Models.MaterialStock, error) {
+	var materialStock Models.MaterialStock
+
+	if err := r.DB.
+		Where("id = ?", materialStockID).
+		First(&materialStock).Error; err != nil {
+		return nil, fmt.Errorf("material stock not found: %w", err)
+	}
+
+	return &materialStock, nil
 }

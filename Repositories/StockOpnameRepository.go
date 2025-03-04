@@ -25,11 +25,22 @@ func StockOpnameRepositoryProvider(db *gorm.DB) *StockOpnameRepository {
 }
 
 func (r *StockOpnameRepository) GetAll(query *Common.Query) (data []*Models.StockOpname, totalData int64, err error) {
-	if err := r.DB.
+	dbQuery := r.DB.
 		Where("company_id = ?", query.CompanyID).
 		Scopes(
 			Utils.Paginate(query.Page, query.Limit)).
-		Order("created_at desc").
+		Preload("Items").
+		Order("created_at desc")
+
+	if query.StartDate != nil {
+		dbQuery = dbQuery.Where("created_at >= ?", query.StartDate)
+	}
+
+	if query.EndDate != nil {
+		dbQuery = dbQuery.Where("created_at <= ?", query.EndDate)
+	}
+
+	if err := dbQuery.
 		Find(&data).Error; err != nil {
 		return nil, 0, err
 	}
