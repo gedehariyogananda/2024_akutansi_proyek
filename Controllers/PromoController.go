@@ -41,6 +41,7 @@ func (controller *PromoController) Create(ctx *gin.Context) {
 		return
 	}
 	request.CompanyID = ctx.GetString("company_id")
+	fmt.Println("request", request.CompanyID)
 	res, err := controller.PromoService.Create(&request)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), http.StatusBadRequest)

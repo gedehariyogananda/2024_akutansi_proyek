@@ -2,6 +2,7 @@ package Response
 
 import (
 	"2024_akutansi_project/Models"
+	"time"
 )
 
 type productPromoResponse struct {
@@ -29,9 +30,9 @@ func toProductPromoResponseSlice(products []*Models.SellableProduct) []productPr
 type PromoResponse struct {
 	ID        string                 `json:"id"`
 	Name      string                 `json:"name"`
-	Ammount   float64                `json:"ammount"`
-	StartDate string                 `json:"start_date"`
-	EndDate   string                 `json:"end_date"`
+	Amount    float64                `json:"amount"`
+	StartDate time.Time              `json:"start_date"`
+	EndDate   time.Time              `json:"end_date"`
 	IsAll     bool                   `json:"is_all"`
 	Type      string                 `json:"type"`
 	CompanyID string                 `json:"company_id"`
@@ -50,7 +51,7 @@ func ToPromoResponse(productPromo Models.Promo) PromoResponse {
 		return PromoResponse{
 			ID:        productPromo.ID,
 			Name:      productPromo.Name,
-			Ammount:   productPromo.Amount,
+			Amount:    productPromo.Amount,
 			StartDate: productPromo.StartDate,
 			EndDate:   productPromo.EndDate,
 			IsAll:     productPromo.IsAll,
@@ -63,7 +64,7 @@ func ToPromoResponse(productPromo Models.Promo) PromoResponse {
 	return PromoResponse{
 		ID:        productPromo.ID,
 		Name:      productPromo.Name,
-		Ammount:   productPromo.Amount,
+		Amount:    productPromo.Amount,
 		StartDate: productPromo.StartDate,
 		EndDate:   productPromo.EndDate,
 		IsAll:     productPromo.IsAll,

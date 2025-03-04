@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -30,19 +31,35 @@ type (
 	PromoService struct {
 		PromoRepository           Repositories.IPromoRepository
 		PromoItemRepository       Repositories.IPromoItemRepository
-		SellableProductRepository Repositories.SellableProductRepository
+		SellableProductRepository Repositories.ISellableProductRepository
 	}
 )
 
-func PromoServiceProvider(promoRepository Repositories.IPromoRepository, promoItemRepository Repositories.IPromoItemRepository) *PromoService {
-	return &PromoService{PromoRepository: promoRepository, PromoItemRepository: promoItemRepository}
+func PromoServiceProvider(promoRepository Repositories.IPromoRepository, promoItemRepository Repositories.IPromoItemRepository, sellableProductRepository Repositories.ISellableProductRepository) *PromoService {
+	return &PromoService{
+		PromoRepository:           promoRepository,
+		PromoItemRepository:       promoItemRepository,
+		SellableProductRepository: sellableProductRepository,
+	}
 }
 
 func (s *PromoService) Create(dto *Dto.CreatePromoDto) (res Response.PromoResponse, err error) {
+	startDate, err := time.Parse("2006-01-02", dto.StartDate)
+
+	if err != nil {
+		return
+	}
+
+	endDate, err := time.Parse("2006-01-02", dto.EndDate)
+
+	if err != nil {
+		return
+	}
+
 	promo := &Models.Promo{
 		Name:      dto.Name,
-		StartDate: dto.StartDate,
-		EndDate:   dto.EndDate,
+		StartDate: startDate,
+		EndDate:   endDate,
 		Amount:    dto.Amount,
 		CompanyID: dto.CompanyID,
 		IsAll:     dto.IsAll,
@@ -136,9 +153,21 @@ func (s *PromoService) Update(dto *Dto.UpdatePromoDto, id string) (res Response.
 		return
 	}
 
+	startDate, err := time.Parse("2006-01-02", dto.StartDate)
+
+	if err != nil {
+		return
+	}
+
+	endDate, err := time.Parse("2006-01-02", dto.EndDate)
+
+	if err != nil {
+		return
+	}
+
 	promo.Name = dto.Name
-	promo.StartDate = dto.StartDate
-	promo.EndDate = dto.EndDate
+	promo.StartDate = startDate
+	promo.EndDate = endDate
 	promo.Amount = dto.Amount
 	promo.IsAll = dto.IsAll
 	promo.Type = dto.Type
@@ -188,10 +217,22 @@ func (s *PromoService) FindAll(companyID string, query Common.Query) (res []Resp
 }
 
 func (s *PromoService) CreatePromoOnly(dto *Dto.CreatePromoOnly) (res Response.PromoResponse, err error) {
+	startDate, err := time.Parse("2006-01-02", dto.StartDate)
+
+	if err != nil {
+		return
+	}
+
+	endDate, err := time.Parse("2006-01-02", dto.EndDate)
+
+	if err != nil {
+		return
+	}
+
 	promo := &Models.Promo{
 		Name:      dto.Name,
-		StartDate: dto.StartDate,
-		EndDate:   dto.EndDate,
+		StartDate: startDate,
+		EndDate:   endDate,
 		Amount:    dto.Amount,
 		CompanyID: dto.CompanyID,
 		IsAll:     false,
@@ -247,11 +288,7 @@ func (s *PromoService) AsginPromo(dto *Dto.AsignPromoDto) (res Response.PromoRes
 
 func (s *PromoService) checkAvailableProduct(promoItems []Models.PromoItem) bool {
 	for _, item := range promoItems {
-		endDate, err := time.Parse(Common.Layout, item.Promo.EndDate)
-
-		if err != nil {
-			return false
-		}
+		endDate := item.Promo.EndDate
 
 		if endDate.Before(time.Now()) {
 			return false
@@ -269,23 +306,47 @@ func (s *PromoService) asignPromoToAllProduct(companyID string, promoID string) 
 		return err
 	}
 
-	for _, product := range products {
-		endDate, err := time.Parse(Common.Layout, product.PromoItems[0].Promo.EndDate)
-		if err != nil {
-			return err
-		}
-		if endDate.After(time.Now()) {
-			promoItem := &Models.PromoItem{
-				PromoID:           promoID,
-				SellableProductID: product.ID,
-			}
+	var promoItems []Models.PromoItem
 
-			_, err = s.PromoItemRepository.Create(promoItem)
+	for _, product := range products {
+		// Variabel flag untuk menentukan apakah promo item harus dibuat
+		createPromo := false
+
+		if len(product.PromoItems) > 0 {
+			// Jika ada promo item, cek apakah setidaknya salah satu promo belum berakhir
+			for _, promoItem := range product.PromoItems {
+				if promoItem.Promo.EndDate.After(time.Now()) {
+					createPromo = true
+					break
+				}
+			}
+		} else {
+			// Jika tidak ada promo item, maka langsung buat promo item baru
+			createPromo = true
+		}
+
+		// Jika flag createPromo bernilai true, buat promo item baru
+		if createPromo {
+			uuid, err := uuid.NewV7()
+
 			if err != nil {
 				return err
 			}
+
+			newPromoItem := &Models.PromoItem{
+				PromoID:           promoID,
+				SellableProductID: product.ID,
+				ID:                uuid.String(),
+			}
+
+			promoItems = append(promoItems, *newPromoItem)
 		}
+
 	}
+	if err := s.PromoItemRepository.BulkCreate(promoItems); err != nil {
+		return err
+	}
+
 	return nil
 }
 

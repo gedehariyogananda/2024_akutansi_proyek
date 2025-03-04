@@ -9,6 +9,7 @@ import (
 	"2024_akutansi_project/Utils"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -22,26 +23,31 @@ type (
 		LoginEmployee(ctx context.Context, request *Dto.LoginEmployeeRequest) (token string, statusCode int, err error)
 		LoginMobile(ctx context.Context, request *Dto.LoginMobileRequest) (token string, typeUser string, statusCode int, err error)
 		GetProfile(id string) (profile *Response.Profile, statusCode int, err error)
+		ActivationAccount(token string) (statusCode int, err error)
 	}
 
 	AuthService struct {
-		userRepository    Repositories.IUserRepository
-		subUserRepository Repositories.ISubUserRepository
-		companyRepository Repositories.ICompanyRepository
-		jwtService        IJwtService
-		redisClient       *redis.Client
-		accountRepository Repositories.IAccountRepository
+		userRepository         Repositories.IUserRepository
+		subUserRepository      Repositories.ISubUserRepository
+		companyRepository      Repositories.ICompanyRepository
+		jwtService             IJwtService
+		redisClient            *redis.Client
+		accountRepository      Repositories.IAccountRepository
+		logActivityRespository Repositories.ILogActivityRepository
+		mailService            IEmailService
 	}
 )
 
-func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client, accountRepository Repositories.IAccountRepository) *AuthService {
+func AuthServiceProvider(userRepository Repositories.IUserRepository, jwtService IJwtService, companyRepository Repositories.ICompanyRepository, subUser Repositories.ISubUserRepository, redisClient *redis.Client, accountRepository Repositories.IAccountRepository, logActivityRepo Repositories.ILogActivityRepository, mailService IEmailService) *AuthService {
 	return &AuthService{
-		userRepository:    userRepository,
-		companyRepository: companyRepository,
-		jwtService:        jwtService,
-		subUserRepository: subUser,
-		redisClient:       redisClient,
-		accountRepository: accountRepository,
+		userRepository:         userRepository,
+		companyRepository:      companyRepository,
+		jwtService:             jwtService,
+		subUserRepository:      subUser,
+		redisClient:            redisClient,
+		accountRepository:      accountRepository,
+		logActivityRespository: logActivityRepo,
+		mailService:            mailService,
 	}
 }
 
@@ -68,6 +74,7 @@ func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models
 		Password:  request.Password,
 		Name:      request.Name,
 		CompanyID: company.ID,
+		IsActive:  false,
 	})
 
 	if err != nil {
@@ -79,10 +86,25 @@ func (service *AuthService) Register(request *Dto.RegisterRequest) (user *Models
 		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat account")
 	}
 
+	token, err := service.jwtService.GenerateTokenForVerificationAccount(user.Email)
+
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.New("kesalahan saat membuat token")
+	}
+
+	emailMessage := Models.ToSendEmailVerificationMessage(user.Email, user.Name, token)
+
+	err = service.mailService.Send(*emailMessage)
+
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.New("kesalahan saat mengirim email")
+	}
+
 	return user, http.StatusCreated, nil
 }
 
 func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOwnerRequest) (token string, statusCode int, err error) {
+	fmt.Println("email", request.Email)
 	ownerData, err := service.userRepository.FindEmail(request.Email)
 
 	if err != nil {
@@ -117,6 +139,20 @@ func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOw
 
 	if err != nil {
 		return "", http.StatusInternalServerError, errors.New("error set redis")
+	}
+
+	logActivity := &Models.LogActivity{
+		UserID: ownerData.ID,
+		Name:   "Login",
+		Device: request.Device,
+	}
+
+	fmt.Println("logActivity", logActivity)
+
+	err = service.logActivityRespository.Create(logActivity)
+
+	if err != nil {
+		return "", http.StatusInternalServerError, errors.New("error create log activity")
 	}
 
 	return token, http.StatusOK, err
@@ -291,4 +327,30 @@ func (service *AuthService) GetProfile(id string) (profile *Response.Profile, st
 	profile.CompanyName = company.Name
 
 	return profile, http.StatusOK, nil
+}
+
+func (service *AuthService) ActivationAccount(token string) (statusCode int, err error) {
+	claims, err := service.jwtService.ParseTokenVerificationAccount(token)
+
+	if err != nil {
+		return http.StatusBadRequest, errors.New("token tidak valid")
+	}
+
+	user, err := service.userRepository.FindEmail(claims["email"].(string))
+
+	if err != nil {
+		return http.StatusNotFound, errors.New("email tidak ditemukan")
+	}
+
+	if user.IsActive {
+		return http.StatusBadRequest, errors.New("akun sudah aktif")
+	}
+
+	err = service.userRepository.UpdateStatus(user.ID, true)
+
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("kesalahan saat mengaktifkan akun")
+	}
+
+	return http.StatusOK, nil
 }

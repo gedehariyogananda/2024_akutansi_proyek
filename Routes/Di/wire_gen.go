@@ -27,7 +27,9 @@ func DIAuth(db *gorm.DB, redis2 *redis.Client) *Controllers.AuthController {
 	companyRepository := Repositories.CompanyRepositoryProvider(db)
 	subUserRepository := Repositories.SubUserRepositoryProvider(db)
 	accountRepository := Repositories.AccountProvider(db)
-	authService := Services.AuthServiceProvider(userRepository, jwtService, companyRepository, subUserRepository, redis2, accountRepository)
+	logActivityRepository := Repositories.LogActivityRepositoryProvider(db)
+	emailService := Services.EmailServiceProvider()
+	authService := Services.AuthServiceProvider(userRepository, jwtService, companyRepository, subUserRepository, redis2, accountRepository, logActivityRepository, emailService)
 	authController := Controllers.AuthControllerProvider(authService)
 	return authController
 }
@@ -141,7 +143,8 @@ func DIMaterialProduct(db *gorm.DB) *Controllers.MaterialProductController {
 func DIPromo(db *gorm.DB) *Controllers.PromoController {
 	promoRepository := Repositories.PromoRepositoryProvider(db)
 	promoItemRepository := Repositories.PromoItemRepositoryProvider(db)
-	promoService := Services.PromoServiceProvider(promoRepository, promoItemRepository)
+	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
+	promoService := Services.PromoServiceProvider(promoRepository, promoItemRepository, sellableProductRepository)
 	promoController := Controllers.PromoControllerProvider(promoService)
 	return promoController
 }
@@ -193,8 +196,34 @@ func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
 
 func DiUser(db *gorm.DB, minio2 *minio.Client) *Controllers.UserController {
 	userRepository := Repositories.UserRepositoryProvider(db)
-	userService := Services.UserServiceProvider(userRepository)
+	emailService := Services.EmailServiceProvider()
+	jwtService := Services.JwtServiceProvider()
 	storageService := Services.StorageServiceProvider(minio2)
+	userService := Services.UserServiceProvider(userRepository, emailService, jwtService, storageService)
 	userController := Controllers.UserControllerProvider(userService, storageService)
 	return userController
+}
+
+func DiCompany(db *gorm.DB, minio2 *minio.Client) *Controllers.CompanyController {
+	companyRepository := Repositories.CompanyRepositoryProvider(db)
+	storageService := Services.StorageServiceProvider(minio2)
+	companyService := Services.CompanyServiceProvider(companyRepository, storageService)
+	companyController := Controllers.CompanyControllerProvider(companyService)
+	return companyController
+}
+
+func DiLogActivity(db *gorm.DB) *Controllers.LogActivityController {
+	logActivityRepository := Repositories.LogActivityRepositoryProvider(db)
+	logActivityService := Services.LogActivityServiceProvider(logActivityRepository)
+	logActivityController := Controllers.LogActivityControllerProvider(logActivityService)
+	return logActivityController
+}
+
+func DiDashboard(db *gorm.DB) *Controllers.DashboardController {
+	invoiceItemRepository := Repositories.InvoiceItemRepositoryProvider(db)
+	invoiceRepository := Repositories.InvoiceRepositoryProvider(db)
+	purchaseRepository := Repositories.PurchaseRepositoryProvider(db)
+	dashboardService := Services.DashboardServiceProvider(invoiceItemRepository, invoiceRepository, purchaseRepository)
+	dashboardController := Controllers.DashboardControllerProvider(dashboardService)
+	return dashboardController
 }

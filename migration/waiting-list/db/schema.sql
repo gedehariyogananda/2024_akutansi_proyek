@@ -152,6 +152,20 @@ CREATE TABLE public.journal_entries (
 
 
 --
+-- Name: log_activities; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.log_activities (
+    id character varying(100) NOT NULL,
+    user_id character varying(100) NOT NULL,
+    name character varying(255) NOT NULL,
+    device character varying(255) NOT NULL,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone
+);
+
+
+--
 -- Name: material_conversions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -267,7 +281,7 @@ CREATE TABLE public.purchases (
     company_id character varying(255) NOT NULL,
     discount numeric(15,2) NOT NULL,
     is_discount_percent boolean NOT NULL,
-    tax numeric(15,2) NOT NULL,
+    tax_id character varying(255) NOT NULL,
     payment character varying(255) NOT NULL,
     note character varying(255),
     due_date timestamp with time zone,
@@ -456,6 +470,7 @@ CREATE TABLE public.users (
     email character varying(255) NOT NULL,
     password character varying(255) NOT NULL,
     avatar character varying(255),
+    is_active boolean DEFAULT false,
     created_at timestamp with time zone,
     deleted_at timestamp with time zone,
     updated_at timestamp with time zone,
@@ -532,6 +547,14 @@ ALTER TABLE ONLY public.invoices
 
 ALTER TABLE ONLY public.journal_entries
     ADD CONSTRAINT journal_entries_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: log_activities log_activities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.log_activities
+    ADD CONSTRAINT log_activities_pkey PRIMARY KEY (id);
 
 
 --
@@ -741,4 +764,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20241112144808'),
     ('20241113074549'),
     ('20241113074956'),
-    ('20241121022625');
+    ('20241121022625'),
+    ('20250202035430');

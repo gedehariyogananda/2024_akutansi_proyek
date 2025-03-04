@@ -166,19 +166,11 @@ func (service *SellableProductService) UpdateStock(id string, request *Dto.Sella
 			return http.StatusInternalServerError, nil, err
 		}
 
-		enddate, err := time.Parse(Common.Layout, promoItem.Promo.EndDate)
-
-		if err != nil {
-			return http.StatusInternalServerError, nil, err
-		}
-
-		startDate, err := time.Parse(Common.Layout, promoItem.Promo.StartDate)
-
-		if time.Now().After(enddate) {
-			prefMessage := "Promo yang anda masukkan sudah berakhir di tanggal " + enddate.Format("02-01-2006") + ", Promo tidak akan tampil di layar kasir."
+		if time.Now().After(promoItem.Promo.EndDate) {
+			prefMessage := "Promo yang anda masukkan sudah berakhir di tanggal " + promoItem.Promo.EndDate.Format("02-01-2006") + ", Promo tidak akan tampil di layar kasir."
 			addMessage = &prefMessage
-		} else if time.Now().Before(startDate) {
-			prefMessage := "Promo yang anda masukkan belum dimulai!, Promo akan bisa dipakai dan ditampilkan di kasir di tanggal " + startDate.Format("02-01-2006")
+		} else if time.Now().Before(promoItem.Promo.StartDate) {
+			prefMessage := "Promo yang anda masukkan belum dimulai!, Promo akan bisa dipakai dan ditampilkan di kasir di tanggal " + promoItem.Promo.StartDate.Format("02-01-2006")
 			addMessage = &prefMessage
 		}
 	}
@@ -307,13 +299,8 @@ func (s *SellableProductService) FindById(id string, setWithMaterial bool) (res 
 
 	if len(sellableProduct.PromoItems) > 0 {
 		promo = sellableProduct.PromoItems[0].PromoID
-		promoEndDate, err := time.Parse(Common.Layout, sellableProduct.PromoItems[0].Promo.EndDate)
 
-		if err != nil {
-			return nil, http.StatusInternalServerError, err
-		}
-
-		if time.Now().After(promoEndDate) {
+		if time.Now().After(sellableProduct.PromoItems[0].Promo.EndDate) {
 			isExpired = true
 		}
 	}

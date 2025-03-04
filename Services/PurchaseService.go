@@ -91,7 +91,7 @@ func (p *PurchaseService) Create(dto Dto.CreatePurchasesDto) (err error) {
 	puchase := Models.Purchase{
 		TotalPurchaseAmount: dto.TotalPurchaseAmount,
 		CompanyID:           dto.CompanyID,
-		Tax:                 dto.Tax,
+		TaxID:               dto.TaxID,
 		Discount:            dto.Discount,
 		Payment:             dto.Payment,
 		DueDate:             dueDate,

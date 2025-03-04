@@ -28,4 +28,7 @@ func Init(c *gin.Engine, deps *Dependencies.Dependency) {
 	UserRoute(apiPrefix, deps.DB, deps.Redis, deps.Minio)
 	Promo(apiPrefix, deps.DB, deps.Redis)
 
+	CompanyRoute(apiPrefix, deps.DB, deps.Redis, deps.Minio)
+	LogActivityRoute(apiPrefix, deps.DB, deps.Redis)
+	DashboardRoute(apiPrefix, deps.DB, deps.Redis)
 }

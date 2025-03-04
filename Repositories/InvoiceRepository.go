@@ -4,6 +4,7 @@ import (
 	"2024_akutansi_project/Helper"
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
+	"2024_akutansi_project/Models/Dto/Response"
 	"2024_akutansi_project/Utils"
 
 	"gorm.io/gorm"
@@ -19,6 +20,7 @@ type (
 		GetByInvoiceID(companyID string, invoiceID string) (invoice *Models.Invoice, err error)
 		SumSalesByDate(companyID string, date string) (totalSales float64, err error)
 		SumSalesByYearMonth(companyID string, year int, month int) (totalSales float64, err error)
+		GetMonthlyRevenue(companyID string, year int) (monthlyRevenue []Response.MonthlyRevenueResponse, err error)
 	}
 
 	InvoiceRepository struct {
@@ -118,7 +120,7 @@ func (r *InvoiceRepository) SumSalesByDate(companyID string, date string) (total
 		Model(&Models.Invoice{}).
 		Where("company_id = ?", companyID).
 		Where("date(created_at) = ?", date).
-		Select("sum(sub_total)").
+		Select("COALESCE(SUM(sub_total), 0)").
 		Scan(&totalSales).Error; err != nil {
 		return 0, err
 	}
@@ -133,7 +135,7 @@ func (r *InvoiceRepository) SumSalesByYearMonth(companyID string, year int, mont
 		Where("company_id = ?", companyID).
 		Where("EXTRACT(YEAR FROM created_at) = ?", year).
 		Where("EXTRACT(MONTH FROM created_at) = ?", month).
-		Select("sum(sub_total)").
+		Select("COALESCE(SUM(sub_total), 0)").
 		Scan(&totalSales).Error; err != nil {
 		return 0, err
 	}
@@ -151,4 +153,18 @@ func (r *InvoiceRepository) UpdateToNull(id string, field string) (err error) {
 	}
 
 	return nil
+}
+func (r *InvoiceRepository) GetMonthlyRevenue(companyID string, year int) (monthlyRevenue []Response.MonthlyRevenueResponse, err error) {
+	if err := r.DB.
+		Model(&Models.Invoice{}).
+		Select("EXTRACT(MONTH FROM created_at) as month, COALESCE(SUM(sub_total), 0) as total_revenue").
+		Where("company_id = ?", companyID).
+		Where("EXTRACT(YEAR FROM created_at) = ?", year).
+		Group("month").
+		Order("month").
+		Scan(&monthlyRevenue).Error; err != nil {
+		return monthlyRevenue, err
+	}
+
+	return monthlyRevenue, nil
 }

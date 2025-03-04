@@ -5,6 +5,7 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,6 +13,9 @@ import (
 type (
 	IUserController interface {
 		UploadAvatar(ctx *gin.Context)
+		GetCurrentUser(ctx *gin.Context)
+		ChangePassword(ctx *gin.Context)
+		SendOtp(ctx *gin.Context)
 	}
 
 	UserController struct {
@@ -59,4 +63,48 @@ func (c *UserController) UploadAvatar(ctx *gin.Context) {
 	}
 
 	Helper.SetSuccessResponse(ctx, "Upload Avatar Berhasil!", nil, 200)
+}
+
+func (c *UserController) GetCurrentUser(ctx *gin.Context) {
+	userID := ctx.GetString("id")
+
+	user, err := c.userService.GetCurrentUser(userID)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), 500)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data user", user, 200)
+}
+
+func (c *UserController) ChangePassword(ctx *gin.Context) {
+	var changePasswordDto Dto.ChangePasswordDto
+
+	if err := ctx.ShouldBind(&changePasswordDto); err != nil {
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, &changePasswordDto); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
+		return
+	}
+	statusCode, err := c.userService.ChangePassword(changePasswordDto)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mengubah password", nil, 200)
+}
+
+func (c *UserController) SendOtp(ctx *gin.Context) {
+	userID := ctx.GetString("id")
+	res, err := c.userService.SendOtp(userID)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mengirim OTP", res, 200)
 }

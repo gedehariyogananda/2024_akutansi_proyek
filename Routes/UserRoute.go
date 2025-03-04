@@ -19,5 +19,8 @@ func UserRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client, minio *mini
 	UserController := Di.DiUser(db, minio)
 
 	route.PUT("/upload-avatar", UserController.UploadAvatar)
+	route.GET("/", UserController.GetCurrentUser)
+	route.PUT("/change-password", UserController.ChangePassword)
+	route.GET("/send-otp", UserController.SendOtp)
 
 }

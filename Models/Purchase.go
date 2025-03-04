@@ -28,7 +28,8 @@ type Purchase struct {
 	TotalPurchaseAmount float32    `json:"total_purchase_amount"`
 	PurchaseNumber      string     `json:"purchase_number"`
 	CompanyID           string     `json:"company_id"`
-	Tax                 float32    `json:"tax"`
+	TaxID               string     `json:"tax_id"`
+	Tax                 Tax        `json:"tax"`
 	Discount            float32    `json:"discount"`
 	IsDiscountPercent   bool       `json:"is_discount_percent"`
 	Payment             string     `json:"payment_type"`

@@ -5,6 +5,8 @@ import (
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
+	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,6 +18,7 @@ type (
 		LoginEmployee(ctx *gin.Context)
 		LoginMobile(ctx *gin.Context)
 		Profile(ctx *gin.Context)
+		ActivationAccount(ctx *gin.Context)
 	}
 
 	AuthController struct {
@@ -40,15 +43,13 @@ func (c *AuthController) Register(ctx *gin.Context) {
 		return
 	}
 
-	user, statusCode, err := c.service.Register(&registerDTO)
+	_, statusCode, err := c.service.Register(&registerDTO)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetSuccessResponse(ctx, "Register berhasil!", gin.H{
-		"user": user,
-	}, statusCode)
+	Helper.SetSuccessResponse(ctx, "Register berhasil Silahkan cek email untuk verifikasi!", nil, http.StatusOK)
 }
 func (c *AuthController) LoginOwner(ctx *gin.Context) {
 	var loginOwnerDTO Dto.LoginOwnerRequest
@@ -62,6 +63,8 @@ func (c *AuthController) LoginOwner(ctx *gin.Context) {
 		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
+
+	fmt.Println("email", loginOwnerDTO.Email)
 
 	token, statusCode, err := c.service.LoginOwner(ctx.Request.Context(), &loginOwnerDTO)
 	if err != nil {
@@ -133,4 +136,20 @@ func (c *AuthController) Profile(ctx *gin.Context) {
 	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data profile", gin.H{
 		"profile": profileData,
 	}, statusCode)
+}
+
+func (c *AuthController) ActivationAccount(ctx *gin.Context) {
+	token := ctx.Query("token")
+
+	if token == "" {
+		Helper.SetErrorResponse(ctx, "Token tidak boleh kosong", 400)
+	}
+
+	statusCode, err := c.service.ActivationAccount(token)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Akun berhasil diaktivasi!", nil, statusCode)
 }
