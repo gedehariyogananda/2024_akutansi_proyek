@@ -10,6 +10,7 @@ CREATE TABLE purchases
     is_discount_percent  BOOLEAN                  NOT NULL,
     tax                   DECIMAL(15, 2)           NOT NULL,
     payment        VARCHAR(255)             NOT NULL,
+    note                 VARCHAR(255)             NULL,
     due_date              TIMESTAMP WITH TIME ZONE  NULL,
     created_at            TIMESTAMP WITH TIME ZONE NOT NULL
 );

@@ -252,6 +252,7 @@ CREATE TABLE public.purchases (
     is_discount_percent boolean NOT NULL,
     tax numeric(15,2) NOT NULL,
     payment character varying(255) NOT NULL,
+    note character varying(255),
     due_date timestamp with time zone,
     created_at timestamp with time zone NOT NULL
 );

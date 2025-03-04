@@ -12,4 +12,5 @@ type Query struct {
 	CategoryID     *string `json:"category_id"`
 	StartDate      *string `json:"start_date"`
 	EndDate        *string `json:"end_date"`
+	Type           *string `json:"type"`
 }

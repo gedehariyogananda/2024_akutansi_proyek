@@ -4,6 +4,7 @@ import (
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Dto"
 	"2024_akutansi_project/Utils"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -15,6 +16,8 @@ type (
 		CalculateAmountByType(companyID string, prefixType Models.JournalType) (countAmount float64, err error)
 		CheckupUnbalance(companyID string) (bool, error)
 		Insert(journalEntries []Models.JournalEntry, trx *gorm.DB) error
+		FindByPeriode(year int) ([]*Models.JournalEntry, error)
+		GetIncomeOrExpenseYear(year int, types string) (float64, error)
 	}
 
 	JournalEntriesRepository struct {
@@ -130,4 +133,38 @@ func (repository *JournalEntriesRepository) CheckupUnbalance(companyID string) (
 	}
 
 	return countDebit == countCredit, nil
+}
+
+func (repository *JournalEntriesRepository) FindByPeriode(year int) ([]*Models.JournalEntry, error) {
+	var journalEntries []*Models.JournalEntry
+
+	startOfYear := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
+	endOfYear := time.Date(year, time.December, 31, 23, 59, 59, 999999999, time.UTC)
+
+	if err := repository.DB.
+		Preload("Account").
+		Where("date BETWEEN ? AND ?", startOfYear, endOfYear).
+		Find(&journalEntries).Error; err != nil {
+		return nil, err
+	}
+
+	return journalEntries, nil
+}
+
+func (repository *JournalEntriesRepository) GetIncomeOrExpenseYear(year int, types string) (float64, error) {
+	var totalIncome float64
+
+	startOfYear := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
+	endOfYear := time.Date(year, time.December, 31, 23, 59, 59, 999999999, time.UTC)
+
+	if err := repository.DB.
+		Preload("Account", "type = ?", types).
+		Model(&Models.JournalEntry{}).
+		Where("date BETWEEN ? AND ?", startOfYear, endOfYear).
+		Select("sum(amount)").
+		Scan(&totalIncome).Error; err != nil {
+		return 0, err
+	}
+
+	return totalIncome, nil
 }

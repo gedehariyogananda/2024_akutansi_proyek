@@ -17,6 +17,7 @@ type (
 		GetSpesifySalesHistory(ctx *gin.Context)
 		UpdateRefund(ctx *gin.Context)
 		StatisticSales(ctx *gin.Context)
+		UpdatePaid(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -47,10 +48,16 @@ func (controller *InvoiceController) CreateInvoicePurchased(ctx *gin.Context) {
 		return
 	}
 
+	status := "Belum-lunas"
+	if *invoice.Status {
+		status = "Lunas"
+	}
+
 	Helper.SetSuccessResponse(ctx, "Create Transaction Purchased Success!", gin.H{
-		"invoice_number": invoice.InvoiceNumber,
-		"customer_name":  invoice.CustomerName,
-		"total_price":    invoice.SubTotal,
+		"id":            invoice.ID,
+		"customer_name": invoice.CustomerName,
+		"total_price":   invoice.SubTotal,
+		"status":        status,
 	}, statusCode)
 }
 
@@ -60,9 +67,11 @@ func (controller *InvoiceController) GetSalesHistory(ctx *gin.Context) {
 
 	startDateParams := ctx.Query("start_date")
 	endDateParams := ctx.Query("end_date")
+	inStatus := ctx.Query("in_status")
 
 	request.StartDate = &startDateParams
 	request.EndDate = &endDateParams
+	request.InStatus = &inStatus
 	request.Query = query
 
 	invoices, meta, statusCode, err := controller.InvoiceService.GetAllByCompany(ctx.GetString("company_id"), &request)
@@ -112,4 +121,30 @@ func (controller *InvoiceController) StatisticSales(ctx *gin.Context) {
 
 	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan data statistik penjualan!", statistic, statusCode)
 
+}
+
+func (controller *InvoiceController) UpdatePaid(ctx *gin.Context) {
+	var requestPaidDTO Dto.PaidRequestDTO
+
+	if err := ctx.ShouldBindJSON(&requestPaidDTO); err != nil {
+		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
+		return
+	}
+
+	if validationErrors := Utils.ValidateRequest(ctx, &requestPaidDTO); validationErrors != nil {
+		Helper.SetValidationErrorResponse(ctx, validationErrors)
+		return
+	}
+
+	invoice, statusCode, err := controller.InvoiceService.UpdatePaid(&requestPaidDTO, ctx.GetString("company_id"), ctx.Param("invoiceID"))
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil melakukan pelunasan!", gin.H{
+		"id":             invoice.ID,
+		"money_received": invoice.MoneyReceived,
+		"money_back":     *invoice.MoneyReceived - (invoice.SubTotal + invoice.Tax),
+	}, statusCode)
 }

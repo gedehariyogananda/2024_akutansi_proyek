@@ -11,14 +11,15 @@ type Invoice struct {
 	ID            string         `json:"id"`
 	CustomerName  string         `json:"customer_name,omitempty"`
 	PhoneNumber   *string        `json:"phone_number,omitempty"`
-	Note          string         `json:"note,omitempty"`
+	Note          *string        `json:"note,omitempty"`
 	TaxID         string         `json:"tax_id,omitempty"`
 	PaymentMethod string         `json:"payment_method,omitempty"`
 	InvoiceNumber string         `json:"invoice_number,omitempty"`
 	CompanyID     string         `json:"company_id,omitempty"`
-	Status        bool           `json:"status,omitempty"`
+	Status        *bool          `json:"status,omitempty"`
 	Tax           float64        `json:"tax,omitempty"`
 	SubTotal      float64        `json:"sub_total,omitempty"`
+	MoneyReceived *float64       `json:"money_received,omitempty"`
 	CreatedAt     time.Time      `json:"created_at,omitempty"`
 	UpdatedAt     time.Time      `json:"updated_at,omitempty"`
 	RefundAt      *time.Time     `json:"refund_at,omitempty"`

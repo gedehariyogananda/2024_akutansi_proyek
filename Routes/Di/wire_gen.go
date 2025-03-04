@@ -51,7 +51,9 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 	transactionRepository := Repositories.TransactionRepositoryProvider(db)
 	purchaseRepository := Repositories.PurchaseRepositoryProvider(db)
 	journalEntriesService := Services.JournalEntriesProvider(journalEntriesRepository, accountRepository, transactionRepository, purchaseRepository)
-	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, sellableStockRepository, materialStockRepository, journalEntriesRepository, accountRepository, journalEntriesService, db)
+	promoRepository := Repositories.PromoRepositoryProvider(db)
+	taxRepository := Repositories.TaxRepositoryProvider(db)
+	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, invoiceItemRepository, sellableProductRepository, receiptRepository, materialProductRepository, sellableStockRepository, materialStockRepository, journalEntriesRepository, accountRepository, journalEntriesService, db, promoRepository, taxRepository)
 	invoiceController := Controllers.InvoiceControllerProvider(invoiceService)
 	return invoiceController
 }
@@ -120,8 +122,10 @@ func DISellableProduct(db *gorm.DB, minio2 *minio.Client) *Controllers.SellableP
 	sellableProductRepository := Repositories.SellableProductRepositoryProvider(db)
 	promoItemRepository := Repositories.PromoItemRepositoryProvider(db)
 	receiptRepository := Repositories.ReceiptRepositoryProvider(db)
-	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository, receiptRepository, db)
+	sellableStockRepository := Repositories.SellableStockRepositoryProvider(db)
 	storageService := Services.StorageServiceProvider(minio2)
+	promoRepository := Repositories.PromoRepositoryProvider(db)
+	sellableProductService := Services.SellableProductServiceProvider(sellableProductRepository, promoItemRepository, receiptRepository, sellableStockRepository, db, storageService, promoRepository)
 	sellableProductController := Controllers.SellableProductControllerProvider(sellableProductService, storageService)
 	return sellableProductController
 }
@@ -132,6 +136,14 @@ func DIMaterialProduct(db *gorm.DB) *Controllers.MaterialProductController {
 	materialProductService := Services.MaterialProductServiceProvider(materialProductRepository, materialConversionRepository)
 	materialProductController := Controllers.MaterialProductControllerProvider(materialProductService)
 	return materialProductController
+}
+
+func DIPromo(db *gorm.DB) *Controllers.PromoController {
+	promoRepository := Repositories.PromoRepositoryProvider(db)
+	promoItemRepository := Repositories.PromoItemRepositoryProvider(db)
+	promoService := Services.PromoServiceProvider(promoRepository, promoItemRepository)
+	promoController := Controllers.PromoControllerProvider(promoService)
+	return promoController
 }
 
 func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
@@ -177,4 +189,12 @@ func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
 	purchaseService := Services.PurchaseServiceProvider(sellableProductRepository, materialProductRepository, materialStockRepository, sellableStockRepository, purchaseSellableProductRepository, purchaseMaterialProductRepository, purchaseRepository)
 	purchaseController := Controllers.PurchaseControllerProvider(purchaseService)
 	return purchaseController
+}
+
+func DiUser(db *gorm.DB, minio2 *minio.Client) *Controllers.UserController {
+	userRepository := Repositories.UserRepositoryProvider(db)
+	userService := Services.UserServiceProvider(userRepository)
+	storageService := Services.StorageServiceProvider(minio2)
+	userController := Controllers.UserControllerProvider(userService, storageService)
+	return userController
 }

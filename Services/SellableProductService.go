@@ -9,8 +9,8 @@ import (
 	"2024_akutansi_project/Utils"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -24,29 +24,47 @@ type (
 		FindById(id string, setWithMaterial bool) (res *Response.SellableResponse, statusCode int, err error)
 		Delete(id string) (statusCode int, objectKey string, err error)
 		Update(request *Dto.UpdateSellableProductDTO, id string) (statusCode int, oldImage string, err error)
-		UpdateStock(id string, request *Dto.SellableProductDTO) (statusCode int, err error)
+		UpdateStock(id string, request *Dto.SellableProductDTO, companyID string) (statusCode int, addMessage *string, err error)
 	}
 
 	SellableProductService struct {
 		SellableProductRepository Repositories.ISellableProductRepository
+		SellableStockRepository   Repositories.ISellableStockRepository
 		PromoItemRepository       Repositories.IPromoItemRepository
 		ReceiptRepository         Repositories.IReceiptRepository
+		StorageService            IStorageService
+		PromoRepository           Repositories.IPromoRepository
 		DB                        *gorm.DB
 	}
 )
 
-func SellableProductServiceProvider(sellableProductRepository Repositories.ISellableProductRepository, promoItemRepository Repositories.IPromoItemRepository, receiptRepository Repositories.IReceiptRepository, DB *gorm.DB) *SellableProductService {
+func SellableProductServiceProvider(sellableProductRepository Repositories.ISellableProductRepository, promoItemRepository Repositories.IPromoItemRepository, receiptRepository Repositories.IReceiptRepository, sellableStockRepository Repositories.ISellableStockRepository, DB *gorm.DB, storageService IStorageService, promoRepository Repositories.IPromoRepository) *SellableProductService {
 	return &SellableProductService{
 		SellableProductRepository: sellableProductRepository,
 		PromoItemRepository:       promoItemRepository,
+		StorageService:            storageService,
 		ReceiptRepository:         receiptRepository,
+		SellableStockRepository:   sellableStockRepository,
+		PromoRepository:           promoRepository,
 		DB:                        DB,
 	}
 }
 
+func (service *SellableProductService) presignedURL(objectKey string) (string, error) {
+	presignedURL, err := service.StorageService.SignedUrl(Dto.StorageRequest{
+		ObjectKey: objectKey,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return presignedURL, nil
+}
+
 func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSellableProduct) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
 	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, query)
-	log.Printf("sellableProducts", sellableProducts)
+
 	if err != nil {
 		return nil, Common.Meta{}, http.StatusInternalServerError, err
 	}
@@ -55,9 +73,9 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 
 	for _, sellableProduct := range sellableProducts {
 		status := ""
-		if *sellableProduct.Status {
+		if *sellableProduct.Status && sellableProduct.CurrentQuantity > 0 {
 			status = "Aktif"
-		} else if !*sellableProduct.Status && sellableProduct.CurrentQuantity <= 0 {
+		} else if sellableProduct.CurrentQuantity == 0 {
 			status = "Habis"
 		} else {
 			status = "Non-Aktif"
@@ -68,14 +86,20 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 			promo = sellableProduct.PromoItems[0].Promo
 		}
 
+		presignedURL, err := service.presignedURL(sellableProduct.Image)
+		if err != nil {
+			return nil, Common.Meta{}, http.StatusInternalServerError, err
+		}
+
 		res = append(res, &Response.SellableResponse{
 			ID:              sellableProduct.ID,
 			Name:            &sellableProduct.Name,
-			Image:           &sellableProduct.Image,
+			Image:           &presignedURL,
 			CurrentQuantity: &sellableProduct.CurrentQuantity,
 			Price:           &sellableProduct.Price,
 			Category:        sellableProduct.Category,
 			StatusDisplay:   &status,
+			Description:     &sellableProduct.Description,
 			Promo:           promo,
 		})
 	}
@@ -85,56 +109,94 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 	return res, meta, http.StatusOK, nil
 }
 
-func (service *SellableProductService) UpdateStock(id string, request *Dto.SellableProductDTO) (statusCode int, err error) {
+func (service *SellableProductService) UpdateStock(id string, request *Dto.SellableProductDTO, companyID string) (statusCode int, addMessage *string, err error) {
+	var status bool
 
-	if request.PrefixDeletePromo != nil && *request.PrefixDeletePromo {
-		result, err := service.PromoItemRepository.DeleteBySellableProductID(id)
+	if request.PromoID != nil {
+		_, err := service.PromoRepository.FindById(*request.PromoID)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return http.StatusNotFound, nil, fmt.Errorf("promo dengan id %s tidak ditemukan", *request.PromoID)
+		}
+
 		if err != nil {
-			return http.StatusInternalServerError, err
+			return http.StatusInternalServerError, nil, err
 		}
-
-		if result.RowsAffected == 0 {
-			return http.StatusNotFound, nil
-		}
-
-		return http.StatusOK, nil
 	}
 
-	if request.PromoID != nil && *request.PromoID != "" {
-		promoItems := &Models.PromoItem{}
+	product, err := service.SellableProductRepository.FindByID(id, false)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return http.StatusNotFound, nil, err
+	}
+
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	if !product.HasReceipt {
+		if request.CurrentQuantity != nil && product.CurrentQuantity != *request.CurrentQuantity {
+			return http.StatusBadRequest, nil, errors.New("product tidak bisa diupdate, harus melakukan pembelian terlebih dahulu")
+		}
+	}
+
+	if request.PromoID == nil {
+		_, isExist, _ := service.PromoItemRepository.FindBySellableID(id)
+
+		if isExist {
+			if err := service.PromoItemRepository.DeleteBySellableProductID(id); err != nil {
+				return http.StatusInternalServerError, nil, err
+			}
+		}
+	} else {
+		promoItems := &Models.PromoItem{
+			SellableProductID: id,
+		}
+
 		if request.PromoID != nil {
-			promoItems.SellableProductID = id
 			promoItems.PromoID = *request.PromoID
 		}
 
-		_, result, err := service.PromoItemRepository.UpdateOrCreate(promoItems)
+		_, _, err = service.PromoItemRepository.UpdateOrCreate(promoItems)
 
 		if err != nil {
-			return http.StatusInternalServerError, err
+			return http.StatusInternalServerError, nil, err
 		}
 
-		if result.RowsAffected == 0 {
-			return http.StatusNotFound, nil
+		promoItem, _, err := service.PromoItemRepository.FindBySellableID(id)
+		if err != nil {
+			return http.StatusInternalServerError, nil, err
+		}
+
+		enddate, err := time.Parse(Common.Layout, promoItem.Promo.EndDate)
+
+		if err != nil {
+			return http.StatusInternalServerError, nil, err
+		}
+
+		startDate, err := time.Parse(Common.Layout, promoItem.Promo.StartDate)
+
+		if time.Now().After(enddate) {
+			prefMessage := "Promo yang anda masukkan sudah berakhir di tanggal " + enddate.Format("02-01-2006") + ", Promo tidak akan tampil di layar kasir."
+			addMessage = &prefMessage
+		} else if time.Now().Before(startDate) {
+			prefMessage := "Promo yang anda masukkan belum dimulai!, Promo akan bisa dipakai dan ditampilkan di kasir di tanggal " + startDate.Format("02-01-2006")
+			addMessage = &prefMessage
 		}
 	}
 
-	sellableProduct := &Models.SellableProduct{}
-
-	if request.CurrentQuantity != nil {
-		sellableProduct.CurrentQuantity = *request.CurrentQuantity
-	}
 	if request.Status != nil {
-		sellableProduct.Status = request.Status
-	}
-	if request.Description != nil {
-		sellableProduct.Description = *request.Description
+		status = *request.Status
 	}
 
-	if err = service.SellableProductRepository.Update(id, sellableProduct); err != nil {
-		return http.StatusInternalServerError, err
+	if err = service.SellableProductRepository.Update(id,
+		&Models.SellableProduct{
+			CurrentQuantity: *request.CurrentQuantity,
+			Status:          &status,
+			Description:     *request.Description,
+		}); err != nil {
+		return http.StatusInternalServerError, nil, err
 	}
 
-	return http.StatusOK, nil
+	return http.StatusOK, addMessage, nil
 }
 
 func (service *SellableProductService) Create(request *Dto.CreateSellableProductDTO) (res *Response.SellableResponse, err error) {
@@ -174,7 +236,7 @@ func (service *SellableProductService) Create(request *Dto.CreateSellableProduct
 		return res, err
 	}
 
-	if !request.HasReceipt && request.MaterialsObj == nil {
+	if !request.HasReceipt && request.MaterialsObj != nil {
 		return res, errors.New("if don't have receipt can't send materials")
 	}
 
@@ -224,7 +286,7 @@ func (service *SellableProductService) UnAssignMaterial(request *Dto.UnAssignMat
 }
 
 func (s *SellableProductService) FindById(id string, setWithMaterial bool) (res *Response.SellableResponse, statusCode int, err error) {
-	sellableProduct, err := s.SellableProductRepository.FindByID(id)
+	sellableProduct, err := s.SellableProductRepository.FindByID(id, setWithMaterial)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, http.StatusNotFound, err
@@ -234,18 +296,45 @@ func (s *SellableProductService) FindById(id string, setWithMaterial bool) (res 
 		return nil, http.StatusInternalServerError, err
 	}
 
+	presignedURL, err := s.presignedURL(sellableProduct.Image)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+
+	}
+
+	var promo string
+	isExpired := false
+
+	if len(sellableProduct.PromoItems) > 0 {
+		promo = sellableProduct.PromoItems[0].PromoID
+		promoEndDate, err := time.Parse(Common.Layout, sellableProduct.PromoItems[0].Promo.EndDate)
+
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+
+		if time.Now().After(promoEndDate) {
+			isExpired = true
+		}
+	}
+
 	if setWithMaterial {
 		res = Response.ToSellableResponse(sellableProduct)
 	} else {
 		res = &Response.SellableResponse{
 			ID:              sellableProduct.ID,
 			Name:            &sellableProduct.Name,
-			Image:           &sellableProduct.Image,
+			Image:           &presignedURL,
+			Status:          sellableProduct.Status,
 			CurrentQuantity: &sellableProduct.CurrentQuantity,
 			Description:     &sellableProduct.Description,
-			PromoItems:      sellableProduct.PromoItems,
 			Category:        sellableProduct.Category,
 			HasReceipt:      &sellableProduct.HasReceipt,
+			IsExpiredPromo:  &isExpired,
+		}
+
+		if promo != "" {
+			res.PromoID = &promo
 		}
 	}
 
@@ -270,7 +359,7 @@ func (s *SellableProductService) Delete(id string) (statusCode int, objectKey st
 		}
 	}()
 
-	data, err := s.SellableProductRepository.FindByID(id)
+	data, err := s.SellableProductRepository.FindByID(id, false)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return http.StatusBadRequest, "", err
@@ -296,7 +385,7 @@ func (s *SellableProductService) Delete(id string) (statusCode int, objectKey st
 }
 
 func (s *SellableProductService) Update(dto *Dto.UpdateSellableProductDTO, id string) (statusCode int, oldImage string, err error) {
-	product, err := s.SellableProductRepository.FindByID(id)
+	product, err := s.SellableProductRepository.FindByID(id, false)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return http.StatusBadRequest, "", err

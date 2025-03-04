@@ -110,13 +110,13 @@ func FilterManagementStock(query string) func(*gorm.DB) *gorm.DB {
 		}
 
 		if query == "active" {
-			db = db.Where("status = ?", true)
-		} else if query == "inactive" {
-			db = db.Where("status = ?", false)
-		} else if query == "empty" {
-			db = db.Where("current_quantity = ?", 0)
-		} else {
-			db = db.Where("status = ?", true)
+			return db.Where("status = ?", true)
+		}
+		if query == "inactive" {
+			return db.Where("status = ?", false)
+		}
+		if query == "empty" {
+			return db.Where("current_quantity = ?", 0)
 		}
 
 		return db
@@ -130,5 +130,34 @@ func FilterDateInvoice(startDate string, endDate string) func(*gorm.DB) *gorm.DB
 		}
 
 		return db.Where("DATE(created_at) BETWEEN ? AND ?", startDate, endDate)
+	}
+}
+
+func FilterHistoryTransaction(query string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if query == "" {
+			return db
+		}
+
+		if query == "paid" {
+			return db.Where("refund_at IS NULL AND status = ?", true)
+		}
+		if query == "refund" {
+			return db.Where("refund_at IS NOT NULL AND status = ?", true)
+		}
+		if query == "unpaid" {
+			return db.Where("status = ?", false)
+		}
+
+		return db
+	}
+}
+func FilterType(types string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if types == "" {
+			return db
+		}
+
+		return db.Where("type = ?", types)
 	}
 }

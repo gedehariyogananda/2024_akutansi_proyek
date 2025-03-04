@@ -9,15 +9,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func StorageRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client, minio *minio.Client) {
-	route := c.Group("/storage")
+func UserRoute(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client, minio *minio.Client) {
+	route := c.Group("/users")
 
 	m := Di.DICommonMiddleware(db, redis)
 
 	route.Use(m.RolesAll)
 
-	StorageController := Di.DIStorage(minio)
+	UserController := Di.DiUser(db, minio)
 
-	route.GET("/signed-url", StorageController.GetSignedUrl)
+	route.PUT("/upload-avatar", UserController.UploadAvatar)
 
 }

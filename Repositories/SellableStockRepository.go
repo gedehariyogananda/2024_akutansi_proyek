@@ -8,6 +8,7 @@ import (
 
 type (
 	ISellableStockRepository interface {
+		FindByLatestNotExp(companyID string) (sellableStock *Models.SellableStock, err error)
 		FindBySellableStockNotExp(sellableStockID string) (sellableStock []*Models.SellableStock, err error)
 		UpdateCurrent(trx *gorm.DB, sellableStockID string, qtyClient int) error
 		SumCurrentQuantity(sellableStockID string) (total int, err error)
@@ -23,6 +24,18 @@ type (
 
 func SellableStockRepositoryProvider(db *gorm.DB) *SellableStockRepository {
 	return &SellableStockRepository{DB: db}
+}
+
+func (r *SellableStockRepository) FindByLatestNotExp(companyID string) (sellableStock *Models.SellableStock, err error) {
+	if err := r.DB.Where("expired_date > now()").
+		Where("current_quantity > 0").
+		Where("company_id = ?", companyID).
+		Order("created_at desc").
+		First(&sellableStock).Error; err != nil {
+		return nil, err
+	}
+
+	return sellableStock, nil
 }
 
 func (r *SellableStockRepository) FindBySellableStockNotExp(sellableStockID string) (sellableStock []*Models.SellableStock, err error) {

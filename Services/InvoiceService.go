@@ -20,9 +20,10 @@ type (
 	IInvoiceService interface {
 		CreateInvoicePurchased(requestClient *Dto.InvoiceRequestDTO, companyID string) (invoice *Models.Invoice, statusCode int, err error)
 		GetAllByCompany(companyID string, query *Dto.GetHistoryInvoice) (response []Response.InvoiceResponse, meta Common.Meta, statusCode int, err error)
-		GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.InvoiceResponse, statusCode int, err error)
+		GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.CoreInvoiceRes, statusCode int, err error)
 		UpdateRefund(companyID string, id string) (statusCode int, err error)
 		StatisticSales(companyID string, date string) (data interface{}, statusCode int, err error)
+		UpdatePaid(requestClient *Dto.PaidRequestDTO, companyID string, id string) (invoice *Models.Invoice, statusCode int, err error)
 	}
 
 	InvoiceService struct {
@@ -36,11 +37,13 @@ type (
 		journalEntriesRepository  Repositories.IJournalEntriesRepository
 		accountRepository         Repositories.IAccountRepository
 		journalEntriesService     IJournalEntriesService
+		promoRepository           Repositories.IPromoRepository
+		taxRepository             Repositories.ITaxRepository
 		DB                        *gorm.DB
 	}
 )
 
-func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceItemRepository Repositories.IInvoiceItemRepository, sellableProductRepository Repositories.ISellableProductRepository, receiptProductRepository Repositories.IReceiptRepository, materialProductRepository Repositories.IMaterialProductRepository, sellableStockRepository Repositories.ISellableStockRepository, materialStockRepository Repositories.IMaterialStockRepository, journalEntries Repositories.IJournalEntriesRepository, accountRepository Repositories.IAccountRepository, journalEntriesService IJournalEntriesService, DB *gorm.DB) *InvoiceService {
+func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, invoiceItemRepository Repositories.IInvoiceItemRepository, sellableProductRepository Repositories.ISellableProductRepository, receiptProductRepository Repositories.IReceiptRepository, materialProductRepository Repositories.IMaterialProductRepository, sellableStockRepository Repositories.ISellableStockRepository, materialStockRepository Repositories.IMaterialStockRepository, journalEntries Repositories.IJournalEntriesRepository, accountRepository Repositories.IAccountRepository, journalEntriesService IJournalEntriesService, DB *gorm.DB, promoRepository Repositories.IPromoRepository, taxRepository Repositories.ITaxRepository) *InvoiceService {
 	return &InvoiceService{
 		invoiceRepository:         invoiceRepository,
 		invoiceItemRepository:     invoiceItemRepository,
@@ -52,6 +55,8 @@ func InvoiceServiceProvider(invoiceRepository Repositories.IInvoiceRepository, i
 		journalEntriesRepository:  journalEntries,
 		accountRepository:         accountRepository,
 		journalEntriesService:     journalEntriesService,
+		promoRepository:           promoRepository,
+		taxRepository:             taxRepository,
 		DB:                        DB,
 	}
 }
@@ -73,16 +78,30 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 		}
 	}()
 
+	tax, err := invoiceService.taxRepository.FindByID(requestClient.TaxID)
+	if err != nil {
+		return nil, http.StatusNotFound, fmt.Errorf("tax tidak ditemukan: %s", requestClient.TaxID)
+	}
+
+	resultTax := requestClient.SubTotal * (float64(tax.Precentage) / 100)
+
+	if requestClient.MoneyReceived != nil {
+		if (requestClient.SubTotal + resultTax) > *requestClient.MoneyReceived {
+			return nil, http.StatusBadRequest, errors.New("uang yang diterima tidak cukup")
+		}
+	}
+
 	invoiceDataClient := &Models.Invoice{
 		CustomerName:  requestClient.CustomerName,
-		PhoneNumber:   &requestClient.PhoneNumber,
+		PhoneNumber:   requestClient.PhoneNumber,
 		Note:          requestClient.Notes,
 		TaxID:         requestClient.TaxID,
 		PaymentMethod: requestClient.PaymentMethod,
 		InvoiceNumber: requestClient.InvoiceNumber,
 		CompanyID:     companyID,
-		Status:        requestClient.Status,
-		Tax:           requestClient.Tax,
+		MoneyReceived: requestClient.MoneyReceived,
+		Status:        &requestClient.Status,
+		Tax:           resultTax,
 		SubTotal:      requestClient.SubTotal,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
@@ -106,6 +125,10 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 			return nil, http.StatusForbidden, errors.New("FORBIDDEN_ACCESS")
 		}
 
+		if !*sellableProduct.Status {
+			return nil, http.StatusBadRequest, fmt.Errorf("produk %s tidak aktif, tidak dapat dipesan!", sellableProduct.Name)
+		}
+
 		// check stock availability
 		if sellableProduct.CurrentQuantity < purchasedItem.Qty {
 			lowStockErrors = append(lowStockErrors, fmt.Sprintf("stok produk %s tidak mencukupi (tersedia: %d %s, dibutuhkan: %d %s)",
@@ -119,14 +142,31 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 		}
 
 		// add invoice item
+		var promoAmount *float64
+		if purchasedItem.PromoID != nil {
+			promo, err := invoiceService.promoRepository.FindById(*purchasedItem.PromoID)
+			if err != nil {
+				return nil, http.StatusNotFound, fmt.Errorf("promo tidak ditemukan: %s", *purchasedItem.PromoID)
+			}
+
+			amount := promo.Amount * float64(purchasedItem.Qty)
+			promoAmount = &amount
+		}
+
+		priceAll := sellableProduct.Price * float64(purchasedItem.Qty)
+
+		if promoAmount != nil {
+			priceAll -= *promoAmount
+		}
+
 		invoiceItem := &Models.InvoiceItem{
 			InvoiceID:         invoice.ID,
 			SellableProductID: sellableProduct.ID,
 			Quantity:          purchasedItem.Qty,
 			CompanyID:         companyID,
-			Price:             purchasedItem.PriceAll,
-			PromoID:           &purchasedItem.PromoID,
-			PromoAmount:       &purchasedItem.PromoAmount,
+			Price:             priceAll,
+			PromoID:           purchasedItem.PromoID,
+			PromoAmount:       promoAmount,
 		}
 
 		if err = invoiceService.invoiceItemRepository.Store(trx, invoiceItem); err != nil {
@@ -151,13 +191,13 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 	}
 
 	// true === lunas
-	if invoiceDataClient.Status {
+	if *invoiceDataClient.Status {
 		// insert journal entry
 		note := "pembayaran transaksi kasir"
 		if err := invoiceService.journalEntriesService.InsertJournalCashier(Common.JournalEntryParams{
 			CompanyID:       companyID,
 			SubTotal:        invoiceDataClient.SubTotal,
-			Tax:             invoiceDataClient.Tax,
+			Tax:             resultTax,
 			Note:            note,
 			TransactionCode: invoiceDataClient.InvoiceNumber,
 			AdditionalData:  nil,
@@ -291,20 +331,29 @@ func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *D
 
 		status := ""
 
-		if invoice.Status {
+		if invoice.RefundAt != nil {
+			status = "Refund"
+		} else if *invoice.Status {
 			status = "Lunas"
 		} else {
 			status = "Belum Lunas"
+		}
+
+		var refundAt *string
+		if invoice.RefundAt != nil {
+			refundData := invoice.RefundAt.Format("2006-01-02 15:04:05")
+			refundAt = &refundData
 		}
 
 		res = append(res, Response.InvoiceResponse{
 			ID:            invoice.ID,
 			CustomerName:  invoice.CustomerName,
 			InvoiceNumber: invoice.InvoiceNumber,
-			SubTotal:      invoice.SubTotal,
+			SubTotal:      invoice.SubTotal + invoice.Tax,
 			Status:        &status,
 			CreatedAt:     invoice.CreatedAt.Format("2006-01-02 15:04:05"),
 			CountSale:     &total,
+			RefundAt:      refundAt,
 		})
 
 	}
@@ -314,34 +363,81 @@ func (invoiceService *InvoiceService) GetAllByCompany(companyID string, query *D
 	return res, meta, http.StatusOK, nil
 }
 
-func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.InvoiceResponse, statusCode int, err error) {
-	invoice, _ := invoiceService.invoiceRepository.GetByInvoiceID(companyID, invoiceID)
+func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.CoreInvoiceRes, statusCode int, err error) {
+	invoice, err := invoiceService.invoiceRepository.GetByInvoiceID(companyID, invoiceID)
 
-	status := ""
+	if err != nil {
+		return Response.CoreInvoiceRes{}, http.StatusNotFound, err
+	}
 
-	if invoice.Status {
+	var status string
+	var total int
+
+	if invoice.RefundAt != nil {
+		status = "Refund"
+	} else if *invoice.Status {
 		status = "Lunas"
 	} else {
 		status = "Belum Lunas"
 	}
 
-	total := 0
-
-	for _, item := range invoice.InvoiceItems {
-		total += item.Quantity
+	var refundAt *string
+	if invoice.RefundAt != nil {
+		refundDate := invoice.RefundAt.Format("2006-01-02 15:05:05")
+		refundAt = &refundDate
 	}
 
-	res := Response.InvoiceResponse{
-		ID:           invoice.ID,
-		CustomerName: invoice.CustomerName,
-		PhoneNumber:  invoice.PhoneNumber,
-		CreatedAt:    invoice.CreatedAt.Format("02/01/2006"),
-		Status:       &status,
-		Note:         &invoice.Note,
-		SubTotal:     invoice.SubTotal,
-		Tax:          &invoice.Tax,
-		CountSale:    &total,
-		InvoiceItems: &invoice.InvoiceItems,
+	var invItemRes []Response.InvItemRes
+
+	for _, item := range invoice.InvoiceItems {
+		var promoAmount *float64
+
+		total += item.Quantity
+		resultTotal := float64(item.Quantity) * item.SellableProduct.Price
+
+		if item.PromoID != nil {
+			resultTotal -= *item.PromoAmount
+
+			promo, err := invoiceService.promoRepository.FindById(*item.PromoID)
+			if err != nil {
+				return Response.CoreInvoiceRes{}, http.StatusNotFound, err
+			}
+
+			promoAmount = &promo.Amount
+		}
+
+		invItemRes = append(invItemRes, Response.InvItemRes{
+			SellableProductID: item.SellableProductID,
+			Quantity:          item.Quantity,
+			Name:              item.SellableProduct.Name,
+			Price:             item.SellableProduct.Price,
+			ResultTotal:       &resultTotal,
+			PromoAmount:       promoAmount,
+		})
+	}
+
+	var moneyBack *float64
+	if invoice.MoneyReceived != nil {
+		value := *invoice.MoneyReceived - (invoice.SubTotal + invoice.Tax)
+		moneyBack = &value
+	}
+
+	res := Response.CoreInvoiceRes{
+		ID:            invoice.ID,
+		CustomerName:  invoice.CustomerName,
+		PhoneNumber:   invoice.PhoneNumber,
+		CreatedAt:     invoice.CreatedAt.Format("02/01/2006"),
+		Status:        &status,
+		Note:          invoice.Note,
+		SubTotal:      invoice.SubTotal,
+		Tax:           &invoice.Tax,
+		CountSale:     total,
+		InvoiceItems:  invItemRes,
+		MoneyReceived: invoice.MoneyReceived,
+		Total:         invoice.SubTotal + invoice.Tax,
+		MoneyBack:     moneyBack,
+		InvoiceNumber: invoice.InvoiceNumber,
+		RefundAt:      refundAt,
 	}
 
 	return res, http.StatusOK, nil
@@ -353,8 +449,17 @@ func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) 
 	if err != nil {
 		return http.StatusNotFound, err
 	}
+
+	// var status *bool
+	// if *invoice.Status {
+	// 	inStatus := false
+	// 	status = &inStatus
+	// }
+
 	if invoice.RefundAt != nil {
 		return http.StatusBadRequest, errors.New("invoice sudah di refund")
+	} else if !*invoice.Status {
+		return http.StatusBadRequest, errors.New("invoice belum lunas, tidak bisa di refund")
 	}
 
 	if err = invoiceService.invoiceRepository.Update(id, &Models.Invoice{
@@ -363,6 +468,11 @@ func (invoiceService *InvoiceService) UpdateRefund(companyID string, id string) 
 			return &now
 		}(),
 	}); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	// update nil moneyReceived
+	if err = invoiceService.invoiceRepository.UpdateToNull(id, "money_received"); err != nil {
 		return http.StatusInternalServerError, err
 	}
 
@@ -430,4 +540,51 @@ func (invoiceService *InvoiceService) StatisticSales(companyID string, date stri
 	}
 
 	return data, http.StatusOK, nil
+}
+
+func (invoiceService *InvoiceService) UpdatePaid(requestClient *Dto.PaidRequestDTO, companyID string, id string) (invoice *Models.Invoice, statusCode int, err error) {
+	invoice, err = invoiceService.invoiceRepository.FindByID(id, companyID)
+
+	if err != nil {
+		return nil, http.StatusNotFound, err
+	}
+
+	if *invoice.Status {
+		if invoice.RefundAt == nil {
+			return nil, http.StatusBadRequest, errors.New("invoice sudah lunas")
+		}
+	}
+
+	var status *bool
+	inStatus := true
+	status = &inStatus
+
+	if err = invoiceService.invoiceRepository.Update(id, &Models.Invoice{
+		Status:        status,
+		MoneyReceived: &requestClient.MoneyReceived,
+	}); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	// update nil refundAt
+	if err = invoiceService.invoiceRepository.UpdateToNull(id, "refund_at"); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	// insert journal entry
+	note := "pembayaran transaksi kasir"
+	if err := invoiceService.journalEntriesService.InsertJournalCashier(Common.JournalEntryParams{
+		CompanyID:       companyID,
+		SubTotal:        invoice.SubTotal,
+		Tax:             invoice.Tax,
+		Note:            note,
+		TransactionCode: invoice.InvoiceNumber,
+		AdditionalData:  nil,
+	}, true, nil); err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
+	invoice.MoneyReceived = &requestClient.MoneyReceived
+
+	return invoice, http.StatusOK, nil
 }

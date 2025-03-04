@@ -7,6 +7,7 @@ import (
 	"2024_akutansi_project/Services"
 	"2024_akutansi_project/Utils"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,7 @@ type (
 		FindAll(ctx *gin.Context)
 		TrialBalanceReport(ctx *gin.Context)
 		FinancialBalanceReport(ctx *gin.Context)
+		ProfitOrLossReport(ctx *gin.Context)
 	}
 
 	JournalEntriesController struct {
@@ -104,4 +106,24 @@ func (controller *JournalEntriesController) FinancialBalanceReport(ctx *gin.Cont
 		meta,
 		http.StatusOK,
 	)
+}
+
+func (controller *JournalEntriesController) ProfitOrLossReport(ctx *gin.Context) {
+	yearString := ctx.Query("year")
+	year, err := strconv.Atoi(yearString)
+
+	if err != nil {
+		Helper.SetErrorResponse(ctx, "Tahun tidak valid", http.StatusBadRequest)
+		return
+	}
+
+	res, err := controller.JournalEntriesService.ProfitLossReport(year)
+
+	if err != nil {
+		statusCode := Utils.HandleStatusCode(err)
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetSuccessResponse(ctx, "Berhasil mendapatkan laporan laba rugi", res, http.StatusOK)
 }

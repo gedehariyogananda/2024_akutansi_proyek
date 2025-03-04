@@ -6,10 +6,11 @@ import (
 )
 
 type PromoItem struct {
-	ID                string `json:"id"`
-	PromoID           string `json:"promo_id"`
-	SellableProductID string `json:"sellable_product_id"`
-	Promo             *Promo `json:"promo,omitempty"`
+	ID                string           `json:"id"`
+	PromoID           string           `json:"promo_id"`
+	SellableProductID string           `json:"sellable_product_id"`
+	SellableProduct   *SellableProduct `json:"sellable_product,omitempty"`
+	Promo             *Promo           `json:"promo,omitempty"`
 }
 
 // create uuid

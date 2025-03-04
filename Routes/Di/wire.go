@@ -73,6 +73,8 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 		Repositories.TransactionRepositoryProvider,
 		Services.JournalEntriesProvider,
 		Repositories.PurchaseRepositoryProvider,
+		Repositories.PromoRepositoryProvider,
+		Repositories.TaxRepositoryProvider,
 
 		wire.Bind(new(Controllers.IInvoiceController), new(*Controllers.InvoiceController)),
 		wire.Bind(new(Services.IInvoiceService), new(*Services.InvoiceService)),
@@ -86,8 +88,10 @@ func DIInvoice(db *gorm.DB) *Controllers.InvoiceController {
 		wire.Bind(new(Repositories.IJournalEntriesRepository), new(*Repositories.JournalEntriesRepository)),
 		wire.Bind(new(Repositories.IMaterialProductRepository), new(*Repositories.MaterialProductRepository)),
 		wire.Bind(new(Services.IJournalEntriesService), new(*Services.JournalEntriesService)),
+		wire.Bind(new(Repositories.IPromoRepository), new(*Repositories.PromoRepository)),
 		wire.Bind(new(Repositories.ITransactionRepository), new(*Repositories.TransactionRepository)),
 		wire.Bind(new(Repositories.IPurchaseRepository), new(*Repositories.PurchaseRepository)),
+		wire.Bind(new(Repositories.ITaxRepository), new(*Repositories.TaxRepository)),
 	),
 	))
 
@@ -225,13 +229,16 @@ func DISellableProduct(db *gorm.DB, minio *minio.Client) *Controllers.SellablePr
 		Services.SellableProductServiceProvider,
 		Services.StorageServiceProvider,
 		Controllers.SellableProductControllerProvider,
+		Repositories.SellableStockRepositoryProvider,
+		Repositories.PromoRepositoryProvider,
 
-		// Bind interfaces ke implementasinya
 		wire.Bind(new(Repositories.ISellableProductRepository), new(*Repositories.SellableProductRepository)),
 		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
 		wire.Bind(new(Repositories.IReceiptRepository), new(*Repositories.ReceiptRepository)),
 		wire.Bind(new(Services.ISellableProductService), new(*Services.SellableProductService)),
 		wire.Bind(new(Services.IStorageService), new(*Services.StorageService)),
+		wire.Bind(new(Repositories.IPromoRepository), new(*Repositories.PromoRepository)),
+		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
 		wire.Bind(new(Controllers.ISellableProductController), new(*Controllers.SellableProductController)),
 	),
 	))
@@ -256,6 +263,22 @@ func DIMaterialProduct(db *gorm.DB) *Controllers.MaterialProductController {
 	return &Controllers.MaterialProductController{}
 }
 
+func DIPromo(db *gorm.DB) *Controllers.PromoController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.PromoRepositoryProvider,
+		Services.PromoServiceProvider,
+		Controllers.PromoControllerProvider,
+		Repositories.PromoItemRepositoryProvider,
+
+		wire.Bind(new(Controllers.IPromoController), new(*Controllers.PromoController)),
+		wire.Bind(new(Services.IPromoService), new(*Services.PromoService)),
+		wire.Bind(new(Repositories.IPromoRepository), new(*Repositories.PromoRepository)),
+		wire.Bind(new(Repositories.IPromoItemRepository), new(*Repositories.PromoItemRepository)),
+	),
+	))
+
+	return &Controllers.PromoController{}
+}
 func DIStockOpname(db *gorm.DB) *Controllers.StockOpnameController {
 	panic(wire.Build(wire.NewSet(
 		Repositories.StockOpnameRepositoryProvider,
@@ -345,5 +368,19 @@ func DiPurchase(db *gorm.DB) *Controllers.PurchaseController {
 		wire.Bind(new(Repositories.IPurchaseMaterialProductRepository), new(*Repositories.PurchaseMaterialProductRepository)),
 		wire.Bind(new(Repositories.IMaterialStockRepository), new(*Repositories.MaterialStockRepository)),
 		wire.Bind(new(Repositories.ISellableStockRepository), new(*Repositories.SellableStockRepository)),
+	)))
+}
+
+func DiUser(db *gorm.DB, minio *minio.Client) *Controllers.UserController {
+	panic(wire.Build(wire.NewSet(
+		Repositories.UserRepositoryProvider,
+		Services.UserServiceProvider,
+		Controllers.UserControllerProvider,
+		Services.StorageServiceProvider,
+
+		wire.Bind(new(Controllers.IUserController), new(*Controllers.UserController)),
+		wire.Bind(new(Services.IUserService), new(*Services.UserService)),
+		wire.Bind(new(Repositories.IUserRepository), new(*Repositories.UserRepository)),
+		wire.Bind(new(Services.IStorageService), new(*Services.StorageService)),
 	)))
 }

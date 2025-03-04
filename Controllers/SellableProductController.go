@@ -72,9 +72,16 @@ func (controller *SellableProductController) UpdateSellableProduct(ctx *gin.Cont
 		return
 	}
 
-	statusCode, err := controller.SellableProductService.UpdateStock(ctx.Param("id"), &updateSellableDTO)
+	statusCode, addMessage, err := controller.SellableProductService.UpdateStock(ctx.Param("id"), &updateSellableDTO, ctx.GetString("company_id"))
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	if addMessage != nil {
+		Helper.SetSuccessResponse(ctx, *addMessage, gin.H{
+			"SET_MESSAGE_PROMO": true,
+		}, statusCode)
 		return
 	}
 
@@ -109,10 +116,12 @@ func (controller *SellableProductController) Create(ctx *gin.Context) {
 		return
 	}
 
-	for _, material := range *materials {
-		if material.MaterialID == "" || material.Quantity <= 0 {
-			Helper.SetErrorResponse(ctx, "Kesalahan Input Data Resep", 400)
-			return
+	if materials != nil {
+		for _, material := range *materials {
+			if material.MaterialID == "" || material.Quantity <= 0 {
+				Helper.SetErrorResponse(ctx, "Kesalahan Input Data Resep", 400)
+				return
+			}
 		}
 	}
 	// VALIDATION SECTION END
