@@ -11,7 +11,7 @@ type RegisterRequest struct {
 type LoginOwnerRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=8"`
-	Device   string `json:"device" validate:"required"`
+	//Device   string `json:"device" validate:"required"`
 }
 
 type LoginEmployeeRequest struct {

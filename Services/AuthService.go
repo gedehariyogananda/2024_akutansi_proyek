@@ -141,19 +141,19 @@ func (service *AuthService) LoginOwner(ctx context.Context, request *Dto.LoginOw
 		return "", http.StatusInternalServerError, errors.New("error set redis")
 	}
 
-	logActivity := &Models.LogActivity{
-		UserID: ownerData.ID,
-		Name:   "Login",
-		Device: request.Device,
-	}
+	//logActivity := &Models.LogActivity{
+	//	UserID: ownerData.ID,
+	//	Name:   "Login",
+	//	Device: request.Device,
+	//}
 
-	fmt.Println("logActivity", logActivity)
+	//fmt.Println("logActivity", logActivity)
 
-	err = service.logActivityRespository.Create(logActivity)
+	//err = service.logActivityRespository.Create(logActivity)
 
-	if err != nil {
-		return "", http.StatusInternalServerError, errors.New("error create log activity")
-	}
+	//if err != nil {
+	//	return "", http.StatusInternalServerError, errors.New("error create log activity")
+	//}
 
 	return token, http.StatusOK, err
 }
