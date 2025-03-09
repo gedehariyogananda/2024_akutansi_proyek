@@ -17,7 +17,7 @@ type (
 		GetSpesifySalesHistory(ctx *gin.Context)
 		UpdateRefund(ctx *gin.Context)
 		StatisticSales(ctx *gin.Context)
-		UpdatePaid(ctx *gin.Context)
+		UpdateCashier(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -123,28 +123,26 @@ func (controller *InvoiceController) StatisticSales(ctx *gin.Context) {
 
 }
 
-func (controller *InvoiceController) UpdatePaid(ctx *gin.Context) {
-	var requestPaidDTO Dto.PaidRequestDTO
+func (controller *InvoiceController) UpdateCashier(ctx *gin.Context) {
+	var request Dto.InvoiceRequestDTO
 
-	if err := ctx.ShouldBindJSON(&requestPaidDTO); err != nil {
+	if err := ctx.ShouldBindJSON(&request); err != nil {
 		Helper.SetErrorResponse(ctx, "Kesalahan Input Data", 400)
 		return
 	}
 
-	if validationErrors := Utils.ValidateRequest(ctx, &requestPaidDTO); validationErrors != nil {
+	if validationErrors := Utils.ValidateRequest(ctx, &request); validationErrors != nil {
 		Helper.SetValidationErrorResponse(ctx, validationErrors)
 		return
 	}
 
-	invoice, statusCode, err := controller.InvoiceService.UpdatePaid(&requestPaidDTO, ctx.GetString("company_id"), ctx.Param("invoiceID"))
+	invoice, statusCode, err := controller.InvoiceService.UpdateCashier(&request, ctx.GetString("company_id"), ctx.Param("invoiceID"))
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return
 	}
 
-	Helper.SetSuccessResponse(ctx, "Berhasil melakukan pelunasan!", gin.H{
+	Helper.SetSuccessResponse(ctx, "Berhasil melakukan update kasir!", gin.H{
 		"id":             invoice.ID,
-		"money_received": invoice.MoneyReceived,
-		"money_back":     *invoice.MoneyReceived - (invoice.SubTotal + invoice.Tax),
 	}, statusCode)
 }

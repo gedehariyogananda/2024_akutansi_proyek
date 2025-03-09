@@ -12,6 +12,7 @@ import (
 type (
 	IInvoiceItemRepository interface {
 		Store(trx *gorm.DB, invoiceItem *Models.InvoiceItem) error
+		DeleteByInvoiceID(trx *gorm.DB, invoiceID string) error
 		GetMostProductSold(companyID string, date string) (invoiceItems Response.InvoiceItemResponse, err error)
 		GetBestSellingProducts(companyID, startDate, endDate string, limit int) (invoiceItems []Response.InvoiceItemResponse, err error)
 	}
@@ -77,4 +78,17 @@ func (r *InvoiceItemRepository) GetBestSellingProducts(companyID, startDate, end
 	}
 
 	return invoiceItems, nil
+}
+
+func (r *InvoiceItemRepository) DeleteByInvoiceID(trx *gorm.DB, invoiceID string) error {
+	db := trx
+	if db == nil {
+		db = r.DB
+	}
+
+	if err := db.Where("invoice_id = ?", invoiceID).Delete(&Models.InvoiceItem{}).Error; err != nil {
+		return fmt.Errorf("error saat menghapus invoice item: %w", err)
+	}
+
+	return nil
 }

@@ -23,7 +23,7 @@ type (
 		GetSpesifySalesHistory(companyID string, invoiceID string) (response Response.CoreInvoiceRes, statusCode int, err error)
 		UpdateRefund(companyID string, id string) (statusCode int, err error)
 		StatisticSales(companyID string, date string) (data interface{}, statusCode int, err error)
-		UpdatePaid(requestClient *Dto.PaidRequestDTO, companyID string, id string) (invoice *Models.Invoice, statusCode int, err error)
+		UpdateCashier(requestClient *Dto.InvoiceRequestDTO, companyID string, id string) (invoice *Models.Invoice, statusCode int, err error)
 	}
 
 	InvoiceService struct {
@@ -542,8 +542,24 @@ func (invoiceService *InvoiceService) StatisticSales(companyID string, date stri
 	return data, http.StatusOK, nil
 }
 
-func (invoiceService *InvoiceService) UpdatePaid(requestClient *Dto.PaidRequestDTO, companyID string, id string) (invoice *Models.Invoice, statusCode int, err error) {
-	invoice, err = invoiceService.invoiceRepository.FindByID(id, companyID)
+func (invoiceService *InvoiceService) UpdateCashier(requestClient *Dto.InvoiceRequestDTO, companyID string, id string) (invoice *Models.Invoice, statusCode int, err error) {
+	trx := invoiceService.DB.Begin()
+	if trx.Error != nil {
+		return nil, http.StatusInternalServerError, trx.Error
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			trx.Rollback()
+			err = fmt.Errorf("panic occurred: %v", r)
+		} else if err != nil {
+			trx.Rollback()
+		} else {
+			trx.Commit()
+		}
+	}()
+
+	invoice, err = invoiceService.invoiceRepository.GetByInvoiceID(companyID, id)
 
 	if err != nil {
 		return nil, http.StatusNotFound, err
@@ -551,40 +567,243 @@ func (invoiceService *InvoiceService) UpdatePaid(requestClient *Dto.PaidRequestD
 
 	if *invoice.Status {
 		if invoice.RefundAt == nil {
-			return nil, http.StatusBadRequest, errors.New("invoice sudah lunas")
+			return nil, http.StatusBadRequest, errors.New("invoice sudah lunas, tidak bisa di update")
 		}
 	}
 
-	var status *bool
-	inStatus := true
-	status = &inStatus
+	invoiceItemsMap := make(map[string]struct {
+		Quantity int
+		Name     string
+	})
+
+	for _, item := range invoice.InvoiceItems {
+		invoiceItemsMap[item.SellableProductID] = struct {
+			Quantity int
+			Name     string
+		}{
+			Quantity: item.Quantity,
+			Name:     item.SellableProduct.Name,
+		}
+	}
+
+	purchasedItemsMap := make(map[string]struct {
+		QtyRequest     int
+		PromoID        *string
+		IsAlreadyExist bool
+		Difference     int
+	})
+
+	for _, purchased := range requestClient.Purchaseds {
+		purchasedItemsMap[purchased.ID] = struct {
+			QtyRequest     int
+			PromoID        *string
+			IsAlreadyExist bool
+			Difference     int
+		}{
+			QtyRequest:     purchased.Qty,
+			PromoID:        purchased.PromoID,
+			IsAlreadyExist: false,
+			Difference:     0,
+		}
+	}
+
+	var errorMessages []string
+
+	isSame := true
+	for id, itemData := range invoiceItemsMap {
+		if requestData, exists := purchasedItemsMap[id]; !exists || requestData.QtyRequest != itemData.Quantity {
+			isSame = false
+			break
+		}
+	}
+
+	if isSame {
+		for id, itemData := range invoiceItemsMap {
+			if requestData, exists := purchasedItemsMap[id]; !exists {
+				errorMessages = append(errorMessages, fmt.Sprintf("Produk '%s'dari invoice tidak boleh dihapus!", itemData.Name))
+			} else if requestData.QtyRequest < itemData.Quantity {
+				errorMessages = append(errorMessages, fmt.Sprintf("Produk '%s' memiliki quantity sebelumnya %d. Tidak boleh dikurangi menjadi %d!", itemData.Name, itemData.Quantity, requestData.QtyRequest))
+			}
+		}
+
+		// check stock with old value
+		for id, purchasedData := range purchasedItemsMap {
+			oldItem, exists := invoiceItemsMap[id]
+
+			product, err := invoiceService.sellableProductRepository.Find(id)
+			if err != nil {
+				return nil, http.StatusInternalServerError, errors.New(fmt.Sprintf("Gagal mengecek stok produk '%s'", id))
+			}
+
+			difference := purchasedData.QtyRequest
+			if exists {
+				difference -= oldItem.Quantity
+			}
+
+			purchasedItemsMap[id] = struct {
+				QtyRequest     int
+				PromoID        *string
+				IsAlreadyExist bool
+				Difference     int
+			}{
+				QtyRequest:     purchasedData.QtyRequest,
+				PromoID:        purchasedData.PromoID,
+				IsAlreadyExist: exists,
+				Difference:     difference,
+			}
+
+			if !exists {
+				if purchasedData.QtyRequest > product.CurrentQuantity {
+					errorMessages = append(errorMessages, fmt.Sprintf(
+						"Produk '%s' hanya memiliki stok %d, tidak bisa diperbarui menjadi %d!",
+						product.Name, product.CurrentQuantity, purchasedData.QtyRequest,
+					))
+				}
+			} else {
+				if difference > 0 && difference > product.CurrentQuantity {
+					errorMessages = append(errorMessages, fmt.Sprintf(
+						"Produk '%s' hanya memiliki stok %d. Tidak bisa menambah menjadi %d!",
+						oldItem.Name, product.CurrentQuantity, purchasedData.QtyRequest,
+					))
+				}
+			}
+
+			if !*product.Status {
+				errorMessages = append(errorMessages, fmt.Sprintf("Produk '%s' tidak aktif, tidak dapat dipesan!", product.Name))
+			}
+		}
+
+		if len(errorMessages) > 0 {
+			return nil, http.StatusBadRequest, errors.New(strings.Join(errorMessages, " , "))
+		}
+
+		var lowStockErrors []string
+		var expiredItemsErrors []string
+
+		// delete invoice_item
+		if err = invoiceService.invoiceItemRepository.DeleteByInvoiceID(trx, id); err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+
+		for id, purchasedData := range purchasedItemsMap {
+			product, err := invoiceService.sellableProductRepository.Find(id)
+			if err != nil {
+				return nil, http.StatusInternalServerError, errors.New(fmt.Sprintf("Gagal mengecek stok produk '%s'", id))
+			}
+
+			dataPurchased := purchasedData.QtyRequest
+
+			if purchasedData.IsAlreadyExist {
+				dataPurchased = purchasedData.Difference
+
+				if err = invoiceService.sellableProductRepository.UpdateCurrent(trx, id, dataPurchased); err != nil {
+					return nil, http.StatusInternalServerError, errors.New(fmt.Sprintf("Gagal memperbarui stok produk '%s'", id))
+				}
+			} else {
+				if err = invoiceService.sellableProductRepository.UpdateCurrent(trx, id, dataPurchased); err != nil {
+					return nil, http.StatusInternalServerError, errors.New(fmt.Sprintf("Gagal memperbarui stok produk '%s'", id))
+				}
+			}
+
+			var promoAmount *float64
+			if purchasedData.PromoID != nil {
+				promo, err := invoiceService.promoRepository.FindById(*purchasedData.PromoID)
+				if err != nil {
+					return nil, http.StatusNotFound, fmt.Errorf("promo tidak ditemukan: %s", *purchasedData.PromoID)
+				}
+
+				amount := promo.Amount * float64(purchasedData.QtyRequest)
+				promoAmount = &amount
+			}
+
+			priceAll := product.Price * float64(purchasedData.QtyRequest)
+
+			if promoAmount != nil {
+				priceAll -= *promoAmount
+			}
+
+			invoiceItem := &Models.InvoiceItem{
+				InvoiceID:         invoice.ID,
+				SellableProductID: product.ID,
+				Quantity:          purchasedData.QtyRequest,
+				CompanyID:         companyID,
+				Price:             priceAll,
+				PromoID:           purchasedData.PromoID,
+				PromoAmount:       promoAmount,
+			}
+
+			if err = invoiceService.invoiceItemRepository.Store(trx, invoiceItem); err != nil {
+				return nil, http.StatusInternalServerError, fmt.Errorf("gagal menyimpan item invoice untuk produk %s: %v", product.Name, err)
+			}
+
+			// set logic hasReceipt true or false handling
+			if product.HasReceipt {
+				if err = invoiceService.handleMaterialProducts(trx, product, dataPurchased, &expiredItemsErrors, &lowStockErrors); err != nil {
+					return nil, http.StatusInternalServerError, err
+				}
+			} else {
+				if err = invoiceService.handleSellableStocks(trx, product, dataPurchased, &expiredItemsErrors, &lowStockErrors); err != nil {
+					return nil, http.StatusInternalServerError, err
+				}
+			}
+		}
+
+		if len(lowStockErrors) > 0 || len(expiredItemsErrors) > 0 {
+			allErrors := append(lowStockErrors, expiredItemsErrors...)
+			return nil, http.StatusBadRequest, fmt.Errorf("terdapat beberapa masalah: %v", strings.Join(allErrors, "; "))
+		}
+	}
+
+	// set update invoices
+	tax, err := invoiceService.taxRepository.FindByID(requestClient.TaxID)
+	if err != nil {
+		return nil, http.StatusNotFound, fmt.Errorf("tax tidak ditemukan: %s", requestClient.TaxID)
+	}
+
+	resultTax := requestClient.SubTotal * (float64(tax.Precentage) / 100)
+
+	if requestClient.MoneyReceived != nil {
+		if (requestClient.SubTotal + resultTax) > *requestClient.MoneyReceived {
+			return nil, http.StatusBadRequest, errors.New("uang yang diterima tidak cukup")
+		}
+	}
 
 	if err = invoiceService.invoiceRepository.Update(id, &Models.Invoice{
-		Status:        status,
-		MoneyReceived: &requestClient.MoneyReceived,
+		CustomerName:  requestClient.CustomerName,
+		PhoneNumber:   requestClient.PhoneNumber,
+		Note:          requestClient.Notes,
+		TaxID:         requestClient.TaxID,
+		PaymentMethod: requestClient.PaymentMethod,
+		InvoiceNumber: requestClient.InvoiceNumber,
+		CompanyID:     companyID,
+		Status:        &requestClient.Status,
+		MoneyReceived: requestClient.MoneyReceived,
+		Tax:           resultTax,
+		SubTotal:      requestClient.SubTotal,
+		UpdatedAt:     time.Now(),
 	}); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 
-	// update nil refundAt
-	if err = invoiceService.invoiceRepository.UpdateToNull(id, "refund_at"); err != nil {
-		return nil, http.StatusInternalServerError, err
-	}
+	if *invoice.Status {
+		// update nil refundAt
+		if err = invoiceService.invoiceRepository.UpdateToNull(id, "refund_at"); err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
 
-	// insert journal entry
-	note := "pembayaran transaksi kasir"
-	if err := invoiceService.journalEntriesService.InsertJournalCashier(Common.JournalEntryParams{
-		CompanyID:       companyID,
-		SubTotal:        invoice.SubTotal,
-		Tax:             invoice.Tax,
-		Note:            note,
-		TransactionCode: invoice.InvoiceNumber,
-		AdditionalData:  nil,
-	}, true, nil); err != nil {
-		return nil, http.StatusBadRequest, err
+		// insert journal entry
+		note := "pembayaran transaksi kasir"
+		if err := invoiceService.journalEntriesService.InsertJournalCashier(Common.JournalEntryParams{
+			CompanyID:       companyID,
+			SubTotal:        invoice.SubTotal,
+			Tax:             invoice.Tax,
+			Note:            note,
+			TransactionCode: invoice.InvoiceNumber,
+			AdditionalData:  nil,
+		}, true, nil); err != nil {
+			return nil, http.StatusBadRequest, err
+		}
 	}
-
-	invoice.MoneyReceived = &requestClient.MoneyReceived
 
 	return invoice, http.StatusOK, nil
 }

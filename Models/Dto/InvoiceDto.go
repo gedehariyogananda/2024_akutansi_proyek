@@ -24,10 +24,6 @@ type InvoiceRequestDTO struct {
 	Purchaseds    []PurchasedItem `json:"purchaseds" validate:"required,dive"`
 }
 
-type PaidRequestDTO struct {
-	MoneyReceived float64 `json:"money_received" validate:"required"`
-}
-
 type GetHistoryInvoice struct {
 	Common.Query
 	StartDate *string `json:"start_date"`
