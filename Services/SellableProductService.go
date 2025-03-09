@@ -97,6 +97,8 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 			Image:           &presignedURL,
 			CurrentQuantity: &sellableProduct.CurrentQuantity,
 			Price:           &sellableProduct.Price,
+			HasReceipt:      &sellableProduct.HasReceipt,
+			Status:          sellableProduct.Status,
 			Category:        sellableProduct.Category,
 			StatusDisplay:   &status,
 			Description:     &sellableProduct.Description,
