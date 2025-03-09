@@ -9,6 +9,7 @@ import (
 	"2024_akutansi_project/Utils"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -571,6 +572,12 @@ func (invoiceService *InvoiceService) UpdateCashier(requestClient *Dto.InvoiceRe
 		}
 	}
 
+	if requestClient.Status {
+		if requestClient.MoneyReceived == nil || *requestClient.MoneyReceived == 0 {
+			return nil, http.StatusBadRequest, errors.New("jika status lunas, maka uang yang diterima tidak boleh kosong")
+		}
+	}
+
 	invoiceItemsMap := make(map[string]struct {
 		Quantity int
 		Name     string
@@ -611,11 +618,13 @@ func (invoiceService *InvoiceService) UpdateCashier(requestClient *Dto.InvoiceRe
 
 	isSame := true
 	for id, itemData := range invoiceItemsMap {
-		if requestData, exists := purchasedItemsMap[id]; !exists || requestData.QtyRequest != itemData.Quantity {
+		if requestData, exists := purchasedItemsMap[id]; !exists && requestData.QtyRequest != itemData.Quantity {
 			isSame = false
 			break
 		}
 	}
+
+	log.Println("is_same", isSame)
 
 	if isSame {
 		for id, itemData := range invoiceItemsMap {
@@ -785,7 +794,7 @@ func (invoiceService *InvoiceService) UpdateCashier(requestClient *Dto.InvoiceRe
 		return nil, http.StatusInternalServerError, err
 	}
 
-	if *invoice.Status {
+	if requestClient.Status {
 		// update nil refundAt
 		if err = invoiceService.invoiceRepository.UpdateToNull(id, "refund_at"); err != nil {
 			return nil, http.StatusInternalServerError, err
