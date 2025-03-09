@@ -93,6 +93,9 @@ func (r *InvoiceRepository) GetByInvoiceID(companyID string, invoiceID string) (
 		Preload("InvoiceItems", func(invItemPayload *gorm.DB) *gorm.DB {
 			return invItemPayload.
 				Select("invoice_id", "sellable_product_id", "quantity", "promo_id", "promo_amount").
+				Preload("Promo", func(promoPayload *gorm.DB) *gorm.DB {
+					return promoPayload.Select("id", "name", "amount", "type", "start_date", "end_date")
+				}).
 				Preload("SellableProduct", func(spPayload *gorm.DB) *gorm.DB {
 					return spPayload.Select("id", "name", "price")
 				})

@@ -55,7 +55,7 @@ func (sellableProductRepository *SellableProductRepository) GetAll(companyID str
 		return promoItemPayload.Joins("JOIN promos ON promo_items.promo_id = promos.id").
 			Where("DATE(promos.start_date) <= ? AND DATE(promos.end_date) >= ?", time.Now().Format("2006-01-02"), time.Now().Format("2006-01-02")).
 			Preload("Promo", func(promoPayload *gorm.DB) *gorm.DB {
-				return promoPayload.Select("id, name, start_date, end_date, amount")
+				return promoPayload.Select("id, name, start_date, end_date, amount, type")
 			}).
 			Select("promo_items.promo_id, promo_items.sellable_product_id")
 	}).Preload("Category", func(categoryPayload *gorm.DB) *gorm.DB {

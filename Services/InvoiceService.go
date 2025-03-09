@@ -1,6 +1,7 @@
 package Services
 
 import (
+	"2024_akutansi_project/Consts"
 	"2024_akutansi_project/Models"
 	"2024_akutansi_project/Models/Common"
 	"2024_akutansi_project/Models/Dto"
@@ -9,7 +10,6 @@ import (
 	"2024_akutansi_project/Utils"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -78,6 +78,12 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 			trx.Commit()
 		}
 	}()
+
+	if requestClient.Status {
+		if requestClient.MoneyReceived == nil || *requestClient.MoneyReceived == 0 {
+			return nil, http.StatusBadRequest, errors.New("jika status lunas, maka uang yang diterima tidak boleh kosong")
+		}
+	}
 
 	tax, err := invoiceService.taxRepository.FindByID(requestClient.TaxID)
 	if err != nil {
@@ -150,7 +156,14 @@ func (invoiceService *InvoiceService) CreateInvoicePurchased(requestClient *Dto.
 				return nil, http.StatusNotFound, fmt.Errorf("promo tidak ditemukan: %s", *purchasedItem.PromoID)
 			}
 
-			amount := promo.Amount * float64(purchasedItem.Qty)
+			var amount float64
+
+			if promo.Type == Consts.PERCENT_TYPE {
+				amount = (promo.Amount / 100) * (sellableProduct.Price * float64(purchasedItem.Qty))
+			} else {
+				amount = promo.Amount * float64(purchasedItem.Qty)
+			}
+
 			promoAmount = &amount
 		}
 
@@ -414,6 +427,7 @@ func (invoiceService *InvoiceService) GetSpesifySalesHistory(companyID string, i
 			Price:             item.SellableProduct.Price,
 			ResultTotal:       &resultTotal,
 			PromoAmount:       promoAmount,
+			Promo:             item.Promo,
 		})
 	}
 
@@ -624,8 +638,6 @@ func (invoiceService *InvoiceService) UpdateCashier(requestClient *Dto.InvoiceRe
 		}
 	}
 
-	log.Println("is_same", isSame)
-
 	if isSame {
 		for id, itemData := range invoiceItemsMap {
 			if requestData, exists := purchasedItemsMap[id]; !exists {
@@ -721,7 +733,14 @@ func (invoiceService *InvoiceService) UpdateCashier(requestClient *Dto.InvoiceRe
 					return nil, http.StatusNotFound, fmt.Errorf("promo tidak ditemukan: %s", *purchasedData.PromoID)
 				}
 
-				amount := promo.Amount * float64(purchasedData.QtyRequest)
+				var amount float64
+
+				if promo.Type == Consts.PERCENT_TYPE {
+					amount = (promo.Amount / 100) * (product.Price * float64(purchasedData.QtyRequest))
+				} else {
+					amount = promo.Amount * float64(purchasedData.QtyRequest)
+				}
+
 				promoAmount = &amount
 			}
 

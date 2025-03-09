@@ -55,10 +55,11 @@ type CoreInvoiceRes struct {
 }
 
 type InvItemRes struct {
-	SellableProductID string   `json:"sellable_product_id"`
-	Quantity          int      `json:"quantity"`
-	Name              string   `json:"name"`
-	Price             float64  `json:"price"`
-	ResultTotal       *float64 `json:"result_total,omitempty"`
-	PromoAmount       *float64 `json:"promo_amount,omitempty"`
+	SellableProductID string        `json:"sellable_product_id"`
+	Quantity          int           `json:"quantity"`
+	Name              string        `json:"name"`
+	Price             float64       `json:"price"`
+	Promo             *Models.Promo `json:"promo,omitempty"`
+	ResultTotal       *float64      `json:"result_total,omitempty"`
+	PromoAmount       *float64      `json:"promo_amount,omitempty"`
 }
