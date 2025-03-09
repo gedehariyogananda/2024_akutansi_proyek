@@ -9,6 +9,7 @@ type StockOpnameResponse struct {
 	ID          string                    `json:"id"`
 	Title       string                    `json:"title"`
 	ChangerName *string                   `json:"changer_name"`
+	CreatedAt   *time.Time                `json:"created_at"`
 	Items       []StockOpnameItemResponse `json:"items"`
 }
 
@@ -41,6 +42,7 @@ func MapFromStockOpname(stockOpname Models.StockOpname) *StockOpnameResponse {
 		ID:          stockOpname.ID,
 		Title:       stockOpname.Title,
 		ChangerName: stockOpname.ChangerName,
+		CreatedAt:   stockOpname.CreatedAt,
 		Items:       items,
 	}
 }

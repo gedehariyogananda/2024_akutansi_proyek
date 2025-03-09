@@ -40,6 +40,10 @@ func (r *StockOpnameRepository) GetAll(query *Common.Query) (data []*Models.Stoc
 		dbQuery = dbQuery.Where("created_at <= ?", query.EndDate)
 	}
 
+	if query.Search != nil {
+		dbQuery = dbQuery.Where("title LIKE ?", "%"+*query.Search+"%")
+	}
+
 	if err := dbQuery.
 		Find(&data).Error; err != nil {
 		return nil, 0, err
