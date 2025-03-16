@@ -15,6 +15,7 @@ import (
 type (
 	ISellableProductController interface {
 		GetAllSellableProduct(ctx *gin.Context)
+		GetAllWithDetaiProduct(ctx *gin.Context)
 		UpdateSellableProduct(ctx *gin.Context)
 		Create(ctx *gin.Context)
 		AssignMaterial(ctx *gin.Context)
@@ -46,7 +47,28 @@ func (controller *SellableProductController) GetAllSellableProduct(ctx *gin.Cont
 
 	request.Query = query
 
-	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &request)
+	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &request, false)
+	if err != nil {
+		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
+		return
+	}
+
+	Helper.SetPaginationResponse(ctx,
+		"Berhasil mendapatkan data sellable product",
+		sellableProducts,
+		meta,
+		statusCode)
+}
+
+func (controller *SellableProductController) GetAllWithDetaiProduct(ctx *gin.Context) {
+	var request Dto.GetSellableProduct
+	query := Utils.InsertParams(ctx)
+	inStatus := ctx.Query("in_status")
+	request.InStatus = &inStatus
+
+	request.Query = query
+
+	sellableProducts, meta, statusCode, err := controller.SellableProductService.GetAll(ctx.GetString("company_id"), &request, true)
 	if err != nil {
 		Helper.SetErrorResponse(ctx, err.Error(), statusCode)
 		return

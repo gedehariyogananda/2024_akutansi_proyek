@@ -13,7 +13,7 @@ import (
 
 type (
 	ISellableProductRepository interface {
-		GetAll(companyID string, query *Dto.GetSellableProduct) (sellableProducts []*Models.SellableProduct, totalData int64, err error)
+		GetAll(companyID string, query *Dto.GetSellableProduct, withCheckedPromo bool) (sellableProducts []*Models.SellableProduct, totalData int64, err error)
 		Update(id string, sellableProduct *Models.SellableProduct) error
 		Find(id string) (sellableProduct *Models.SellableProduct, err error)
 		UpdateCurrent(trx *gorm.DB, sellableProductID string, QtyClient int) error
@@ -36,7 +36,7 @@ func SellableProductRepositoryProvider(db *gorm.DB) *SellableProductRepository {
 	return &SellableProductRepository{DB: db}
 }
 
-func (sellableProductRepository *SellableProductRepository) GetAll(companyID string, query *Dto.GetSellableProduct) (sellableProducts []*Models.SellableProduct, totalData int64, err error) {
+func (sellableProductRepository *SellableProductRepository) GetAll(companyID string, query *Dto.GetSellableProduct, withCheckedPromo bool) (sellableProducts []*Models.SellableProduct, totalData int64, err error) {
 	totalCountInit := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
 		Where("company_id = ?", companyID)
 
@@ -51,16 +51,28 @@ func (sellableProductRepository *SellableProductRepository) GetAll(companyID str
 	db := sellableProductRepository.DB.Model(&Models.SellableProduct{}).
 		Where("company_id = ?", companyID)
 
-	db = db.Preload("PromoItems", func(promoItemPayload *gorm.DB) *gorm.DB {
-		return promoItemPayload.Joins("JOIN promos ON promo_items.promo_id = promos.id").
-			Where("DATE(promos.start_date) <= ? AND DATE(promos.end_date) >= ?", time.Now().Format("2006-01-02"), time.Now().Format("2006-01-02")).
-			Preload("Promo", func(promoPayload *gorm.DB) *gorm.DB {
-				return promoPayload.Select("id, name, start_date, end_date, amount, type")
-			}).
-			Select("promo_items.promo_id, promo_items.sellable_product_id")
-	}).Preload("Category", func(categoryPayload *gorm.DB) *gorm.DB {
-		return categoryPayload.Select("id, name")
-	})
+	if withCheckedPromo {
+		db = db.Preload("PromoItems", func(promoItemPayload *gorm.DB) *gorm.DB {
+			return promoItemPayload.Joins("JOIN promos ON promo_items.promo_id = promos.id").
+				Where("DATE(promos.start_date) <= ? AND DATE(promos.end_date) >= ?", time.Now().Format("2006-01-02"), time.Now().Format("2006-01-02")).
+				Preload("Promo", func(promoPayload *gorm.DB) *gorm.DB {
+					return promoPayload.Select("id, name, start_date, end_date, amount, type")
+				}).
+				Select("promo_items.promo_id, promo_items.sellable_product_id")
+		}).Preload("Category", func(categoryPayload *gorm.DB) *gorm.DB {
+			return categoryPayload.Select("id, name")
+		})
+	} else {
+		db = db.Preload("PromoItems", func(promoItemPayload *gorm.DB) *gorm.DB {
+			return promoItemPayload.Joins("JOIN promos ON promo_items.promo_id = promos.id").
+				Preload("Promo", func(promoPayload *gorm.DB) *gorm.DB {
+					return promoPayload.Select("id, name, start_date, end_date, amount, type")
+				}).
+				Select("promo_items.promo_id, promo_items.sellable_product_id")
+		}).Preload("Category", func(categoryPayload *gorm.DB) *gorm.DB {
+			return categoryPayload.Select("id, name")
+		})
+	}
 
 	if err := db.Scopes(
 		Utils.Paginate(query.Page, query.Limit),

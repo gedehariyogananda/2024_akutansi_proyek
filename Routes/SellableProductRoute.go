@@ -19,6 +19,7 @@ func SellableProductRoutes(c *gin.RouterGroup, db *gorm.DB, redis *redis.Client,
 	SellableController := Di.DISellableProduct(db, minio)
 
 	route.GET("", SellableController.GetAllSellableProduct)
+	route.GET("/all", SellableController.GetAllWithDetaiProduct)
 	route.GET("/:id/stock", SellableController.FindByIdSetStock)
 	route.POST("/", SellableController.Create)
 	route.DELETE("/", SellableController.UnAssignMAterial)

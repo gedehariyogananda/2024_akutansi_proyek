@@ -18,7 +18,7 @@ import (
 type (
 	ISellableProductService interface {
 		Create(request *Dto.CreateSellableProductDTO) (res *Response.SellableResponse, err error)
-		GetAll(companyID string, query *Dto.GetSellableProduct) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error)
+		GetAll(companyID string, query *Dto.GetSellableProduct, withPromoExpired bool) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error)
 		AssignMaterial(request *Dto.AssignMaterialDtos) (statusCode int, err error)
 		UnAssignMaterial(request *Dto.UnAssignMaterialDto) (statusCode int, err error)
 		FindById(id string, setWithMaterial bool) (res *Response.SellableResponse, statusCode int, err error)
@@ -62,8 +62,12 @@ func (service *SellableProductService) presignedURL(objectKey string) (string, e
 	return presignedURL, nil
 }
 
-func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSellableProduct) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
-	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, query)
+func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSellableProduct, withPromoExpired bool) (response []*Response.SellableResponse, meta Common.Meta, statusCode int, err error) {
+	sellableProducts, totalData, err := service.SellableProductRepository.GetAll(companyID, query, true)
+
+	if withPromoExpired {
+		sellableProducts, totalData, err = service.SellableProductRepository.GetAll(companyID, query, false)
+	}
 
 	if err != nil {
 		return nil, Common.Meta{}, http.StatusInternalServerError, err
@@ -82,8 +86,14 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 		}
 
 		var promo *Models.Promo
+		isExpired := false
+
 		if len(sellableProduct.PromoItems) > 0 {
 			promo = sellableProduct.PromoItems[0].Promo
+
+			if time.Now().After(sellableProduct.PromoItems[0].Promo.EndDate) {
+				isExpired = true
+			}
 		}
 
 		presignedURL, err := service.presignedURL(sellableProduct.Image)
@@ -104,6 +114,10 @@ func (service *SellableProductService) GetAll(companyID string, query *Dto.GetSe
 			Description:     &sellableProduct.Description,
 			Promo:           promo,
 		})
+
+		if withPromoExpired {
+			res[len(res)-1].IsExpiredPromo = &isExpired
+		}
 	}
 
 	meta = Common.PaginateMetadata(nil, totalData, query.Limit, query.Page)
